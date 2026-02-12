@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Share, Alert } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Share, Alert, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { Heart, Share2, PenLine, Music, Sparkles, Bell, Image as ImageIcon, HandHelping, X as CloseIcon, ChevronRight } from 'lucide-react-native';
@@ -21,7 +21,12 @@ export const AffirmationScreen = () => {
     const [isWallpaperMode, setIsWallpaperMode] = React.useState(false);
     const [saving, setSaving] = React.useState(false);
     const [showAdvice, setShowAdvice] = React.useState(false);
-    const { isSubscribed, beliefType, themes, lastAdviceTimestamp, setLastAdviceTimestamp } = useStore();
+    const [blessed, setBlessed] = React.useState(false);
+    const fadeAnim = React.useRef(new Animated.Value(1)).current;
+    const scaleAnim = React.useRef(new Animated.Value(1)).current;
+    const glowAnim = React.useRef(new Animated.Value(0)).current;
+
+    const { isSubscribed, beliefType, themes, username, lastAdviceTimestamp, setLastAdviceTimestamp } = useStore();
 
     const { data: affirmation } = useQuery({
         queryKey: ['daily-affirmation'],
@@ -61,6 +66,22 @@ export const AffirmationScreen = () => {
                 ].filter(Boolean) as any
             );
         }
+    };
+
+    const handleBless = () => {
+        setBlessed(true);
+
+        // Spiritual animation sequence
+        Animated.parallel([
+            Animated.sequence([
+                Animated.timing(scaleAnim, { toValue: 1.05, duration: 400, useNativeDriver: true }),
+                Animated.timing(scaleAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+            ]),
+            Animated.sequence([
+                Animated.timing(glowAnim, { toValue: 1, duration: 400, useNativeDriver: false }),
+                Animated.timing(glowAnim, { toValue: 0, duration: 1200, useNativeDriver: false }),
+            ])
+        ]).start(() => setBlessed(false));
     };
 
     const onShare = async () => {
@@ -111,7 +132,22 @@ export const AffirmationScreen = () => {
                         style={StyleSheet.absoluteFill}
                     />
 
-                    <View style={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}>
+                    <Animated.View style={[
+                        StyleSheet.absoluteFill,
+                        {
+                            backgroundColor: palette.softGold,
+                            opacity: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.15] })
+                        }
+                    ]} />
+
+                    <Animated.View style={[
+                        styles.content,
+                        {
+                            paddingTop: insets.top + 20,
+                            paddingBottom: insets.bottom + 20,
+                            transform: [{ scale: scaleAnim }]
+                        }
+                    ]}>
                         {!isWallpaperMode ? (
                             <View style={styles.topNav}>
                                 <Text style={styles.date}>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</Text>
@@ -135,9 +171,14 @@ export const AffirmationScreen = () => {
                         {!isWallpaperMode ? (
                             <View style={styles.footer}>
                                 <View style={styles.actions}>
-                                    <TouchableOpacity style={styles.blessButton}>
-                                        <Heart color={palette.softGold} size={24} fill={palette.softGold} />
-                                        <Text style={styles.blessText}>Bless</Text>
+                                    <TouchableOpacity style={styles.blessButton} onPress={handleBless}>
+                                        <Heart
+                                            color={palette.softGold}
+                                            size={24}
+                                            fill={palette.softGold}
+                                            style={blessed && { transform: [{ scale: 1.2 }] }}
+                                        />
+                                        <Text style={styles.blessText}>{blessed ? 'Blessed' : 'Bless'}</Text>
                                     </TouchableOpacity>
 
                                     <View style={styles.divider} />
@@ -147,6 +188,7 @@ export const AffirmationScreen = () => {
                                     </TouchableOpacity>
                                     <TouchableOpacity style={styles.actionIcon} onPress={handleAdvicePress}>
                                         <HandHelping color={palette.ivory} size={24} />
+                                        {canGetAdvice() && <View style={styles.availableIndicator} />}
                                     </TouchableOpacity>
                                 </View>
                                 <TouchableOpacity style={styles.journalButton} onPress={() => navigation.navigate('Journal')}>
@@ -169,7 +211,7 @@ export const AffirmationScreen = () => {
                                 <FaithAd type="community" />
                             </View>
                         )}
-                    </View>
+                    </Animated.View>
                 </ImageBackground>
             </ViewShot>
 
@@ -193,7 +235,7 @@ export const AffirmationScreen = () => {
 
                         <RnScrollView style={styles.adviceScroll}>
                             <Text style={styles.adviceText}>
-                                {contentAgentService.getDailyAdvice(beliefType || 'Open', themes)}
+                                {contentAgentService.getDailyAdvice(username || 'friend', beliefType || 'Open', themes)}
                             </Text>
 
                             {!isSubscribed && (
@@ -297,5 +339,9 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.text, height: 50, borderRadius: 25,
         alignItems: 'center', justifyContent: 'center'
     },
-    closeButtonText: { color: theme.colors.background, fontFamily: theme.typography.sansBold, fontSize: 16 }
+    closeButtonText: { color: theme.colors.background, fontFamily: theme.typography.sansBold, fontSize: 16 },
+    availableIndicator: {
+        position: 'absolute', top: 0, right: 0, width: 8, height: 8,
+        borderRadius: 4, backgroundColor: '#FF3B30', borderWidth: 1, borderColor: palette.ivory
+    }
 });

@@ -235,41 +235,41 @@ export const contentAgentService = {
         }));
     },
 
-    getDailyAdvice: (belief: BeliefType, themes: string[], journalInput?: string): string => {
+    getDailyAdvice: (username: string, belief: BeliefType, themes: string[], journalInput?: string): string => {
         const theme = themes[0] || 'Wisdom';
 
         const adviceTemplates: Record<BeliefType, string[]> = {
             Christian: [
-                "Based on your focus on {{theme}}, remember that your path is prepared. Lean into the stillness today.",
-                "I see you've been reflecting on {{theme}}. The word reminds us that grace is a marathon, not a sprint. Take a breath.",
-                "Your journey in {{theme}} is being noted. Take five minutes for prayerful silence this afternoon; the clarity you seek is already within you."
+                "Dear {{name}}, based on your focus on {{theme}}, remember that your path is prepared. Lean into the stillness today.",
+                "{{name}}, I see you've been reflecting on {{theme}}. The word reminds us that grace is a marathon, not a sprint. Take a breath.",
+                "Your journey in {{theme}} is being noted, {{name}}. Take five minutes for prayerful silence this afternoon; the clarity you seek is already within you."
             ],
             Muslim: [
-                "Reflecting on {{theme}}, remember that Sabr (patience) is your greatest ally today. Stay grounded in your intentions.",
-                "For your path in {{theme}}, consider how your small actions today echo your larger faith. Every step towards goodness is counted.",
-                "In the pursuit of {{theme}}, find tranquility in the remembrance of Allah. Your heart is being guided."
+                "{{name}}, reflecting on {{theme}}, remember that Sabr (patience) is your greatest ally today. Stay grounded in your intentions.",
+                "For your path in {{theme}}, {{name}}, consider how your small actions today echo your larger faith. Every step towards goodness is counted.",
+                "In the pursuit of {{theme}}, {{name}}, find tranquility in the remembrance of Allah. Your heart is being guided."
             ],
             Secular: [
-                "Focusing on {{theme}} today? Remember that consistency is better than intensity. What's one tiny step you can take right now?",
-                "Your path in {{theme}} is becoming clearer. Trust the process and honor your boundaries today.",
-                "Science and stillness both agree: your growth in {{theme}} requires rest. Don't forget to unplug tonight."
+                "{{name}}, focusing on {{theme}} today? Remember that consistency is better than intensity. What's one tiny step you can take right now?",
+                "Your path in {{theme}} is becoming clearer, {{name}}. Trust the process and honor your boundaries today.",
+                "{{name}}, science and stillness both agree: your growth in {{theme}} requires rest. Don't forget to unplug tonight."
             ],
             Open: [
-                "The universe is reflecting your focus on {{theme}}. Stay open to the small signs appearing in your day.",
-                "Your journey toward {{theme}} is unique. Comparison is the thief of joy; stay centered in your own light.",
-                "In the flow of {{theme}}, remember that you are exactly where you need to be. Breathe through the transition."
+                "{{name}}, the universe is reflecting your focus on {{theme}}. Stay open to the small signs appearing in your day.",
+                "Your journey toward {{theme}} is unique, {{name}}. Comparison is the thief of joy; stay centered in your own light.",
+                "In the flow of {{theme}}, {{name}}, remember that you are exactly where you need to be. Breathe through the transition."
             ],
             Exploring: [
-                "As you explore {{theme}}, keep your heart open to the wisdom found in unexpected places today.",
-                "Truth reveals itself in the quiet. Your pursuit of {{theme}} is a beautiful endeavor.",
-                "Keep seeking {{theme}}. The questions are more important than the answers right now."
+                "{{name}}, as you explore {{theme}}, keep your heart open to the wisdom found in unexpected places today.",
+                "Truth reveals itself in the quiet, {{name}}. Your pursuit of {{theme}} is a beautiful endeavor.",
+                "Keep seeking {{theme}}, {{name}}. The questions are more important than the answers right now."
             ]
         };
 
         const templates = adviceTemplates[belief] || adviceTemplates.Open;
         const template = templates[Math.floor(Math.random() * templates.length)];
 
-        let advice = template.replace('{{theme}}', theme.toLowerCase());
+        let advice = template.replace('{{theme}}', theme.toLowerCase()).replace('{{name}}', username || 'friend');
 
         if (journalInput && journalInput.length > 20) {
             advice += "\n\nI also noticed your recent journal entries touched on something deeper. Trust that those feelings are pointing you toward your True North.";
