@@ -12,6 +12,7 @@ import { AffirmationScreen } from '../features/affirmation/AffirmationScreen';
 import { JournalScreen } from '../features/journal/JournalScreen';
 import { CommunityScreen } from '../features/community/CommunityScreen';
 import { OnboardingScreen } from '../features/onboarding/OnboardingScreen';
+import { LoginScreen } from '../features/auth/LoginScreen';
 import { NotificationsScreen } from '../features/notifications/NotificationsScreen';
 import { CircleDetailScreen } from '../features/community/CircleDetailScreen';
 import { JournalDetailScreen } from '../features/journal/JournalDetailScreen';
@@ -89,6 +90,7 @@ const MainTabs = () => (
 
 export const RootNavigator = () => {
     const isOnboarded = useStore((state) => state.isOnboarded);
+    const isLoggedIn = useStore((state) => state.isLoggedIn);
 
     React.useEffect(() => {
         const handleDeepLink = (event: { url: string }) => {
@@ -111,6 +113,8 @@ export const RootNavigator = () => {
         <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
             {!isOnboarded ? (
                 <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+            ) : !isLoggedIn ? (
+                <Stack.Screen name="Login" component={LoginScreen} />
             ) : (
                 <Stack.Group>
                     <Stack.Screen name="Main" component={MainTabs} />

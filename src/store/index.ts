@@ -12,6 +12,9 @@ interface UserState {
     username: string;
     profilePicture: string | null;
     role: UserRole;
+    isLoggedIn: boolean;
+    biometricsEnabled: boolean;
+    securityPin: string | null;
     beliefType: BeliefType | null;
     themes: string[];
     dailyGoals: {
@@ -33,6 +36,9 @@ interface UserState {
     setUsername: (username: string) => void;
     setProfilePicture: (uri: string | null) => void;
     setRole: (role: UserRole) => void;
+    setLoggedIn: (value: boolean) => void;
+    setBiometricsEnabled: (value: boolean) => void;
+    setSecurityPin: (pin: string | null) => void;
     setBeliefType: (belief: BeliefType | null) => void;
     setThemes: (themes: string[]) => void;
     setPreferences: (belief: BeliefType, themes: string[], goals: any) => void;
@@ -55,6 +61,9 @@ export const useStore = create<UserState>()(
             username: '',
             profilePicture: null,
             role: 'member',
+            isLoggedIn: false,
+            biometricsEnabled: false,
+            securityPin: null,
             beliefType: null,
             themes: [],
             dailyGoals: {
@@ -81,9 +90,15 @@ export const useStore = create<UserState>()(
                     if (hasPermission) {
                         await notificationService.scheduleDailyAffirmation(get().isSubscribed);
                     }
+                } else {
+                    // Reset login state if un-onboarding (effectively logging out)
+                    set({ isLoggedIn: false });
                 }
                 set({ isOnboarded });
             },
+            setLoggedIn: (isLoggedIn) => set({ isLoggedIn }),
+            setBiometricsEnabled: (biometricsEnabled) => set({ biometricsEnabled }),
+            setSecurityPin: (securityPin) => set({ securityPin }),
             setSubscribed: async (isSubscribed: boolean) => {
                 set({ isSubscribed });
                 await notificationService.scheduleDailyAffirmation(isSubscribed);

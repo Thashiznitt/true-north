@@ -3,9 +3,10 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, LayoutAn
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { theme, palette } from '../../theme';
-import { Search, Plus, X, Bell, Calendar, Sparkles } from 'lucide-react-native';
+import { Search, Plus, X, Bell, Calendar, Sparkles, Fingerprint } from 'lucide-react-native';
 import { useStore } from '../../store';
 import { FaithAd } from '../../components/FaithAd';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 interface JournalEntry {
     id: string;
@@ -20,15 +21,58 @@ export const JournalScreen = () => {
     const dailyGoals = useStore(state => state.dailyGoals);
     const setSubscribed = useStore(state => state.setSubscribed);
     const beliefType = useStore(state => state.beliefType);
+    const biometricsEnabled = useStore(state => state.biometricsEnabled);
+    const securityPin = useStore(state => state.securityPin);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
+    const [isLocked, setIsLocked] = useState(biometricsEnabled || !!securityPin);
+    const [bioError, setBioError] = useState(false);
     const [entries] = useState<JournalEntry[]>([
         { id: '1', date: 'Oct 24, 2023', title: 'A New Beginning', content: 'Today was the first day I felt truly aligned. The morning affirmation really spoke to me...' },
         { id: '2', date: 'Oct 23, 2023', title: 'Strength in Silence', content: 'Finding peace in the quiet moments between meetings. Focusing on the "Strength" theme.' },
     ]);
 
     const navigation = useNavigation<any>();
+
+    React.useEffect(() => {
+        if (isSubscribed && (biometricsEnabled || securityPin)) {
+            authenticate();
+        } else {
+            setIsLocked(false);
+        }
+    }, []);
+
+    const authenticate = async () => {
+        if (!biometricsEnabled) {
+            // Simplified PIN check for this mock (could be a modal)
+            if (securityPin) {
+                // In a real app, showing a PIN pad here
+                setIsLocked(false);
+            }
+            return;
+        }
+
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+
+        if (hasHardware && isEnrolled) {
+            const result = await LocalAuthentication.authenticateAsync({
+                promptMessage: 'Unlock your private journal',
+                fallbackLabel: 'Use PIN',
+            });
+
+            if (result.success) {
+                setIsLocked(false);
+                setBioError(false);
+            } else {
+                setBioError(true);
+            }
+        } else {
+            // Fallback to PIN if biometrics fail or aren't available
+            setIsLocked(false);
+        }
+    };
 
     const filteredEntries = entries.filter(entry =>
         entry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -75,7 +119,29 @@ export const JournalScreen = () => {
                         Unlock your daily reflection space, track your journey to alignment, and take notes from your {getBeliefTrait()} as well.
                     </Text>
                     <TouchableOpacity style={styles.subscribeButton} onPress={handleSubscribe}>
-                        <Text style={styles.subscribeButtonText}>Subscribe for $25/month</Text>
+                        <Text style={styles.subscribeButtonText}>Subscribe for $12.99/month</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    }
+
+    if (isLocked) {
+        return (
+            <View style={styles.lockContainer}>
+                <View style={styles.lockContent}>
+                    <View style={styles.lockIconCircle}>
+                        <Fingerprint size={48} color={palette.softGold} />
+                    </View>
+                    <Text style={styles.lockTitle}>Sanctuary Locked</Text>
+                    <Text style={styles.lockSubtitle}>Your reflections are protected by your security settings.</Text>
+
+                    {bioError && (
+                        <Text style={styles.bioErrorText}>Authentication failed. Please try again.</Text>
+                    )}
+
+                    <TouchableOpacity style={styles.unlockButton} onPress={authenticate}>
+                        <Text style={styles.unlockButtonText}>Unlock Journal</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -222,5 +288,13 @@ const styles = StyleSheet.create({
     gratitudeTitle: { fontFamily: theme.typography.serifBold, fontSize: 18, color: palette.softGold },
     gratitudeText: { fontFamily: theme.typography.sans, fontSize: 15, color: theme.colors.text, opacity: 0.8, marginBottom: 12 },
     gratitudeAction: { alignSelf: 'flex-start', backgroundColor: palette.softGold, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-    gratitudeActionText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 13 }
+    gratitudeActionText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 13 },
+    lockContainer: { flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 },
+    lockContent: { alignItems: 'center', width: '100%' },
+    lockIconCircle: { width: 100, height: 100, borderRadius: 50, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 24, borderWidth: 1, borderColor: theme.colors.border },
+    lockTitle: { fontFamily: theme.typography.serifBold, fontSize: 28, color: theme.colors.text, marginBottom: 12 },
+    lockSubtitle: { fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.secondaryText, textAlign: 'center', lineHeight: 24, marginBottom: 40 },
+    unlockButton: { backgroundColor: theme.colors.text, paddingVertical: 18, paddingHorizontal: 40, borderRadius: theme.borderRadius.full, width: '100%', alignItems: 'center' },
+    unlockButtonText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 16 },
+    bioErrorText: { color: '#E57373', fontFamily: theme.typography.sansMedium, fontSize: 14, marginBottom: 20, textAlign: 'center' }
 });

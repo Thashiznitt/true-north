@@ -4,7 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '../../store';
 import { theme, palette } from '../../theme';
-import { Check, ArrowRight, ChevronLeft, Plus, Shield, Heart, Sparkles, Compass } from 'lucide-react-native';
+import { Check, ArrowRight, ChevronLeft, Plus, Shield, Heart, Sparkles, Compass, Lock, Fingerprint } from 'lucide-react-native';
 
 const THEME_ICONS: Record<string, any> = {
     Strength: Shield,
@@ -22,6 +22,9 @@ export const OnboardingScreen = () => {
     const setPreferences = useStore(state => state.setPreferences);
     const setStoreUsername = useStore(state => state.setUsername);
     const setProfilePicture = useStore(state => state.setProfilePicture);
+    const setLoggedIn = useStore(state => state.setLoggedIn);
+    const setBiometricsEnabled = useStore(state => state.setBiometricsEnabled);
+    const setSecurityPin = useStore(state => state.setSecurityPin);
 
     const [step, setStep] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -29,6 +32,8 @@ export const OnboardingScreen = () => {
     const [beliefType, setBeliefType] = useState<any>(null);
     const [username, setUsername] = useState('');
     const [profileImage, setProfileImage] = useState<string | null>(null);
+    const [setupBiometrics, setSetupBiometrics] = useState(false);
+    const [pin, setPin] = useState('');
     const [goals, setGoals] = useState({
         spirituality: '',
         spouse: '',
@@ -52,11 +57,16 @@ export const OnboardingScreen = () => {
             }, 1000);
         } else if (step === 4) {
             setStep(5);
+        } else if (step === 5) {
+            setStep(6);
         } else {
             // Final step: Finish onboarding
             setStoreUsername(username);
             setProfilePicture(profileImage);
             setPreferences(beliefType, selectedThemes, goals);
+            setBiometricsEnabled(setupBiometrics);
+            setSecurityPin(pin || null);
+            setLoggedIn(true);
             setOnboarded(true);
         }
     };
@@ -228,6 +238,41 @@ export const OnboardingScreen = () => {
         </View>
     );
 
+    const renderStep6 = () => (
+        <View style={styles.stepContainer}>
+            {renderHeader("Sanctuary Security", "Protect your private reflections with biometrics or a PIN.")}
+
+            <TouchableOpacity
+                style={[styles.securityCard, setupBiometrics && styles.securityCardActive]}
+                onPress={() => setSetupBiometrics(!setupBiometrics)}
+            >
+                <View style={styles.securityIconContainer}>
+                    <Fingerprint size={28} color={setupBiometrics ? palette.ivory : theme.colors.text} />
+                </View>
+                <View style={styles.securityTextContainer}>
+                    <Text style={[styles.securityTitle, setupBiometrics && styles.securityTextActive]}>Enable Biometrics</Text>
+                    <Text style={[styles.securityDesc, setupBiometrics && styles.securityTextActive]}>Use FaceID or TouchID to unlock your journal.</Text>
+                </View>
+                {setupBiometrics && <Check size={20} color={palette.ivory} />}
+            </TouchableOpacity>
+
+            <View style={styles.pinSection}>
+                <Text style={styles.label}>Or set a 4-digit PIN</Text>
+                <TextInput
+                    style={styles.pinInput}
+                    placeholder="••••"
+                    placeholderTextColor={theme.colors.secondaryText}
+                    keyboardType="number-pad"
+                    maxLength={4}
+                    value={pin}
+                    onChangeText={setPin}
+                    secureTextEntry
+                />
+                <Text style={styles.pinHint}>Recommended if biometrics are unavailable.</Text>
+            </View>
+        </View>
+    );
+
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -248,6 +293,7 @@ export const OnboardingScreen = () => {
                 {step === 3 && renderStep3()}
                 {step === 4 && renderStep4()}
                 {step === 5 && renderStep5()}
+                {step === 6 && renderStep6()}
             </View>
 
             <View style={styles.footer}>
@@ -257,7 +303,7 @@ export const OnboardingScreen = () => {
                         onPress={nextStep}
                         disabled={step === 4 && !username}
                     >
-                        <Text style={styles.nextButtonText}>{step === 5 ? "Get Started" : "Continue"}</Text>
+                        <Text style={styles.nextButtonText}>{step === 6 ? "Get Started" : "Continue"}</Text>
                         <ArrowRight size={20} color={theme.colors.inverseText} />
                     </TouchableOpacity>
                 )}
@@ -334,5 +380,23 @@ const styles = StyleSheet.create({
         position: 'absolute', width: 44, height: 44, borderRadius: 22,
         backgroundColor: theme.colors.text, justifyContent: 'center', alignItems: 'center'
     },
-    pickerHint: { fontFamily: theme.typography.sansBold, fontSize: 15, color: theme.colors.primary, marginTop: theme.spacing.lg }
+    pickerHint: { fontFamily: theme.typography.sansBold, fontSize: 15, color: theme.colors.primary, marginTop: theme.spacing.lg },
+    securityCard: {
+        flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface,
+        borderRadius: 16, padding: theme.spacing.xl, borderWidth: 1, borderColor: theme.colors.border,
+        marginBottom: 24, gap: theme.spacing.lg
+    },
+    securityCardActive: { backgroundColor: theme.colors.text, borderColor: theme.colors.text },
+    securityIconContainer: { width: 48, height: 48, borderRadius: 12, backgroundColor: palette.softGold + '20', alignItems: 'center', justifyContent: 'center' },
+    securityTextContainer: { flex: 1 },
+    securityTitle: { fontFamily: theme.typography.sansBold, fontSize: 16, color: theme.colors.text, marginBottom: 4 },
+    securityDesc: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText, lineHeight: 18 },
+    securityTextActive: { color: palette.ivory },
+    pinSection: { marginTop: 8 },
+    pinInput: {
+        backgroundColor: theme.colors.surface, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border,
+        height: 60, textAlign: 'center', fontSize: 28, letterSpacing: 20, color: theme.colors.text,
+        fontFamily: theme.typography.serifBold, marginTop: 12
+    },
+    pinHint: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText, marginTop: 12, textAlign: 'center' }
 });

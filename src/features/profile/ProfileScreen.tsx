@@ -10,11 +10,10 @@ export const ProfileScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<any>();
     const { username, beliefType, isSubscribed, themes, dailyGoals, profilePicture } = useStore();
-    const { setOnboarded, setProfilePicture } = useStore();
+    const { setLoggedIn, setProfilePicture } = useStore();
 
     const handleLogout = () => {
-        // In a real app, this would clear tokens
-        setOnboarded(false);
+        setLoggedIn(false);
     };
 
     const pickImage = async () => {
