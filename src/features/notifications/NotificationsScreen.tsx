@@ -4,11 +4,8 @@ import { theme, palette } from '../../theme';
 import { Bell, LucideIcon, Heart, Sparkles, MessageCircle, ChevronLeft, X } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const NOTIFICATIONS = [
-    { id: '1', title: 'New Affirmation', message: 'Your personal alignment for today is ready.', type: 'affirmation', time: '2h ago' },
-    { id: '2', title: 'Blessing Received', message: 'Sarah blessed your reflection in Nairobi Chapel Circle.', type: 'blessing', time: '4h ago' },
-    { id: '3', title: 'Upcoming Event', message: 'Business Alignment session starts in 30 minutes.', type: 'event', time: '1d ago' },
-];
+import { useStore } from '../../store';
+import { useEffect } from 'react';
 
 const getIcon = (type: string) => {
     switch (type) {
@@ -22,6 +19,23 @@ const getIcon = (type: string) => {
 export const NotificationsScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
+    const { notificationsList, cleanupOldNotifications } = useStore();
+
+    useEffect(() => {
+        cleanupOldNotifications();
+    }, []);
+
+    const formatTime = (timestamp: number) => {
+        const diff = Date.now() - timestamp;
+        const mins = Math.floor(diff / 60000);
+        const hours = Math.floor(mins / 60);
+        const days = Math.floor(hours / 24);
+
+        if (days > 0) return `${days}d ago`;
+        if (hours > 0) return `${hours}h ago`;
+        if (mins > 0) return `${mins}m ago`;
+        return 'just now';
+    };
 
     const renderNotification = ({ item }: any) => {
         const Icon = getIcon(item.type);
@@ -33,7 +47,7 @@ export const NotificationsScreen = () => {
                 <View style={styles.content}>
                     <Text style={styles.cardTitle}>{item.title}</Text>
                     <Text style={styles.cardMessage}>{item.message}</Text>
-                    <Text style={styles.cardTime}>{item.time}</Text>
+                    <Text style={styles.cardTime}>{formatTime(item.createdAt)}</Text>
                 </View>
             </View>
         );
@@ -50,7 +64,7 @@ export const NotificationsScreen = () => {
             </View>
 
             <FlatList
-                data={NOTIFICATIONS}
+                data={notificationsList}
                 renderItem={renderNotification}
                 keyExtractor={item => item.id}
                 contentContainerStyle={styles.list}

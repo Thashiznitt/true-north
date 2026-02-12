@@ -26,6 +26,7 @@ interface UserState {
     };
     lastAdviceTimestamp: number | null;
     bookmarkedCircleIds: string[];
+    notificationsList: any[];
     createdCircles: any[];
     setOnboarded: (value: boolean) => Promise<void>;
     setSubscribed: (value: boolean) => Promise<void>;
@@ -39,6 +40,8 @@ interface UserState {
     addCreatedCircle: (circle: any) => void;
     toggleBookmark: (circleId: string) => void;
     setLastAdviceTimestamp: (timestamp: number) => void;
+    addNotification: (notification: any) => void;
+    cleanupOldNotifications: () => void;
     toggleDailyGoal: (key: string) => void;
 }
 
@@ -64,6 +67,11 @@ export const useStore = create<UserState>()(
             },
             lastAdviceTimestamp: null,
             bookmarkedCircleIds: [],
+            notificationsList: [
+                { id: '1', title: 'New Affirmation', message: 'Your personal alignment for today is ready.', type: 'affirmation', createdAt: Date.now() - 2 * 60 * 60 * 1000 },
+                { id: '2', title: 'Blessing Received', message: 'Sarah blessed your reflection in Nairobi Chapel Circle.', type: 'blessing', createdAt: Date.now() - 4 * 60 * 60 * 1000 },
+                { id: '3', title: 'Upcoming Event', message: 'Business Alignment session starts in 30 minutes.', type: 'event', createdAt: Date.now() - 24 * 60 * 60 * 1000 },
+            ],
             createdCircles: [],
             setOnboarded: async (isOnboarded: boolean) => {
                 if (isOnboarded) {
@@ -92,6 +100,16 @@ export const useStore = create<UserState>()(
                     : [...state.bookmarkedCircleIds, circleId]
             })),
             setLastAdviceTimestamp: (lastAdviceTimestamp) => set({ lastAdviceTimestamp }),
+            addNotification: (notification) => set((state) => ({
+                notificationsList: [{ ...notification, id: Math.random().toString(36).substr(2, 9), createdAt: Date.now() }, ...state.notificationsList]
+            })),
+            cleanupOldNotifications: () => set((state) => {
+                const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+                const now = Date.now();
+                return {
+                    notificationsList: state.notificationsList.filter(n => (now - n.createdAt) < SEVEN_DAYS_MS)
+                };
+            }),
             toggleDailyGoal: (key) => set((state) => ({
                 dailyGoals: {
                     ...state.dailyGoals,
