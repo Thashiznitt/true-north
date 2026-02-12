@@ -21,6 +21,9 @@ export const AffirmationScreen = () => {
     const [isWallpaperMode, setIsWallpaperMode] = React.useState(false);
     const [saving, setSaving] = React.useState(false);
     const [showAdvice, setShowAdvice] = React.useState(false);
+    const [showLimitModal, setShowLimitModal] = React.useState(false);
+    const [showPrayerModal, setShowPrayerModal] = React.useState(false);
+    const [prayerData, setPrayerData] = React.useState<any>(null);
     const [blessed, setBlessed] = React.useState(false);
     const fadeAnim = React.useRef(new Animated.Value(1)).current;
     const scaleAnim = React.useRef(new Animated.Value(1)).current;
@@ -56,15 +59,7 @@ export const AffirmationScreen = () => {
             setShowAdvice(true);
             setLastAdviceTimestamp(Date.now());
         } else {
-            const period = isSubscribed ? 'day' : 'week';
-            Alert.alert(
-                "Divine Patience",
-                `You've received your advice for this ${period}. Subscribers get daily guidance!`,
-                [
-                    { text: "Dismiss", style: 'cancel' },
-                    !isSubscribed ? { text: "Upgrade Now", onPress: () => navigation.navigate('Subscription') } : null
-                ].filter(Boolean) as any
-            );
+            setShowLimitModal(true);
         }
     };
 
@@ -263,9 +258,97 @@ export const AffirmationScreen = () => {
 
                         <TouchableOpacity
                             style={styles.closeButton}
-                            onPress={() => setShowAdvice(false)}
+                            onPress={() => {
+                                const data = contentAgentService.getDailyPrayerOrQuote(username || 'friend', beliefType || 'Open');
+                                setPrayerData(data);
+                                setShowAdvice(false);
+                                setShowPrayerModal(true);
+                            }}
                         >
-                            <Text style={styles.closeButtonText}>Amen</Text>
+                            <Text style={styles.closeButtonText}>Continue</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            <Modal
+                visible={showPrayerModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowPrayerModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <View style={styles.modalHeaderLeft}>
+                                <Sparkles color={palette.softGold} size={20} />
+                                <Text style={styles.modalTitle}>{prayerData?.title || 'Daily Wisdom'}</Text>
+                            </View>
+                            <TouchableOpacity onPress={() => setShowPrayerModal(false)}>
+                                <CloseIcon color={theme.colors.text} size={24} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <RnScrollView style={styles.adviceScroll}>
+                            <Text style={styles.adviceText}>{prayerData?.content}</Text>
+                        </RnScrollView>
+
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setShowPrayerModal(false)}
+                        >
+                            <Text style={styles.closeButtonText}>{prayerData?.buttonLabel || 'Amen'}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            <Modal
+                visible={showLimitModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowLimitModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <View style={styles.modalHeaderLeft}>
+                                <Sparkles color={palette.softGold} size={20} />
+                                <Text style={styles.modalTitle}>Divine Patience</Text>
+                            </View>
+                            <TouchableOpacity onPress={() => setShowLimitModal(false)}>
+                                <CloseIcon color={theme.colors.text} size={24} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <Text style={styles.adviceText}>
+                            You've received your spiritual guidance for this {isSubscribed ? 'day' : 'week'}.
+                            {isSubscribed ? ' Your next insight will be ready tomorrow.' : ' Subscribers unlock personalized daily wisdom.'}
+                        </Text>
+
+                        {!isSubscribed ? (
+                            <TouchableOpacity
+                                style={styles.premiumNudgeButton}
+                                onPress={() => {
+                                    setShowLimitModal(false);
+                                    navigation.navigate('Subscription');
+                                }}
+                            >
+                                <LinearGradient
+                                    colors={[palette.softGold, '#D4AF37']}
+                                    style={styles.premiumNudgeGradient}
+                                >
+                                    <Text style={styles.premiumNudgeText}>Upgrade to Daily Advice</Text>
+                                    <ChevronRight color={palette.ivory} size={20} />
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        ) : null}
+
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setShowLimitModal(false)}
+                        >
+                            <Text style={styles.closeButtonText}>Continue</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -343,5 +426,14 @@ const styles = StyleSheet.create({
     availableIndicator: {
         position: 'absolute', top: 0, right: 0, width: 8, height: 8,
         borderRadius: 4, backgroundColor: '#FF3B30', borderWidth: 1, borderColor: palette.ivory
+    },
+    premiumNudgeButton: {
+        borderRadius: theme.borderRadius.lg, overflow: 'hidden', marginBottom: theme.spacing.xl
+    },
+    premiumNudgeGradient: {
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 10
+    },
+    premiumNudgeText: {
+        color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 16
     }
 });

@@ -54,20 +54,13 @@ export const SubscriptionScreen = () => {
                 <View style={styles.plans}>
                     <TouchableOpacity style={styles.planCardActive}>
                         <View style={styles.planHeader}>
-                            <Text style={styles.planName}>Sacred Annual</Text>
-                            <View style={styles.saveBadge}><Text style={styles.saveBadgeText}>SAVE 30%</Text></View>
+                            <Text style={styles.planName}>Monthly Journey</Text>
+                            <View style={styles.planSelect}>
+                                <Check size={20} color={palette.ivory} />
+                            </View>
                         </View>
-                        <Text style={styles.planPrice}>$49.99 / year</Text>
-                        <Text style={styles.planNote}>That's just $4.16 per month</Text>
-                        <View style={styles.planSelect}>
-                            <Check size={20} color={palette.ivory} />
-                        </View>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.planCard}>
-                        <Text style={styles.planName}>Monthly Journey</Text>
-                        <Text style={styles.planPrice}>$5.99 / month</Text>
-                        <Text style={styles.planNote}>Cancel anytime</Text>
+                        <Text style={styles.planPrice}>$12.99 / month</Text>
+                        <Text style={styles.planNote}>Full access to daily personalized AI guidance</Text>
                     </TouchableOpacity>
                 </View>
 

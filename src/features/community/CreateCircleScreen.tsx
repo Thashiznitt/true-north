@@ -43,7 +43,7 @@ export const CreateCircleScreen = () => {
         Alert.alert(
             'Sanctuary Established',
             `Your sacred circle "${name}" in ${city} has been created.`,
-            [{ text: 'Praise', onPress: () => navigation.navigate('Community') }]
+            [{ text: 'Praise', onPress: () => navigation.navigate('Circles') }]
         );
     };
 

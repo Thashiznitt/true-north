@@ -276,5 +276,44 @@ export const contentAgentService = {
         }
 
         return advice;
+    },
+
+    getDailyPrayerOrQuote: (username: string, belief: BeliefType): { content: string, title: string, buttonLabel: string } => {
+        const isReligious = belief === 'Christian' || belief === 'Muslim';
+        const name = username || 'friend';
+
+        const prayers: Record<'Christian' | 'Muslim', string[]> = {
+            Christian: [
+                "Heavenly Father, we lift up {{name}} today. Grant them the strength to walk in Your light and the wisdom to see Your path. May Your peace, which surpasses all understanding, guard their heart and mind. Amen.",
+                "Lord, thank You for {{name}}. Bless their journey this day. Fill them with Your Spirit and guide their every step. May they be a beacon of Your love to everyone they meet. Amen."
+            ],
+            Muslim: [
+                "O Allah, we ask You to bless {{name}} with guidance, piety, and contentment. Grant them success in this life and the hereafter, and protect them from all harm. Ameen.",
+                "Allahumma, guide {{name}} to the straight path. Fill their day with barakah and grant them the patience and wisdom to navigate their challenges with faith. Ameen."
+            ]
+        };
+
+        const quotes: string[] = [
+            "{{name}}, remember that your potential is limitless. Today is a clean slate to build the life you envision. Stay focused, stay kind, and trust your inner strength.",
+            "The journey of a thousand miles begins with a single step, {{name}}. Honor your progress today, no matter how small it may seem. You are growing in ways you cannot yet see.",
+            "{{name}}, find stillness in the chaos. Your clarity comes from within. Trust yourself to handle whatever today brings with grace and resilience."
+        ];
+
+        if (isReligious && belief in prayers) {
+            const templates = prayers[belief as keyof typeof prayers];
+            const content = templates[Math.floor(Math.random() * templates.length)].replace('{{name}}', name);
+            return {
+                title: belief === 'Christian' ? "Daily Prayer" : "Daily Du'a",
+                content,
+                buttonLabel: belief === 'Christian' ? "Amen" : "Ameen"
+            };
+        } else {
+            const content = quotes[Math.floor(Math.random() * quotes.length)].replace('{{name}}', name);
+            return {
+                title: "Daily Wisdom",
+                content,
+                buttonLabel: "Reflect"
+            };
+        }
     }
 };
