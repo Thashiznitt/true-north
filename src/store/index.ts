@@ -24,6 +24,7 @@ interface UserState {
         enabled: boolean;
         time: string;
     };
+    lastAdviceTimestamp: number | null;
     bookmarkedCircleIds: string[];
     createdCircles: any[];
     setOnboarded: (value: boolean) => Promise<void>;
@@ -37,6 +38,7 @@ interface UserState {
     updateNotificationSettings: (enabled: boolean, time: string) => void;
     addCreatedCircle: (circle: any) => void;
     toggleBookmark: (circleId: string) => void;
+    setLastAdviceTimestamp: (timestamp: number) => void;
     toggleDailyGoal: (key: string) => void;
 }
 
@@ -60,6 +62,7 @@ export const useStore = create<UserState>()(
                 enabled: true,
                 time: '07:30',
             },
+            lastAdviceTimestamp: null,
             bookmarkedCircleIds: [],
             createdCircles: [],
             setOnboarded: async (isOnboarded: boolean) => {
@@ -88,6 +91,7 @@ export const useStore = create<UserState>()(
                     ? state.bookmarkedCircleIds.filter(id => id !== circleId)
                     : [...state.bookmarkedCircleIds, circleId]
             })),
+            setLastAdviceTimestamp: (lastAdviceTimestamp) => set({ lastAdviceTimestamp }),
             toggleDailyGoal: (key) => set((state) => ({
                 dailyGoals: {
                     ...state.dailyGoals,

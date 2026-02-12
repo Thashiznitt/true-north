@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Share, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { Heart, Share2, PenLine, Music, Sparkles, Bell, Image as ImageIcon } from 'lucide-react-native';
+import { Heart, Share2, PenLine, Music, Sparkles, Bell, Image as ImageIcon, HandHelping, X as CloseIcon, ChevronRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
@@ -11,6 +11,8 @@ import * as MediaLibrary from 'expo-media-library';
 import ViewShot, { captureRef } from 'react-native-view-shot';
 import { useStore } from '../../store';
 import { FaithAd } from '../../components/FaithAd';
+import { Modal, ScrollView as RnScrollView } from 'react-native';
+import { contentAgentService } from '../../services/ContentAgentService';
 
 export const AffirmationScreen = () => {
     const insets = useSafeAreaInsets();
@@ -18,7 +20,8 @@ export const AffirmationScreen = () => {
     const viewShotRef = React.useRef<any>(null);
     const [isWallpaperMode, setIsWallpaperMode] = React.useState(false);
     const [saving, setSaving] = React.useState(false);
-    const isSubscribed = useStore(state => state.isSubscribed);
+    const [showAdvice, setShowAdvice] = React.useState(false);
+    const { isSubscribed, beliefType, themes, lastAdviceTimestamp, setLastAdviceTimestamp } = useStore();
 
     const { data: affirmation } = useQuery({
         queryKey: ['daily-affirmation'],
@@ -33,6 +36,32 @@ export const AffirmationScreen = () => {
     };
 
     const current = affirmation || mockAffirmation;
+
+    const canGetAdvice = () => {
+        if (!lastAdviceTimestamp) return true;
+        const now = Date.now();
+        const diff = now - lastAdviceTimestamp;
+        const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+        const ONE_WEEK_MS = 7 * ONE_DAY_MS;
+        return isSubscribed ? diff >= ONE_DAY_MS : diff >= ONE_WEEK_MS;
+    };
+
+    const handleAdvicePress = () => {
+        if (canGetAdvice()) {
+            setShowAdvice(true);
+            setLastAdviceTimestamp(Date.now());
+        } else {
+            const period = isSubscribed ? 'day' : 'week';
+            Alert.alert(
+                "Divine Patience",
+                `You've received your advice for this ${period}. Subscribers get daily guidance!`,
+                [
+                    { text: "Dismiss", style: 'cancel' },
+                    !isSubscribed ? { text: "Upgrade Now", onPress: () => navigation.navigate('Subscription') } : null
+                ].filter(Boolean) as any
+            );
+        }
+    };
 
     const onShare = async () => {
         try {
@@ -116,11 +145,11 @@ export const AffirmationScreen = () => {
                                     <TouchableOpacity style={styles.actionIcon} onPress={() => setIsWallpaperMode(true)}>
                                         <ImageIcon color={palette.ivory} size={24} />
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={styles.actionIcon}>
-                                        <Music color={palette.ivory} size={24} />
+                                    <TouchableOpacity style={styles.actionIcon} onPress={handleAdvicePress}>
+                                        <HandHelping color={palette.ivory} size={24} />
                                     </TouchableOpacity>
                                 </View>
-                                <TouchableOpacity style={styles.journalButton}>
+                                <TouchableOpacity style={styles.journalButton} onPress={() => navigation.navigate('Journal')}>
                                     <Text style={styles.journalButtonText}>Reflect in Journal</Text>
                                 </TouchableOpacity>
                             </View>
@@ -143,6 +172,62 @@ export const AffirmationScreen = () => {
                     </View>
                 </ImageBackground>
             </ViewShot>
+
+            <Modal
+                visible={showAdvice}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowAdvice(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <View style={styles.modalHeaderLeft}>
+                                <Sparkles color={palette.softGold} size={20} />
+                                <Text style={styles.modalTitle}>Spiritual Advice</Text>
+                            </View>
+                            <TouchableOpacity onPress={() => setShowAdvice(false)}>
+                                <CloseIcon color={theme.colors.text} size={24} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <RnScrollView style={styles.adviceScroll}>
+                            <Text style={styles.adviceText}>
+                                {contentAgentService.getDailyAdvice(beliefType || 'Open', themes)}
+                            </Text>
+
+                            {!isSubscribed && (
+                                <TouchableOpacity
+                                    style={styles.nudgeBox}
+                                    onPress={() => {
+                                        setShowAdvice(false);
+                                        navigation.navigate('Subscription');
+                                    }}
+                                >
+                                    <LinearGradient
+                                        colors={[palette.softGold, '#D4AF37']}
+                                        style={styles.nudgeGradient}
+                                    >
+                                        <Sparkles color={palette.ivory} size={20} />
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={styles.nudgeTitle}>Unlock Daily Guidance</Text>
+                                            <Text style={styles.nudgeDesc}>Get personalized AI wisdom every single day with Premium.</Text>
+                                        </View>
+                                        <ChevronRight color={palette.ivory} size={20} />
+                                    </LinearGradient>
+                                </TouchableOpacity>
+                            )}
+                        </RnScrollView>
+
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setShowAdvice(false)}
+                        >
+                            <Text style={styles.closeButtonText}>Amen</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -188,5 +273,29 @@ const styles = StyleSheet.create({
     },
     saveButton: { backgroundColor: palette.softGold },
     wallpaperButtonText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 14 },
-    saveButtonText: { color: theme.colors.text, fontFamily: theme.typography.sansBold, fontSize: 14 }
+    saveButtonText: { color: theme.colors.text, fontFamily: theme.typography.sansBold, fontSize: 14 },
+    modalOverlay: {
+        flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', padding: theme.spacing.xl
+    },
+    modalContent: {
+        backgroundColor: theme.colors.background, borderRadius: theme.borderRadius.lg, width: '100%',
+        maxHeight: '80%', padding: theme.spacing.xl, overflow: 'hidden'
+    },
+    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.xl },
+    modalHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    modalTitle: { fontFamily: theme.typography.serifBold, fontSize: 22, color: theme.colors.text },
+    adviceScroll: { marginBottom: theme.spacing.xl },
+    adviceText: {
+        fontFamily: theme.typography.sans, fontSize: 17, color: theme.colors.text,
+        lineHeight: 28, opacity: 0.9, marginBottom: theme.spacing.xl
+    },
+    nudgeBox: { marginTop: theme.spacing.md, borderRadius: theme.borderRadius.lg, overflow: 'hidden' },
+    nudgeGradient: { flexDirection: 'row', alignItems: 'center', padding: theme.spacing.lg, gap: theme.spacing.md },
+    nudgeTitle: { fontFamily: theme.typography.sansBold, fontSize: 15, color: palette.ivory },
+    nudgeDesc: { fontFamily: theme.typography.sans, fontSize: 13, color: palette.ivory, opacity: 0.9 },
+    closeButton: {
+        backgroundColor: theme.colors.text, height: 50, borderRadius: 25,
+        alignItems: 'center', justifyContent: 'center'
+    },
+    closeButtonText: { color: theme.colors.background, fontFamily: theme.typography.sansBold, fontSize: 16 }
 });
