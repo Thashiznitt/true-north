@@ -38,6 +38,8 @@ interface UserState {
     setPreferences: (belief: BeliefType, themes: string[], goals: any) => void;
     updateNotificationSettings: (enabled: boolean, time: string) => void;
     addCreatedCircle: (circle: any) => void;
+    deleteCreatedCircle: (circleId: string) => void;
+    flagCircle: (circleId: string) => void;
     toggleBookmark: (circleId: string) => void;
     setLastAdviceTimestamp: (timestamp: number) => void;
     addNotification: (notification: any) => void;
@@ -94,6 +96,28 @@ export const useStore = create<UserState>()(
             setPreferences: (belief, themes, dailyGoals) => set({ beliefType: belief, themes, dailyGoals }),
             updateNotificationSettings: (enabled, time) => set({ notifications: { enabled, time } }),
             addCreatedCircle: (circle) => set((state) => ({ createdCircles: [circle, ...state.createdCircles] })),
+            deleteCreatedCircle: (circleId) => set((state) => {
+                const circle = state.createdCircles.find(c => c.id === circleId);
+                const newCreatedCircles = state.createdCircles.filter(c => c.id !== circleId);
+
+                // Add notification about deletion
+                if (circle) {
+                    const notification = {
+                        title: 'Sanctuary Closed',
+                        message: `The sanctuary "${circle.name}" has been closed by the admin.`,
+                        type: 'community'
+                    };
+                    return {
+                        createdCircles: newCreatedCircles,
+                        notificationsList: [{ ...notification, id: Math.random().toString(36).substr(2, 9), createdAt: Date.now() }, ...state.notificationsList]
+                    };
+                }
+                return { createdCircles: newCreatedCircles };
+            }),
+            flagCircle: (circleId) => {
+                // In a real app, this would send to a moderation API
+                // For now, we simulate the logic in the component but could store flag state here
+            },
             toggleBookmark: (circleId) => set((state) => ({
                 bookmarkedCircleIds: state.bookmarkedCircleIds.includes(circleId)
                     ? state.bookmarkedCircleIds.filter(id => id !== circleId)

@@ -4,7 +4,14 @@ import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '../../store';
 import { theme, palette } from '../../theme';
-import { Check, ArrowRight, ChevronLeft, Plus } from 'lucide-react-native';
+import { Check, ArrowRight, ChevronLeft, Plus, Shield, Heart, Sparkles, Compass } from 'lucide-react-native';
+
+const THEME_ICONS: Record<string, any> = {
+    Strength: Shield,
+    Love: Heart,
+    Wisdom: Sparkles,
+    Faith: Compass,
+};
 
 const THEMES = ['Strength', 'Love', 'Wisdom', 'Faith'];
 const BELIEFS = ['Christian', 'Muslim', 'Secular'];
@@ -88,16 +95,26 @@ export const OnboardingScreen = () => {
         <View style={styles.stepContainer}>
             {renderHeader("Core Themes", "What areas of life do you want to focus on?")}
             <View style={styles.grid}>
-                {THEMES.map(t => (
-                    <TouchableOpacity
-                        key={t}
-                        style={[styles.themeCard, selectedThemes.includes(t) && styles.themeCardActive]}
-                        onPress={() => toggleTheme(t)}
-                    >
-                        <Text style={[styles.themeText, selectedThemes.includes(t) && styles.themeTextActive]}>{t}</Text>
-                        {selectedThemes.includes(t) && <Check size={18} color={theme.colors.primary} />}
-                    </TouchableOpacity>
-                ))}
+                {THEMES.map(t => {
+                    const Icon = THEME_ICONS[t];
+                    return (
+                        <TouchableOpacity
+                            key={t}
+                            style={[styles.themeCard, selectedThemes.includes(t) && styles.themeCardActive]}
+                            onPress={() => toggleTheme(t)}
+                        >
+                            <View style={styles.themeHeader}>
+                                <Icon
+                                    size={24}
+                                    color={selectedThemes.includes(t) ? palette.softGold : theme.colors.secondaryText}
+                                    strokeWidth={1.5}
+                                />
+                                {selectedThemes.includes(t) && <Check size={18} color={palette.softGold} />}
+                            </View>
+                            <Text style={[styles.themeText, selectedThemes.includes(t) && styles.themeTextActive]}>{t}</Text>
+                        </TouchableOpacity>
+                    );
+                })}
             </View>
         </View>
     );
@@ -264,9 +281,10 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between', borderWidth: 1, borderColor: theme.colors.border,
         shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 12, elevation: 1
     },
-    themeCardActive: { borderColor: theme.colors.primary, backgroundColor: '#FAF9F6' },
+    themeCardActive: { borderColor: palette.softGold, backgroundColor: '#FAF9F6' },
+    themeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     themeText: { fontFamily: theme.typography.sansBold, fontSize: 16, color: theme.colors.text },
-    themeTextActive: { color: theme.colors.primary },
+    themeTextActive: { color: palette.softGold },
     inputGroup: { marginBottom: theme.spacing.lg },
     label: { fontFamily: theme.typography.sansMedium, fontSize: 14, color: theme.colors.text, marginBottom: theme.spacing.xs, textTransform: 'uppercase', letterSpacing: 1 },
     input: {

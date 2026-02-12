@@ -18,7 +18,7 @@ export const CircleDetailScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const isFocused = useIsFocused();
-    const { createdCircles, bookmarkedCircleIds, toggleBookmark } = useStore();
+    const { createdCircles, bookmarkedCircleIds, toggleBookmark, deleteCreatedCircle } = useStore();
     const { circleId, circleName: initialName } = (route.params as any) || {};
 
     // Check in both ghost circles and user-created circles
@@ -148,6 +148,63 @@ export const CircleDetailScreen = () => {
         }
     };
 
+    const handleCircleMenu = () => {
+        const options = ['Cancel', 'Flag Sanctuary'];
+        if (isAdmin) options.push('Delete Sanctuary');
+
+        if (Platform.OS === 'ios') {
+            ActionSheetIOS.showActionSheetWithOptions(
+                {
+                    options,
+                    destructiveButtonIndex: isAdmin ? 2 : undefined,
+                    cancelButtonIndex: 0,
+                    title: circleName,
+                    message: isAdmin ? 'Manage your sacred sanctuary.' : 'Help keep this space sacred.'
+                },
+                (buttonIndex) => {
+                    if (buttonIndex === 1) handleFlagCircle();
+                    if (isAdmin && buttonIndex === 2) handleDeleteCircle();
+                }
+            );
+        } else {
+            const buttons: any[] = [
+                { text: "Cancel", style: "cancel" },
+                { text: "Flag Sanctuary", onPress: handleFlagCircle }
+            ];
+            if (isAdmin) {
+                buttons.push({ text: "Delete Sanctuary", style: "destructive", onPress: handleDeleteCircle });
+            }
+            Alert.alert(circleName, "Sanctuary Management", buttons);
+        }
+    };
+
+    const handleFlagCircle = () => {
+        Alert.alert(
+            "AI Assessment Started",
+            "This sanctuary is now being assessed by our moderation AI. Thank you for keeping True North sacred.",
+            [{ text: "Praise" }]
+        );
+    };
+
+    const handleDeleteCircle = () => {
+        Alert.alert(
+            "Delete Sanctuary?",
+            "This will permanently close this sanctuary for all members. This action cannot be undone.",
+            [
+                { text: "Keep Sanctuary", style: "cancel" },
+                {
+                    text: "Close Permanently",
+                    style: "destructive",
+                    onPress: () => {
+                        deleteCreatedCircle(circleId);
+                        navigation.goBack();
+                        Alert.alert("Sanctuary Closed", "Your sanctuary has been dissolved and members have been notified.");
+                    }
+                }
+            ]
+        );
+    };
+
     const renderEvent = ({ item }: any) => (
         <View style={styles.eventCard}>
             <View style={styles.eventInfo}>
@@ -207,6 +264,9 @@ export const CircleDetailScreen = () => {
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.headerAction} onPress={handleInvite}>
                         <Link size={22} color={palette.softGold} />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.headerAction} onPress={handleCircleMenu}>
+                        <MoreVertical size={24} color={theme.colors.text} />
                     </TouchableOpacity>
                 </View>
             </View>
