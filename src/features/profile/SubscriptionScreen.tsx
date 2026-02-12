@@ -5,10 +5,17 @@ import { theme, palette } from '../../theme';
 import { ChevronLeft, Check, Sparkles, ShieldCheck, Heart } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useStore } from '../../store';
 
 export const SubscriptionScreen = () => {
     const insets = useSafeAreaInsets();
-    const navigation = useNavigation();
+    const navigation = useNavigation<any>();
+    const setSubscribed = useStore(state => state.setSubscribed);
+
+    const handleSubscribe = async () => {
+        await setSubscribed(true);
+        navigation.goBack();
+    };
 
     return (
         <View style={styles.container}>
@@ -64,7 +71,7 @@ export const SubscriptionScreen = () => {
                     </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity style={styles.ctaButton}>
+                <TouchableOpacity style={styles.ctaButton} onPress={handleSubscribe}>
                     <Text style={styles.ctaButtonText}>Start 7-Day Free Trial</Text>
                 </TouchableOpacity>
                 <Text style={styles.footerNote}>Secured and encrypted by App Store</Text>
