@@ -9,6 +9,8 @@ import { useQuery } from '@tanstack/react-query';
 import { affirmationService } from '../../services/api';
 import * as MediaLibrary from 'expo-media-library';
 import ViewShot, { captureRef } from 'react-native-view-shot';
+import { useStore } from '../../store';
+import { FaithAd } from '../../components/FaithAd';
 
 export const AffirmationScreen = () => {
     const insets = useSafeAreaInsets();
@@ -16,6 +18,7 @@ export const AffirmationScreen = () => {
     const viewShotRef = React.useRef<any>(null);
     const [isWallpaperMode, setIsWallpaperMode] = React.useState(false);
     const [saving, setSaving] = React.useState(false);
+    const isSubscribed = useStore(state => state.isSubscribed);
 
     const { data: affirmation } = useQuery({
         queryKey: ['daily-affirmation'],
@@ -129,6 +132,12 @@ export const AffirmationScreen = () => {
                                 <TouchableOpacity style={[styles.wallpaperButton, styles.saveButton]} onPress={saveWallpaper} disabled={saving}>
                                     <Text style={styles.saveButtonText}>{saving ? 'Saving...' : 'Save Wallpaper'}</Text>
                                 </TouchableOpacity>
+                            </View>
+                        )}
+
+                        {!isSubscribed && !isWallpaperMode && (
+                            <View style={{ marginTop: theme.spacing.xl }}>
+                                <FaithAd type="community" />
                             </View>
                         )}
                     </View>
