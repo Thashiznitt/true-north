@@ -6,13 +6,14 @@ import { theme, palette } from '../../theme';
 import { Users, Lock, ChevronRight, Heart, Search, Plus, Bell } from 'lucide-react-native';
 import { contentAgentService, GhostCircle } from '../../services/ContentAgentService';
 import { useStore } from '../../store';
+import { FaithAd } from '../../components/FaithAd';
 
 export const CommunityScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<any>();
     const [searchQuery, setSearchQuery] = useState('');
     const [circles, setCircles] = useState<any[]>([]);
-    const { createdCircles, bookmarkedCircleIds, toggleBookmark } = useStore();
+    const { createdCircles, bookmarkedCircleIds, isSubscribed } = useStore();
 
     useEffect(() => {
         const initialGhostCircles = contentAgentService.initializeCircles().map(c => ({
@@ -62,45 +63,62 @@ export const CommunityScreen = () => {
             return 0;
         });
 
-    const renderCircle = ({ item }: { item: GhostCircle }) => (
-        <TouchableOpacity
-            style={styles.card}
-            onPress={() => navigation.navigate('CircleDetail', {
-                circleId: item.id,
-                circleName: item.name,
-                circleType: `${item.belief} Circle`
-            })}
-        >
-            {bookmarkedCircleIds.includes(item.id) && (
-                <View style={styles.bookmarkBadge}>
-                    <Heart size={12} color={palette.ivory} fill={palette.ivory} />
+    const dataWithAds = React.useMemo(() => {
+        if (isSubscribed || searchQuery) return filteredCircles;
+
+        const result = [];
+        for (let i = 0; i < filteredCircles.length; i++) {
+            result.push(filteredCircles[i]);
+            if ((i + 1) % 4 === 0) {
+                result.push({ id: `ad-${i}`, isAd: true });
+            }
+        }
+        return result;
+    }, [filteredCircles, isSubscribed, searchQuery]);
+
+    const renderCircle = ({ item }: { item: any }) => {
+        if (item.isAd) return <FaithAd />;
+
+        return (
+            <TouchableOpacity
+                style={styles.card}
+                onPress={() => navigation.navigate('CircleDetail', {
+                    circleId: item.id,
+                    circleName: item.name,
+                    circleType: `${item.belief} Circle`
+                })}
+            >
+                {bookmarkedCircleIds.includes(item.id) && (
+                    <View style={styles.bookmarkBadge}>
+                        <Heart size={12} color={palette.ivory} fill={palette.ivory} />
+                    </View>
+                )}
+                <View style={styles.cardIconContainer}>
+                    <View style={styles.cardIcon}>
+                        {item.type === 'Private' ? <Lock size={20} color={palette.softGold} /> : <Users size={20} color={palette.softGold} />}
+                    </View>
+                    <View style={styles.beliefBadge}>
+                        <Text style={styles.cardBelief}>{item.belief}</Text>
+                    </View>
                 </View>
-            )}
-            <View style={styles.cardIconContainer}>
-                <View style={styles.cardIcon}>
-                    {item.type === 'Private' ? <Lock size={20} color={palette.softGold} /> : <Users size={20} color={palette.softGold} />}
+                <View style={styles.cardContent}>
+                    <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
+                    <Text style={styles.cardLocation} numberOfLines={1}>{item.city}, {item.country}</Text>
+                    <View style={styles.cardStats}>
+                        <Text style={styles.cardDetail}>{item.members.toLocaleString()} members</Text>
+                        <View style={styles.statDot} />
+                        <Text style={styles.cardDetail}>{item.lastActivity}</Text>
+                    </View>
                 </View>
-                <View style={styles.beliefBadge}>
-                    <Text style={styles.cardBelief}>{item.belief}</Text>
-                </View>
-            </View>
-            <View style={styles.cardContent}>
-                <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.cardLocation} numberOfLines={1}>{item.city}, {item.country}</Text>
-                <View style={styles.cardStats}>
-                    <Text style={styles.cardDetail}>{item.members.toLocaleString()} members</Text>
-                    <View style={styles.statDot} />
-                    <Text style={styles.cardDetail}>{item.lastActivity}</Text>
-                </View>
-            </View>
-            <ChevronRight size={18} color={theme.colors.border} style={{ marginLeft: theme.spacing.sm }} />
-        </TouchableOpacity>
-    );
+                <ChevronRight size={18} color={theme.colors.border} style={{ marginLeft: theme.spacing.sm }} />
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <View style={styles.container}>
             <FlatList
-                data={filteredCircles}
+                data={dataWithAds}
                 renderItem={renderCircle}
                 keyExtractor={item => item.id}
                 contentContainerStyle={styles.listContent}

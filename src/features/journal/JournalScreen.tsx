@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { theme, palette } from '../../theme';
 import { Plus, Search, X, Bell } from 'lucide-react-native';
 import { useStore } from '../../store';
+import { FaithAd } from '../../components/FaithAd';
 
 interface JournalEntry {
     id: string;
@@ -124,6 +125,7 @@ export const JournalScreen = () => {
                         </Text>
                     </View>
                 }
+                ListFooterComponent={!isSubscribed ? <FaithAd type="product" /> : null}
             />
 
             <TouchableOpacity
