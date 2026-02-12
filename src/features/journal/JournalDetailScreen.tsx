@@ -5,6 +5,9 @@ import { theme, palette } from '../../theme';
 import { ChevronLeft, Share2, Sparkles, Tag, X } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useStore } from '../../store';
+import * as LocalAuthentication from 'expo-local-authentication';
+import { Alert } from 'react-native';
+import { SanctuaryLock } from '../../components/SanctuaryLock';
 
 export const JournalDetailScreen = () => {
     const insets = useSafeAreaInsets();
@@ -18,6 +21,75 @@ export const JournalDetailScreen = () => {
     const [currentTag, setCurrentTag] = useState('');
 
     const beliefType = useStore((state: any) => state.beliefType);
+    const biometricsEnabled = useStore((state: any) => state.biometricsEnabled);
+    const securityPin = useStore((state: any) => state.securityPin);
+    const isSubscribed = useStore((state: any) => state.isSubscribed);
+
+    const [isLocked, setIsLocked] = useState(isSubscribed && (biometricsEnabled || !!securityPin));
+    const [bioError, setBioError] = useState(false);
+
+    React.useEffect(() => {
+        if (isSubscribed && (biometricsEnabled || securityPin)) {
+            authenticate();
+        } else {
+            setIsLocked(false);
+        }
+    }, []);
+
+    const authenticate = async () => {
+        if (!biometricsEnabled) {
+            if (securityPin) {
+                promptPin();
+            } else {
+                setIsLocked(false);
+            }
+            return;
+        }
+
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+
+        if (hasHardware && isEnrolled) {
+            const result = await LocalAuthentication.authenticateAsync({
+                promptMessage: 'Unlock your reflection',
+                fallbackLabel: 'Use PIN',
+            });
+
+            if (result.success) {
+                setIsLocked(false);
+                setBioError(false);
+            } else {
+                setBioError(true);
+                if (securityPin) promptPin();
+            }
+        } else if (securityPin) {
+            promptPin();
+        } else {
+            setIsLocked(false);
+        }
+    };
+
+    const promptPin = () => {
+        Alert.prompt(
+            "Enter PIN",
+            "This reflection is protected by your sanctuary security settings.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Unlock",
+                    onPress: (enteredPin) => {
+                        if (enteredPin === securityPin) {
+                            setIsLocked(false);
+                            setBioError(false);
+                        } else {
+                            Alert.alert("Incorrect PIN", "The PIN you entered is incorrect. Please try again.");
+                        }
+                    }
+                }
+            ],
+            "secure-text"
+        );
+    };
 
     const addTag = () => {
         if (currentTag && !tags.includes(currentTag)) {
@@ -35,6 +107,16 @@ export const JournalDetailScreen = () => {
         if (beliefType === 'Muslim') return 'Start typing your reflection or khutbah notes...';
         return 'Start typing your reflection...';
     };
+
+    if (isLocked) {
+        return (
+            <SanctuaryLock
+                onUnlock={authenticate}
+                onBack={() => navigation.goBack()}
+                error={bioError}
+            />
+        );
+    }
 
     return (
         <KeyboardAvoidingView
@@ -133,5 +215,5 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border
     },
     tagText: { fontFamily: theme.typography.sansMedium, fontSize: 13, color: theme.colors.text },
-    tagInput: { fontFamily: theme.typography.sans, fontSize: 14, color: theme.colors.text, minWidth: 80, padding: 0 },
+    tagInput: { fontFamily: theme.typography.sans, fontSize: 14, color: theme.colors.text, minWidth: 80, padding: 0 }
 });

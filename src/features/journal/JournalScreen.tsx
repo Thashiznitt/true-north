@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, LayoutAnimation } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, LayoutAnimation, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { theme, palette } from '../../theme';
@@ -7,6 +7,7 @@ import { Search, Plus, X, Bell, Calendar, Sparkles, Fingerprint } from 'lucide-r
 import { useStore } from '../../store';
 import { FaithAd } from '../../components/FaithAd';
 import * as LocalAuthentication from 'expo-local-authentication';
+import { SanctuaryLock } from '../../components/SanctuaryLock';
 
 interface JournalEntry {
     id: string;
@@ -67,11 +68,35 @@ export const JournalScreen = () => {
                 setBioError(false);
             } else {
                 setBioError(true);
+                if (securityPin) promptPin();
             }
+        } else if (securityPin) {
+            promptPin();
         } else {
-            // Fallback to PIN if biometrics fail or aren't available
             setIsLocked(false);
         }
+    };
+
+    const promptPin = () => {
+        Alert.prompt(
+            "Enter PIN",
+            "Your sanctuary is protected. Enter your 4-digit PIN to continue.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Unlock",
+                    onPress: (enteredPin?: string) => {
+                        if (enteredPin === securityPin) {
+                            setIsLocked(false);
+                            setBioError(false);
+                        } else {
+                            Alert.alert("Incorrect PIN", "Please try again.");
+                        }
+                    }
+                }
+            ],
+            "secure-text"
+        );
     };
 
     const filteredEntries = entries.filter(entry =>
@@ -128,23 +153,11 @@ export const JournalScreen = () => {
 
     if (isLocked) {
         return (
-            <View style={styles.lockContainer}>
-                <View style={styles.lockContent}>
-                    <View style={styles.lockIconCircle}>
-                        <Fingerprint size={48} color={palette.softGold} />
-                    </View>
-                    <Text style={styles.lockTitle}>Sanctuary Locked</Text>
-                    <Text style={styles.lockSubtitle}>Your reflections are protected by your security settings.</Text>
-
-                    {bioError && (
-                        <Text style={styles.bioErrorText}>Authentication failed. Please try again.</Text>
-                    )}
-
-                    <TouchableOpacity style={styles.unlockButton} onPress={authenticate}>
-                        <Text style={styles.unlockButtonText}>Unlock Journal</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
+            <SanctuaryLock
+                onUnlock={authenticate}
+                onBack={() => navigation.goBack()}
+                error={bioError}
+            />
         );
     }
 
@@ -294,7 +307,9 @@ const styles = StyleSheet.create({
     lockIconCircle: { width: 100, height: 100, borderRadius: 50, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 24, borderWidth: 1, borderColor: theme.colors.border },
     lockTitle: { fontFamily: theme.typography.serifBold, fontSize: 28, color: theme.colors.text, marginBottom: 12 },
     lockSubtitle: { fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.secondaryText, textAlign: 'center', lineHeight: 24, marginBottom: 40 },
-    unlockButton: { backgroundColor: theme.colors.text, paddingVertical: 18, paddingHorizontal: 40, borderRadius: theme.borderRadius.full, width: '100%', alignItems: 'center' },
+    unlockButton: { backgroundColor: theme.colors.text, paddingVertical: 18, paddingHorizontal: 40, borderRadius: theme.borderRadius.full, width: '100%', alignItems: 'center', marginBottom: 16 },
     unlockButtonText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 16 },
+    backButton: { paddingVertical: 12 },
+    backButtonText: { fontFamily: theme.typography.sansMedium, fontSize: 15, color: theme.colors.secondaryText },
     bioErrorText: { color: '#E57373', fontFamily: theme.typography.sansMedium, fontSize: 14, marginBottom: 20, textAlign: 'center' }
 });
