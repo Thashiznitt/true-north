@@ -14,7 +14,12 @@ interface UserState {
     role: UserRole;
     beliefType: BeliefType | null;
     themes: string[];
-    goals: any;
+    dailyGoals: {
+        dailyReflection: boolean;
+        morningDevotion: boolean;
+        eveningGratitude: boolean;
+        weeklyCommunity: boolean;
+    };
     notifications: {
         enabled: boolean;
         time: string;
@@ -32,6 +37,7 @@ interface UserState {
     updateNotificationSettings: (enabled: boolean, time: string) => void;
     addCreatedCircle: (circle: any) => void;
     toggleBookmark: (circleId: string) => void;
+    toggleDailyGoal: (key: string) => void;
 }
 
 export const useStore = create<UserState>()(
@@ -44,7 +50,12 @@ export const useStore = create<UserState>()(
             role: 'member',
             beliefType: null,
             themes: [],
-            goals: {},
+            dailyGoals: {
+                dailyReflection: true,
+                morningDevotion: true,
+                eveningGratitude: false,
+                weeklyCommunity: true,
+            },
             notifications: {
                 enabled: true,
                 time: '07:30',
@@ -69,13 +80,19 @@ export const useStore = create<UserState>()(
             setRole: (role) => set({ role }),
             setBeliefType: (beliefType) => set({ beliefType }),
             setThemes: (themes) => set({ themes }),
-            setPreferences: (belief, themes, goals) => set({ beliefType: belief, themes, goals }),
+            setPreferences: (belief, themes, dailyGoals) => set({ beliefType: belief, themes, dailyGoals }),
             updateNotificationSettings: (enabled, time) => set({ notifications: { enabled, time } }),
             addCreatedCircle: (circle) => set((state) => ({ createdCircles: [circle, ...state.createdCircles] })),
             toggleBookmark: (circleId) => set((state) => ({
                 bookmarkedCircleIds: state.bookmarkedCircleIds.includes(circleId)
                     ? state.bookmarkedCircleIds.filter(id => id !== circleId)
                     : [...state.bookmarkedCircleIds, circleId]
+            })),
+            toggleDailyGoal: (key) => set((state) => ({
+                dailyGoals: {
+                    ...state.dailyGoals,
+                    [key]: !state.dailyGoals[key as keyof typeof state.dailyGoals]
+                }
             })),
         }),
         {

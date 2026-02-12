@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, LayoutAn
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { theme, palette } from '../../theme';
-import { Plus, Search, X, Bell } from 'lucide-react-native';
+import { Search, Plus, X, Bell, Calendar, Sparkles } from 'lucide-react-native';
 import { useStore } from '../../store';
 import { FaithAd } from '../../components/FaithAd';
 
@@ -17,6 +17,7 @@ interface JournalEntry {
 export const JournalScreen = () => {
     const insets = useSafeAreaInsets();
     const isSubscribed = useStore(state => state.isSubscribed);
+    const dailyGoals = useStore(state => state.dailyGoals);
     const setSubscribed = useStore(state => state.setSubscribed);
     const beliefType = useStore(state => state.beliefType);
 
@@ -118,6 +119,23 @@ export const JournalScreen = () => {
                 keyExtractor={item => item.id}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
+                ListHeaderComponent={
+                    dailyGoals.eveningGratitude ? (
+                        <TouchableOpacity
+                            style={styles.gratitudePrompt}
+                            onPress={() => navigation.navigate('JournalDetail', { isNew: true, initialContent: '1. \n2. \n3. ' })}
+                        >
+                            <View style={styles.gratitudeHeader}>
+                                <Sparkles size={20} color={palette.softGold} />
+                                <Text style={styles.gratitudeTitle}>Evening Gratitude</Text>
+                            </View>
+                            <Text style={styles.gratitudeText}>List 3 things you are grateful for today.</Text>
+                            <View style={styles.gratitudeAction}>
+                                <Text style={styles.gratitudeActionText}>Reflect Now</Text>
+                            </View>
+                        </TouchableOpacity>
+                    ) : null
+                }
                 ListEmptyComponent={
                     <View style={styles.emptyState}>
                         <Text style={styles.emptyStateText}>
@@ -190,5 +208,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: theme.spacing.xxl, borderRadius: theme.borderRadius.full,
         width: '100%', alignItems: 'center'
     },
-    subscribeButtonText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 16 }
+    subscribeButtonText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 16 },
+    gratitudePrompt: {
+        backgroundColor: palette.softGold + '15',
+        marginHorizontal: 0,
+        marginBottom: theme.spacing.xl,
+        padding: theme.spacing.xl,
+        borderRadius: theme.borderRadius.lg,
+        borderWidth: 1,
+        borderColor: palette.softGold + '30',
+    },
+    gratitudeHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+    gratitudeTitle: { fontFamily: theme.typography.serifBold, fontSize: 18, color: palette.softGold },
+    gratitudeText: { fontFamily: theme.typography.sans, fontSize: 15, color: theme.colors.text, opacity: 0.8, marginBottom: 12 },
+    gratitudeAction: { alignSelf: 'flex-start', backgroundColor: palette.softGold, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+    gratitudeActionText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 13 }
 });

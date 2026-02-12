@@ -9,7 +9,7 @@ import { useNavigation } from '@react-navigation/native';
 export const ProfileScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<any>();
-    const { username, beliefType, isSubscribed, themes, goals, profilePicture } = useStore();
+    const { username, beliefType, isSubscribed, themes, dailyGoals, profilePicture } = useStore();
     const { setOnboarded, setProfilePicture } = useStore();
 
     const handleLogout = () => {

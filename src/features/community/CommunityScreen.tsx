@@ -13,7 +13,7 @@ export const CommunityScreen = () => {
     const navigation = useNavigation<any>();
     const [searchQuery, setSearchQuery] = useState('');
     const [circles, setCircles] = useState<any[]>([]);
-    const { createdCircles, bookmarkedCircleIds, isSubscribed } = useStore();
+    const { createdCircles, bookmarkedCircleIds, isSubscribed, dailyGoals } = useStore();
 
     useEffect(() => {
         const initialGhostCircles = contentAgentService.initializeCircles().map(c => ({
@@ -143,6 +143,18 @@ export const CommunityScreen = () => {
                                 placeholderTextColor={theme.colors.secondaryText}
                             />
                         </View>
+
+                        {dailyGoals.weeklyCommunity && (
+                            <View style={styles.missionBanner}>
+                                <View style={styles.missionIcon}>
+                                    <Heart size={18} color={palette.ivory} fill={palette.ivory} />
+                                </View>
+                                <View style={styles.missionCard}>
+                                    <Text style={styles.missionTitle}>Weekly Mission</Text>
+                                    <Text style={styles.missionText}>Bless a reflection today to stay aligned.</Text>
+                                </View>
+                            </View>
+                        )}
                     </View>
                 }
             />
@@ -202,5 +214,27 @@ const styles = StyleSheet.create({
         backgroundColor: palette.softGold, alignItems: 'center', justifyContent: 'center',
         zIndex: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1, shadowRadius: 4, elevation: 3
-    }
+    },
+    missionBanner: {
+        marginTop: theme.spacing.xl,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: theme.colors.surface,
+        padding: theme.spacing.lg,
+        borderRadius: theme.borderRadius.lg,
+        borderWidth: 1,
+        borderColor: palette.softGold + '40',
+    },
+    missionIcon: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: palette.softGold,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: theme.spacing.md
+    },
+    missionCard: { flex: 1 },
+    missionTitle: { fontFamily: theme.typography.sansBold, fontSize: 14, color: palette.softGold, textTransform: 'uppercase', letterSpacing: 1 },
+    missionText: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.text, opacity: 0.7 }
 });

@@ -4,22 +4,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { ChevronLeft, BookOpen, Target } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useStore } from '../../store';
 
 export const GoalSettingsScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
-
-    // In a real app, these would be in the store
-    const [goals, setGoals] = useState({
-        dailyReflection: true,
-        morningPrayer: true,
-        eveningGratitude: false,
-        weeklyCommunity: true,
-    });
-
-    const toggleGoal = (key: keyof typeof goals) => {
-        setGoals({ ...goals, [key]: !goals[key] });
-    };
+    const { dailyGoals, toggleDailyGoal } = useStore();
 
     return (
         <View style={styles.container}>
@@ -43,26 +33,26 @@ export const GoalSettingsScreen = () => {
                     <GoalItem
                         title="Daily Reflection"
                         desc="Read one affirmation every day"
-                        isEnabled={goals.dailyReflection}
-                        onToggle={() => toggleGoal('dailyReflection')}
+                        isEnabled={dailyGoals.dailyReflection}
+                        onToggle={() => toggleDailyGoal('dailyReflection')}
                     />
                     <GoalItem
                         title="Morning Devotion"
                         desc="5 minutes of stillness each morning"
-                        isEnabled={goals.morningPrayer}
-                        onToggle={() => toggleGoal('morningPrayer')}
+                        isEnabled={dailyGoals.morningDevotion}
+                        onToggle={() => toggleDailyGoal('morningDevotion')}
                     />
                     <GoalItem
                         title="Evening Gratitude"
                         desc="List 3 things you are grateful for"
-                        isEnabled={goals.eveningGratitude}
-                        onToggle={() => toggleGoal('eveningGratitude')}
+                        isEnabled={dailyGoals.eveningGratitude}
+                        onToggle={() => toggleDailyGoal('eveningGratitude')}
                     />
                     <GoalItem
                         title="Community Connect"
                         desc="Engage with your circles at least once a week"
-                        isEnabled={goals.weeklyCommunity}
-                        onToggle={() => toggleGoal('weeklyCommunity')}
+                        isEnabled={dailyGoals.weeklyCommunity}
+                        onToggle={() => toggleDailyGoal('weeklyCommunity')}
                         isLast
                     />
                 </View>

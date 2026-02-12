@@ -10,10 +10,10 @@ export const JournalDetailScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const route = useRoute();
-    const { entryId, entryTitle, entryContent } = (route.params as any) || {};
+    const { entryId, entryTitle, entryContent, initialContent } = (route.params as any) || {};
 
     const [title, setTitle] = useState(entryTitle || '');
-    const [content, setContent] = useState(entryContent || '');
+    const [content, setContent] = useState(entryContent || initialContent || '');
     const [tags, setTags] = useState<string[]>([]);
     const [currentTag, setCurrentTag] = useState('');
 
