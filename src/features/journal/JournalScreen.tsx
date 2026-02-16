@@ -123,166 +123,167 @@ export const JournalScreen = () => {
         return 'favorite talks';
     };
 
-    const delay = index * 100;
+    const renderEntry = ({ item, index }: { item: JournalEntry, index: number }) => {
+        const delay = index * 100;
 
-    return (
-        <MotiView
-            from={{ opacity: 0, scale: 0.9, translateY: 10 }}
-            animate={{ opacity: 1, scale: 1, translateY: 0 }}
-            transition={{ type: 'timing', delay }}
-            style={styles.entryCardContainer}
-        >
-            <TouchableOpacity
-                style={styles.entryCard}
-                onPress={() => navigation.navigate('JournalDetail', {
-                    entryId: item.id,
-                    entryTitle: item.title,
-                    entryContent: item.content
-                })}
+        return (
+            <MotiView
+                from={{ opacity: 0, scale: 0.9, translateY: 10 }}
+                animate={{ opacity: 1, scale: 1, translateY: 0 }}
+                transition={{ type: 'timing', delay }}
+                style={styles.entryCardContainer}
             >
-                <Text style={styles.entryDate}>{item.date}</Text>
-                <Text style={styles.entryTitle}>{item.title}</Text>
-                <Text style={styles.entryPreview} numberOfLines={2}>{item.content}</Text>
-            </TouchableOpacity>
-        </MotiView>
-    );
-};
-
-if (!isSubscribed) {
-    return (
-        <View style={styles.container}>
-            <ImageBackground source={JOURNAL_BG} style={StyleSheet.absoluteFill} resizeMode="cover" />
-            <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.8)', 'rgba(0,0,0,0.95)']}
-                style={StyleSheet.absoluteFill}
-            />
-
-            <View style={[styles.paywall, { paddingTop: insets.top + 100 }]}>
-                <Sparkles size={48} color={palette.softGold} style={{ marginBottom: 20 }} />
-                <Text style={[styles.paywallTitle, { color: palette.ivory, fontSize: 32 }]}>
-                    Your Private Sanctuary
-                </Text>
-                <Text style={[styles.paywallSubtitle, { color: palette.ivory, opacity: 0.8, marginBottom: 40 }]}>
-                    Unlock your daily reflection space, track your journey to alignment, and take notes from your {getBeliefTrait()} as well.
-                </Text>
-
-                <View style={styles.benefitList}>
-                    <View style={styles.benefitRow}>
-                        <LucideLock size={20} color={palette.softGold} />
-                        <Text style={styles.benefitText}>End-to-end encrypted journal</Text>
-                    </View>
-                    <View style={styles.benefitRow}>
-                        <Sparkles size={20} color={palette.softGold} />
-                        <Text style={styles.benefitText}>Spiritual Wisdom & Insights</Text>
-                    </View>
-                    <View style={styles.benefitRow}>
-                        <Heart size={20} color={palette.softGold} />
-                        <Text style={styles.benefitText}>Community reflection prompts</Text>
-                    </View>
-                </View>
-
-                <TouchableOpacity style={[styles.subscribeButton, { backgroundColor: palette.softGold }]} onPress={handleSubscribe}>
-                    <Text style={[styles.subscribeButtonText, { color: palette.ivory }]}>Subscribe $12.99 / mo</Text>
+                <TouchableOpacity
+                    style={styles.entryCard}
+                    onPress={() => navigation.navigate('JournalDetail', {
+                        entryId: item.id,
+                        entryTitle: item.title,
+                        entryContent: item.content
+                    })}
+                >
+                    <Text style={styles.entryDate}>{item.date}</Text>
+                    <Text style={styles.entryTitle}>{item.title}</Text>
+                    <Text style={styles.entryPreview} numberOfLines={2}>{item.content}</Text>
                 </TouchableOpacity>
+            </MotiView>
+        );
+    };
 
-                <View style={styles.paywallFooter}>
-                    <Text style={styles.footerLink}>Restore Purchases</Text>
-                    <View style={styles.footerDot} />
-                    <Text style={styles.footerLink}>Terms of Service</Text>
+    if (!isSubscribed) {
+        return (
+            <View style={styles.container}>
+                <ImageBackground source={JOURNAL_BG} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.8)', 'rgba(0,0,0,0.95)']}
+                    style={StyleSheet.absoluteFill}
+                />
+
+                <View style={[styles.paywall, { paddingTop: insets.top + 100 }]}>
+                    <Sparkles size={48} color={palette.softGold} style={{ marginBottom: 20 }} />
+                    <Text style={[styles.paywallTitle, { color: palette.ivory, fontSize: 32 }]}>
+                        Your Private Sanctuary
+                    </Text>
+                    <Text style={[styles.paywallSubtitle, { color: palette.ivory, opacity: 0.8, marginBottom: 40 }]}>
+                        Unlock your daily reflection space, track your journey to alignment, and take notes from your {getBeliefTrait()} as well.
+                    </Text>
+
+                    <View style={styles.benefitList}>
+                        <View style={styles.benefitRow}>
+                            <LucideLock size={20} color={palette.softGold} />
+                            <Text style={styles.benefitText}>End-to-end encrypted journal</Text>
+                        </View>
+                        <View style={styles.benefitRow}>
+                            <Sparkles size={20} color={palette.softGold} />
+                            <Text style={styles.benefitText}>Spiritual Wisdom & Insights</Text>
+                        </View>
+                        <View style={styles.benefitRow}>
+                            <Heart size={20} color={palette.softGold} />
+                            <Text style={styles.benefitText}>Community reflection prompts</Text>
+                        </View>
+                    </View>
+
+                    <TouchableOpacity style={[styles.subscribeButton, { backgroundColor: palette.softGold }]} onPress={handleSubscribe}>
+                        <Text style={[styles.subscribeButtonText, { color: palette.ivory }]}>Subscribe $12.99 / mo</Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.paywallFooter}>
+                        <Text style={styles.footerLink}>Restore Purchases</Text>
+                        <View style={styles.footerDot} />
+                        <Text style={styles.footerLink}>Terms of Service</Text>
+                    </View>
                 </View>
             </View>
-        </View>
-    );
-}
+        );
+    }
 
-if (isLocked) {
+    if (isLocked) {
+        return (
+            <SanctuaryLock
+                onUnlock={authenticate}
+                onBack={() => navigation.goBack()}
+                error={bioError}
+            />
+        );
+    }
+
     return (
-        <SanctuaryLock
-            onUnlock={authenticate}
-            onBack={() => navigation.goBack()}
-            error={bioError}
-        />
-    );
-}
-
-return (
-    <View style={styles.container}>
-        <MotiView
-            from={{ opacity: 0, translateY: -20 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: 'timing', duration: 800 }}
-            style={[styles.header, { paddingTop: insets.top + 20 }]}
-        >
-            {!isSearching ? (
-                <>
-                    <Text style={styles.headerTitle}>Journal</Text>
-                    <View style={styles.headerActions}>
-                        <TouchableOpacity style={styles.searchButton} onPress={toggleSearch}>
-                            <Search size={22} color={theme.colors.text} />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.searchButton} onPress={() => navigation.navigate('Notifications')}>
-                            <Bell size={22} color={theme.colors.text} />
+        <View style={styles.container}>
+            <MotiView
+                from={{ opacity: 0, translateY: -20 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ type: 'timing', duration: 800 }}
+                style={[styles.header, { paddingTop: insets.top + 20 }]}
+            >
+                {!isSearching ? (
+                    <>
+                        <Text style={styles.headerTitle}>Journal</Text>
+                        <View style={styles.headerActions}>
+                            <TouchableOpacity style={styles.searchButton} onPress={toggleSearch}>
+                                <Search size={22} color={theme.colors.text} />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.searchButton} onPress={() => navigation.navigate('Notifications')}>
+                                <Bell size={22} color={theme.colors.text} />
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                ) : (
+                    <View style={styles.searchHeader}>
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Search reflections..."
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            autoFocus
+                        />
+                        <TouchableOpacity onPress={toggleSearch}>
+                            <X size={22} color={theme.colors.text} />
                         </TouchableOpacity>
                     </View>
-                </>
-            ) : (
-                <View style={styles.searchHeader}>
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder="Search reflections..."
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        autoFocus
-                    />
-                    <TouchableOpacity onPress={toggleSearch}>
-                        <X size={22} color={theme.colors.text} />
-                    </TouchableOpacity>
-                </View>
-            )}
-        </MotiView>
+                )}
+            </MotiView>
 
-        <TrueNorthFlashList
-            data={filteredEntries}
-            renderItem={renderEntry}
-            keyExtractor={(item: any) => item.id}
-            estimatedItemSize={140}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            ListHeaderComponent={
-                dailyGoals.eveningGratitude ? (
-                    <TouchableOpacity
-                        style={styles.gratitudePrompt}
-                        onPress={() => navigation.navigate('JournalDetail', { isNew: true, initialContent: '1. \n2. \n3. ' })}
-                    >
-                        <View style={styles.gratitudeHeader}>
-                            <Sparkles size={20} color={palette.softGold} />
-                            <Text style={styles.gratitudeTitle}>Evening Gratitude</Text>
-                        </View>
-                        <Text style={styles.gratitudeText}>List 3 things you are grateful for today.</Text>
-                        <View style={styles.gratitudeAction}>
-                            <Text style={styles.gratitudeActionText}>Reflect Now</Text>
-                        </View>
-                    </TouchableOpacity>
-                ) : null
-            }
-            ListEmptyComponent={
-                <View style={styles.emptyState}>
-                    <Text style={styles.emptyStateText}>
-                        {searchQuery ? "No entries match your search." : "No entries yet. Start reflecting today."}
-                    </Text>
-                </View>
-            }
-            ListFooterComponent={!isSubscribed ? <FaithAd type="product" /> : null}
-        />
+            <TrueNorthFlashList
+                data={filteredEntries}
+                renderItem={renderEntry}
+                keyExtractor={(item: any) => item.id}
+                estimatedItemSize={140}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+                ListHeaderComponent={
+                    dailyGoals.eveningGratitude ? (
+                        <TouchableOpacity
+                            style={styles.gratitudePrompt}
+                            onPress={() => navigation.navigate('JournalDetail', { isNew: true, initialContent: '1. \n2. \n3. ' })}
+                        >
+                            <View style={styles.gratitudeHeader}>
+                                <Sparkles size={20} color={palette.softGold} />
+                                <Text style={styles.gratitudeTitle}>Evening Gratitude</Text>
+                            </View>
+                            <Text style={styles.gratitudeText}>List 3 things you are grateful for today.</Text>
+                            <View style={styles.gratitudeAction}>
+                                <Text style={styles.gratitudeActionText}>Reflect Now</Text>
+                            </View>
+                        </TouchableOpacity>
+                    ) : null
+                }
+                ListEmptyComponent={
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyStateText}>
+                            {searchQuery ? "No entries match your search." : "No entries yet. Start reflecting today."}
+                        </Text>
+                    </View>
+                }
+                ListFooterComponent={!isSubscribed ? <FaithAd type="product" /> : null}
+            />
 
-        <TouchableOpacity
-            style={[styles.fab, { bottom: insets.bottom + 20 }]}
-            onPress={() => navigation.navigate('JournalDetail', { isNew: true })}
-        >
-            <Plus size={28} color={palette.ivory} />
-        </TouchableOpacity>
-    </View >
-);
+            <TouchableOpacity
+                style={[styles.fab, { bottom: insets.bottom + 20 }]}
+                onPress={() => navigation.navigate('JournalDetail', { isNew: true })}
+            >
+                <Plus size={28} color={palette.ivory} />
+            </TouchableOpacity>
+        </View >
+    );
 };
 
 const styles = StyleSheet.create({
