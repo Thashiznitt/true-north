@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, ImageBackground } from 'react-native';
@@ -8,12 +9,13 @@ import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '../../store';
 import { theme, palette } from '../../theme';
-import { Check, ArrowRight, ChevronLeft, Plus, Shield, Heart, Sparkles, Compass, Lock, Fingerprint, Star } from 'lucide-react-native';
+import { Check, ArrowRight, ChevronLeft, Plus, Shield, Heart, Sparkles, Compass, Fingerprint, Star, Moon } from 'lucide-react-native';
 import { subscriptionService } from '../../services/subscription';
+import { MotiView } from 'moti';
 import * as Location from 'expo-location';
 
 
-const THEME_ICONS: Record<string, any> = {
+const THEME_ICONS: Record<string, any> = { // eslint-disable-line
     Strength: Shield,
     Love: Heart,
     Wisdom: Sparkles,
@@ -21,9 +23,15 @@ const THEME_ICONS: Record<string, any> = {
 };
 
 const THEMES = ['Strength', 'Love', 'Wisdom', 'Faith'];
-const BELIEFS = ['Christian', 'Muslim', 'Secular'];
+const BELIEFS = ['Christian', 'Muslim', 'Spiritual'];
 
-const INTRO_BG = require('../../../assets/onboarding_intro_bg.png');
+const BELIEF_META: Record<string, { icon: React.FC<any>, desc: string }> = { // eslint-disable-line
+    Christian: { icon: Heart, desc: "Personalized daily verses and spiritual guidance." },
+    Muslim: { icon: Moon, desc: "Khutbah insights and daily alignment prompts." },
+    Spiritual: { icon: Sparkles, desc: "Universal wisdom and mindfulness reflections." },
+};
+
+const INTRO_BG = require('../../../assets/onboarding_intro_bg.png'); // eslint-disable-line
 
 export const OnboardingScreen = () => {
     const insets = useSafeAreaInsets();
@@ -35,14 +43,16 @@ export const OnboardingScreen = () => {
     const setBiometricsEnabled = useStore(state => state.setBiometricsEnabled);
     const setSecurityPin = useStore(state => state.setSecurityPin);
 
-    const navigation = useNavigation<any>();
+    const navigation = useNavigation<any>(); // eslint-disable-line
     const [step, setStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
-    const [beliefType, setBeliefType] = useState<any>(null);
+    const [beliefType, setBeliefType] = useState<string | null>(null);
     const [username, setUsername] = useState('');
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [setupBiometrics, setSetupBiometrics] = useState(false);
+    const [email, setEmail] = useState('');
+    const [authMode, setAuthMode] = useState<'social' | 'email'>('social');
     const [pin, setPin] = useState('');
     const [goals, setGoals] = useState({
         spirituality: '',
@@ -58,24 +68,21 @@ export const OnboardingScreen = () => {
 
     const nextStep = async () => {
         if (step === 4) {
-            // Step 4 is now the Auth choice (previously 3)
-            setLoading(true);
-            // Mock delay
-            setTimeout(() => {
-                setLoading(false);
-                setStep(5);
-            }, 1000);
-        } else if (step === 5) {
-            setStep(6);
-        } else if (step === 6) {
-            setStep(7);
-        } else if (step === 7) {
-            setStep(8);
-        } else if (step === 8) {
-            // Step 8 is Location (previously 7)
-            setStep(9);
+            // Join True North Choice
+            if (authMode === 'email') {
+                setStep(5); // Go to Email input
+            } else {
+                setLoading(true);
+                setTimeout(() => {
+                    setLoading(false);
+                    setStep(6); // Skip Email, go to Username
+                }, 1000);
+            }
         } else if (step === 9) {
-            // Step 9 is Subscription (previously 8)
+            // Step 9 is Location
+            setStep(10);
+        } else if (step === 10) {
+            // Step 10 is Subscription
             finishOnboarding();
         } else {
             setStep(step + 1);
@@ -85,7 +92,8 @@ export const OnboardingScreen = () => {
     const finishOnboarding = () => {
         setStoreUsername(username);
         setProfilePicture(profileImage);
-        setPreferences(beliefType, selectedThemes, {
+        if (email) useStore.getState().setEmail(email);
+        setPreferences(beliefType as any, selectedThemes, {
             ...goals,
             dailyReflection: true,
             morningDevotion: true,
@@ -178,7 +186,7 @@ export const OnboardingScreen = () => {
         </View>
     );
 
-    const renderStep0 = () => (
+    const renderStep1 = () => (
         <StepContainer>
             {renderHeader("Core Themes", "What areas of life do you want to focus on?")}
             <View style={styles.grid}>
@@ -220,10 +228,10 @@ export const OnboardingScreen = () => {
         }));
     };
 
-    const renderStep1 = () => (
+    const renderStep2 = () => (
         <>
             {/* eslint-disable-next-line truenorth-performance/no-scrollview */}
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
                 <StepContainer>
                     {renderHeader("Daily Goals", "Tell us about your current priorities (max 10 words)")}
                     {Object.keys(goals).map((key, index) => (
@@ -244,62 +252,129 @@ export const OnboardingScreen = () => {
         </>
     );
 
-    const renderStep2 = () => (
-        <StepContainer>
-            {renderHeader("Belief Type", "This helps us personalize your affirmations")}
-            <View style={styles.beliefGrid}>
-                {BELIEFS.map((b, index) => (
-                    <View key={b}>
-                        <TouchableOpacity
-                            style={[styles.beliefCard, beliefType === b && styles.beliefCardActive]}
-                            onPress={() => setBeliefType(b)}
-                        >
-                            <Text style={[styles.beliefText, beliefType === b && styles.beliefTextActive]}>{b}</Text>
-                        </TouchableOpacity>
-                    </View>
-                ))}
-            </View>
-        </StepContainer>
-    );
-
     const renderStep3 = () => (
         <StepContainer>
-            {renderHeader("Join True North", "Create an account to save your journey.")}
-            <View style={styles.authGrid}>
-                {loading ? (
-                    <ActivityIndicator color={theme.colors.text} size="large" style={{ marginTop: 40 }} />
-                ) : (
-                    <>
-                        <TouchableOpacity style={styles.socialButton} onPress={() => {
-                            useStore.getState().setEmail('remy_shiznitt@hotmail.com');
-                            nextStep();
-                        }}>
-                            <Text style={styles.socialButtonText}>Continue with Apple</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={[styles.socialButton, styles.googleButton]} onPress={() => {
-                            useStore.getState().setEmail('remyngatia@gmail.com');
-                            nextStep();
-                        }}>
-                            <Text style={[styles.socialButtonText, styles.googleButtonText]}>Continue with Google</Text>
-                        </TouchableOpacity>
-                        <View style={styles.authDivider}>
-                            <View style={styles.dividerLine} />
-                            <Text style={styles.dividerText}>or</Text>
-                            <View style={styles.dividerLine} />
-                        </View>
-                        <TouchableOpacity style={styles.emailButton} onPress={() => {
-                            useStore.getState().setEmail('user@example.com');
-                            nextStep();
-                        }}>
-                            <Text style={styles.emailButtonText}>Continue with Email</Text>
-                        </TouchableOpacity>
-                    </>
-                )}
+            {renderHeader("Spiritual Path", "This helps us personalize your affirmations and guidance.")}
+            <View style={styles.beliefGrid}>
+                {BELIEFS.map((b, index) => {
+                    const meta = BELIEF_META[b];
+                    const Icon = meta.icon;
+                    const isActive = beliefType === b;
+
+                    return (
+                        <MotiView
+                            key={b}
+                            from={{ opacity: 0, translateY: 20 }}
+                            animate={{ opacity: 1, translateY: 0 }}
+                            transition={{ type: 'timing', duration: 600, delay: index * 150 }}
+                        >
+                            <TouchableOpacity
+                                style={[styles.beliefCard, isActive && styles.beliefCardActive]}
+                                onPress={() => setBeliefType(b)}
+                                activeOpacity={0.7}
+                            >
+                                <MotiView
+                                    animate={{
+                                        scale: isActive ? 1.1 : 1,
+                                        rotate: isActive ? '5deg' : '0deg'
+                                    }}
+                                    style={[styles.beliefIconCircle, isActive && styles.beliefIconCircleActive]}
+                                >
+                                    <Icon size={32} color={isActive ? palette.ivory : palette.softGold} />
+                                </MotiView>
+
+                                <View style={styles.beliefContent}>
+                                    <Text style={[styles.beliefText, isActive && styles.beliefTextActive]}>{b}</Text>
+                                    <Text style={[styles.beliefDesc, isActive && styles.beliefDescActive]}>{meta.desc}</Text>
+                                </View>
+
+                                {isActive && (
+                                    <MotiView
+                                        from={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        style={styles.beliefCheck}
+                                    >
+                                        <Check size={16} color={palette.softGold} />
+                                    </MotiView>
+                                )}
+                            </TouchableOpacity>
+                        </MotiView>
+                    );
+                })}
             </View>
         </StepContainer>
     );
 
     const renderStep4 = () => (
+        <View style={StyleSheet.absoluteFill}>
+            <ImageBackground source={INTRO_BG} style={StyleSheet.absoluteFill} resizeMode="cover" />
+            <LinearGradient
+                colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.9)']}
+                style={StyleSheet.absoluteFill}
+            />
+            <StepContainer>
+                <View style={{ marginTop: 40 }}>
+                    <Text style={[styles.title, { color: palette.ivory }]}>Join True North</Text>
+                    <Text style={[styles.subtitle, { color: palette.ivory, opacity: 0.8 }]}>Create an account to save your sacred journey.</Text>
+                </View>
+
+                <View style={[styles.authGrid, { marginTop: 40 }]}>
+                    {loading ? (
+                        <ActivityIndicator color={palette.softGold} size="large" style={{ marginTop: 40 }} />
+                    ) : (
+                        <>
+                            <TouchableOpacity style={[styles.socialButton, { backgroundColor: palette.ivory }]} onPress={() => {
+                                setAuthMode('social');
+                                useStore.getState().setEmail('remy_shiznitt@hotmail.com');
+                                nextStep();
+                            }}>
+                                <Text style={[styles.socialButtonText, { color: theme.colors.text }]}>Continue with Apple</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.socialButton, styles.googleButton, { backgroundColor: 'transparent', borderColor: 'rgba(255,255,255,0.3)' }]} onPress={() => {
+                                setAuthMode('social');
+                                useStore.getState().setEmail('remyngatia@gmail.com');
+                                nextStep();
+                            }}>
+                                <Text style={[styles.socialButtonText, { color: palette.ivory }]}>Continue with Google</Text>
+                            </TouchableOpacity>
+                            <View style={styles.authDivider}>
+                                <View style={[styles.dividerLine, { backgroundColor: 'rgba(255,255,255,0.2)' }]} />
+                                <Text style={[styles.dividerText, { color: palette.ivory, opacity: 0.5 }]}>or</Text>
+                                <View style={[styles.dividerLine, { backgroundColor: 'rgba(255,255,255,0.2)' }]} />
+                            </View>
+                            <TouchableOpacity style={[styles.emailButton, { borderColor: 'rgba(255,255,255,0.3)' }]} onPress={() => {
+                                setAuthMode('email');
+                                nextStep();
+                            }}>
+                                <Text style={[styles.emailButtonText, { color: palette.ivory }]}>Continue with Email</Text>
+                            </TouchableOpacity>
+                        </>
+                    )}
+                </View>
+            </StepContainer>
+        </View>
+    );
+
+    const renderStep5 = () => (
+        <StepContainer>
+            {renderHeader("Enter Email", "We'll use this to keep your journey synced.")}
+            <View style={styles.inputGroup}>
+                <Text style={styles.label}>Email Address</Text>
+                <TextInput
+                    style={styles.input}
+                    placeholder="you@example.com"
+                    placeholderTextColor={theme.colors.secondaryText}
+                    value={email}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="email-address"
+                    onChangeText={setEmail}
+                />
+            </View>
+        </StepContainer>
+    );
+
+    const renderStep6 = () => (
         <StepContainer>
             {renderHeader("Choose Username", "How should we address you in True North?")}
             <View style={styles.inputGroup}>
@@ -317,7 +392,7 @@ export const OnboardingScreen = () => {
         </StepContainer>
     );
 
-    const renderStep5 = () => (
+    const renderStep7 = () => (
         <StepContainer>
             {renderHeader("Profile Picture", "Let the community put a face to your name (Optional)")}
             <View style={styles.avatarPickerContainer}>
@@ -338,42 +413,48 @@ export const OnboardingScreen = () => {
         </StepContainer>
     );
 
-    const renderStep6 = () => (
-        <StepContainer>
-            {renderHeader("Sanctuary Security", "Protect your private reflections with biometrics or a PIN.")}
+    const renderStep8 = () => (
+        <ScrollView
+            contentContainerStyle={{ paddingBottom: 150 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+        >
+            <StepContainer>
+                {renderHeader("Sanctuary Security", "Protect your private reflections with biometrics or a PIN.")}
 
-            <TouchableOpacity
-                style={[styles.securityCard, setupBiometrics && styles.securityCardActive]}
-                onPress={() => setSetupBiometrics(!setupBiometrics)}
-            >
-                <View style={styles.securityIconContainer}>
-                    <Fingerprint size={28} color={setupBiometrics ? palette.ivory : theme.colors.text} />
-                </View>
-                <View style={styles.securityTextContainer}>
-                    <Text style={[styles.securityTitle, setupBiometrics && styles.securityTextActive]}>Enable Biometrics</Text>
-                    <Text style={[styles.securityDesc, setupBiometrics && styles.securityTextActive]}>Use FaceID or TouchID to unlock your journal.</Text>
-                </View>
-                {setupBiometrics && <Check size={20} color={palette.ivory} />}
-            </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.securityCard, setupBiometrics && styles.securityCardActive]}
+                    onPress={() => setSetupBiometrics(!setupBiometrics)}
+                >
+                    <View style={styles.securityIconContainer}>
+                        <Fingerprint size={28} color={setupBiometrics ? palette.ivory : theme.colors.text} />
+                    </View>
+                    <View style={styles.securityTextContainer}>
+                        <Text style={[styles.securityTitle, setupBiometrics && styles.securityTextActive]}>Enable Biometrics</Text>
+                        <Text style={[styles.securityDesc, setupBiometrics && styles.securityTextActive]}>Use FaceID or TouchID to unlock your journal.</Text>
+                    </View>
+                    {setupBiometrics && <Check size={20} color={palette.ivory} />}
+                </TouchableOpacity>
 
-            <View style={styles.pinSection}>
-                <Text style={styles.label}>Or set a 4-digit PIN</Text>
-                <TextInput
-                    style={styles.pinInput}
-                    placeholder="••••"
-                    placeholderTextColor={theme.colors.secondaryText}
-                    keyboardType="number-pad"
-                    maxLength={4}
-                    value={pin}
-                    onChangeText={setPin}
-                    secureTextEntry
-                />
-                <Text style={styles.pinHint}>Recommended if biometrics are unavailable.</Text>
-            </View>
-        </StepContainer>
+                <View style={[styles.pinSection, { marginBottom: 60 }]}>
+                    <Text style={styles.label}>Or set a 4-digit PIN</Text>
+                    <TextInput
+                        style={styles.pinInput}
+                        placeholder="••••"
+                        placeholderTextColor={theme.colors.secondaryText}
+                        keyboardType="number-pad"
+                        maxLength={4}
+                        value={pin}
+                        onChangeText={setPin}
+                        secureTextEntry
+                    />
+                    <Text style={styles.pinHint}>Recommended if biometrics are unavailable.</Text>
+                </View>
+            </StepContainer>
+        </ScrollView>
     );
 
-    const renderStep7 = () => (
+    const renderStep9 = () => (
         <StepContainer>
             {renderHeader("Local Sanctuaries", "Find fellow seekers in your area for deeper connection.")}
 
@@ -406,58 +487,60 @@ export const OnboardingScreen = () => {
         </StepContainer>
     );
 
-    const renderStep8 = () => (
-        // Premium Upsell Step
-        <>
+    const renderStep10 = () => (
+        <View style={styles.premiumStepWrapper}>
             {/* eslint-disable-next-line truenorth-performance/no-scrollview */}
-            <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>
                 {renderHeader("Unlock Full Potential", "Start your journey with full access.")}
 
                 <View style={styles.premiumCard}>
+                    <ImageBackground source={require('../../../assets/journal_paywall_bg.png')} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                    <LinearGradient
+                        colors={['transparent', 'rgba(0,0,0,0.8)', 'rgba(0,0,0,0.95)']}
+                        style={StyleSheet.absoluteFill}
+                    />
                     <View style={styles.premiumHeader}>
                         <Sparkles size={32} color={palette.softGold} />
-                        <Text style={styles.premiumTitle}>True North Premium</Text>
+                        <Text style={[styles.premiumTitle, { color: palette.ivory }]}>True North Premium</Text>
                     </View>
 
                     <View style={styles.benefitList}>
                         <View style={styles.benefitRow}>
                             <Check size={20} color={palette.softGold} />
-                            <Text style={styles.benefitText}>Unlimited Journal Entries</Text>
+                            <Text style={[styles.benefitText, { color: palette.ivory }]}>Unlimited Journal Entries</Text>
                         </View>
                         <View style={styles.benefitRow}>
                             <Check size={20} color={palette.softGold} />
-                            <Text style={styles.benefitText}>Personalized Divine Guidance</Text>
+                            <Text style={[styles.benefitText, { color: palette.ivory }]}>Personalized Divine Guidance</Text>
                         </View>
                         <View style={styles.benefitRow}>
                             <Check size={20} color={palette.softGold} />
-                            <Text style={styles.benefitText}>Prioritized Local Sanctuaries</Text>
+                            <Text style={[styles.benefitText, { color: palette.ivory }]}>Prioritized Local Sanctuaries</Text>
                         </View>
                         <View style={styles.benefitRow}>
                             <Check size={20} color={palette.softGold} />
-                            <Text style={styles.benefitText}>Secure Biometric Lock</Text>
+                            <Text style={[styles.benefitText, { color: palette.ivory }]}>Secure Biometric Lock</Text>
                         </View>
                     </View>
 
-                    <TouchableOpacity style={styles.subscribeButton} onPress={handleSubscribe}>
+                    <TouchableOpacity style={[styles.subscribeButton, { backgroundColor: palette.softGold }]} onPress={handleSubscribe}>
                         {loading ? (
                             <ActivityIndicator color={palette.ivory} />
                         ) : (
-                            <>
-                                <Text style={styles.subscribeButtonText}>Subscribe $12.99 / mo</Text>
-                            </>
+                            <Text style={styles.subscribeButtonText}>Subscribe $12.99 / mo</Text>
                         )}
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.skipButton} onPress={finishOnboarding}>
-                        <Text style={styles.skipButtonText}>Maybe Later (Continue Free)</Text>
+                        <Text style={[styles.skipButtonText, { color: palette.ivory, opacity: 0.7 }]}>Maybe Later (Continue Free)</Text>
                     </TouchableOpacity>
 
-                    <Text style={styles.disclaimerText}>
+                    <Text style={[styles.disclaimerText, { color: palette.ivory, opacity: 0.5 }]}>
                         No commitment. Cancel anytime in settings.
                     </Text>
                 </View>
             </ScrollView>
-        </>
+        </View>
     );
 
     return (
@@ -477,26 +560,31 @@ export const OnboardingScreen = () => {
 
             <View style={styles.content}>
                 {step === 0 && renderIntroStep()}
-                {step === 1 && renderStep0()}
-                {step === 2 && renderStep1()}
-                {step === 3 && renderStep2()}
-                {step === 4 && renderStep3()}
-                {step === 5 && renderStep4()}
-                {step === 6 && renderStep5()}
-                {step === 7 && renderStep6()}
-                {step === 8 && renderStep7()}
-                {step === 9 && renderStep8()}
+                {step === 1 && renderStep1()}
+                {step === 2 && renderStep2()}
+                {step === 3 && renderStep3()}
+                {step === 4 && renderStep4()}
+                {step === 5 && renderStep5()}
+                {step === 6 && renderStep6()}
+                {step === 7 && renderStep7()}
+                {step === 8 && renderStep8()}
+                {step === 9 && renderStep9()}
+                {step === 10 && renderStep10()}
             </View>
 
-            {step !== 0 && step !== 4 && (
+            {step !== 0 && step !== 4 && step !== 10 && (
                 <View style={styles.footer}>
                     <TouchableOpacity
-                        style={[styles.nextButton, step === 5 && !username && { opacity: 0.5 }]}
+                        style={[
+                            styles.nextButton,
+                            step === 5 && !email && { opacity: 0.5 },
+                            step === 6 && !username && { opacity: 0.5 }
+                        ]}
                         onPress={nextStep}
-                        disabled={(step === 5 && !username) || step === 8 || step === 9}
+                        disabled={(step === 5 && !email) || (step === 6 && !username) || step === 9 || step === 10}
                     >
-                        <Text style={styles.nextButtonText}>{(step === 8 || step === 9) ? "" : "Continue"}</Text>
-                        {(step !== 8 && step !== 9) && <ArrowRight size={20} color={theme.colors.inverseText} />}
+                        <Text style={styles.nextButtonText}>{(step === 9 || step === 10) ? "" : "Continue"}</Text>
+                        {(step !== 9 && step !== 10) && <ArrowRight size={20} color={theme.colors.inverseText} />}
                     </TouchableOpacity>
                 </View>
             )}
@@ -514,7 +602,7 @@ const styles = StyleSheet.create({
     introBenefitText: { fontFamily: theme.typography.sansMedium, fontSize: 16, color: palette.softGold },
     introButton: { backgroundColor: palette.softGold, paddingVertical: 20, borderRadius: theme.borderRadius.full, alignItems: 'center', shadowColor: palette.softGold, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12 },
     introButtonText: { fontFamily: theme.typography.sansBold, fontSize: 18, color: palette.ivory },
-    nav: { height: 40, justifyContent: 'center', marginBottom: theme.spacing.md, paddingHorizontal: theme.spacing.xl },
+    nav: { height: 40, justifyContent: 'center', marginBottom: theme.spacing.md, paddingHorizontal: theme.spacing.xl, zIndex: 10 },
     content: { flex: 1 },
     header: { marginBottom: theme.spacing.xxl, marginTop: theme.spacing.lg },
     title: { fontFamily: theme.typography.serifBold, fontSize: 34, color: theme.colors.text, marginBottom: theme.spacing.sm, letterSpacing: -0.5 },
@@ -538,14 +626,32 @@ const styles = StyleSheet.create({
         padding: theme.spacing.lg, fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.text,
         borderWidth: 1, borderColor: theme.colors.border
     },
-    beliefGrid: { gap: theme.spacing.md },
+    beliefGrid: { gap: theme.spacing.lg },
     beliefCard: {
-        backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.lg,
-        padding: theme.spacing.xl, alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border
+        flexDirection: 'row',
+        backgroundColor: theme.colors.surface, borderRadius: 20,
+        padding: theme.spacing.xl, alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border,
+        shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2
     },
-    beliefCardActive: { backgroundColor: theme.colors.text },
-    beliefText: { fontFamily: theme.typography.sansBold, fontSize: 18, color: theme.colors.text },
-    beliefTextActive: { color: theme.colors.inverseText },
+    beliefCardActive: { backgroundColor: theme.colors.text, borderColor: theme.colors.text },
+    beliefIconCircle: {
+        width: 56, height: 56, borderRadius: 28,
+        backgroundColor: palette.softGold + '15',
+        alignItems: 'center', justifyContent: 'center',
+        marginRight: theme.spacing.lg
+    },
+    beliefIconCircleActive: { backgroundColor: 'rgba(255,255,255,0.1)' },
+    beliefContent: { flex: 1 },
+    beliefText: { fontFamily: theme.typography.serifBold, fontSize: 20, color: theme.colors.text, marginBottom: 2 },
+    beliefTextActive: { color: palette.ivory },
+    beliefDesc: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText, lineHeight: 18, opacity: 0.7 },
+    beliefDescActive: { color: palette.ivory, opacity: 0.8 },
+    beliefCheck: {
+        width: 28, height: 28, borderRadius: 14,
+        backgroundColor: palette.ivory,
+        alignItems: 'center', justifyContent: 'center',
+        marginLeft: theme.spacing.md
+    },
     authGrid: { gap: theme.spacing.md },
     socialButton: {
         backgroundColor: theme.colors.text, height: 56, borderRadius: theme.borderRadius.full,
@@ -553,18 +659,23 @@ const styles = StyleSheet.create({
     },
     socialButtonText: { color: theme.colors.inverseText, fontFamily: theme.typography.sansBold, fontSize: 16 },
     googleButton: { backgroundColor: palette.white, borderWidth: 1, borderColor: palette.border },
-    googleButtonText: { color: theme.colors.text },
     authDivider: { flexDirection: 'row', alignItems: 'center', marginVertical: theme.spacing.md },
     dividerLine: { flex: 1, height: 1, backgroundColor: palette.border },
     dividerText: { marginHorizontal: theme.spacing.md, color: theme.colors.secondaryText, fontFamily: theme.typography.sans },
     emailButton: {
-        height: 56, borderRadius: theme.borderRadius.full, alignItems: 'center', justifyContent: 'center',
+        height: 56, borderRadius: 100, alignItems: 'center', justifyContent: 'center',
         borderWidth: 1, borderColor: theme.colors.border
     },
     emailButtonText: { fontFamily: theme.typography.sansBold, fontSize: 16, color: theme.colors.text },
-    footer: { paddingVertical: theme.spacing.xl, paddingHorizontal: theme.spacing.xl },
+    footer: {
+        paddingVertical: theme.spacing.xl,
+        paddingHorizontal: theme.spacing.xl,
+        backgroundColor: theme.colors.background,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(0,0,0,0.05)'
+    },
     nextButton: {
-        backgroundColor: theme.colors.text, borderRadius: theme.borderRadius.full,
+        backgroundColor: theme.colors.text, borderRadius: 100,
         height: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: theme.spacing.sm
     },
     nextButtonText: { color: theme.colors.inverseText, fontFamily: theme.typography.sansBold, fontSize: 17 },
@@ -630,10 +741,8 @@ const styles = StyleSheet.create({
         marginBottom: theme.spacing.md
     },
     subscribeButtonText: { fontFamily: theme.typography.sansBold, fontSize: 18, color: palette.ivory },
-    subscribeSubText: { fontFamily: theme.typography.sans, fontSize: 12, color: palette.ivory, opacity: 0.8, marginTop: 2 },
     skipButton: { paddingVertical: 12 },
     skipButtonText: { fontFamily: theme.typography.sansMedium, fontSize: 15, color: theme.colors.secondaryText },
-    saveButtonText: { color: theme.colors.text, fontFamily: theme.typography.sansBold, fontSize: 14 },
     locationCard: {
         backgroundColor: theme.colors.surface,
         borderRadius: 24,
@@ -658,5 +767,6 @@ const styles = StyleSheet.create({
         marginBottom: theme.spacing.md
     },
     locationButtonText: { fontFamily: theme.typography.sansBold, fontSize: 17, color: palette.ivory },
-    disclaimerText: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText, marginTop: theme.spacing.lg, textAlign: 'center', opacity: 0.7 }
+    disclaimerText: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText, marginTop: theme.spacing.lg, textAlign: 'center', opacity: 0.7 },
+    premiumStepWrapper: { flex: 1, backgroundColor: theme.colors.background }
 });

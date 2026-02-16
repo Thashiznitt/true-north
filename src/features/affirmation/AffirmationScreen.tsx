@@ -211,14 +211,14 @@ export const AffirmationScreen = () => {
                             >
                                 {current.text}
                             </MotiText>
-                            {current.reference && (
+                            {current.verse && (
                                 <MotiText
                                     from={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     transition={{ type: 'timing', duration: 1000, delay: 1200 }}
                                     style={styles.reference}
                                 >
-                                    {current.reference}
+                                    {current.verse}
                                 </MotiText>
                             )}
                         </MotiView>
@@ -388,7 +388,7 @@ export const AffirmationScreen = () => {
                         </View>
 
                         <Text style={styles.adviceText}>
-                            You've received your spiritual guidance for this {isSubscribed ? 'day' : 'week'}.
+                            You&apos;ve received your spiritual guidance for this {isSubscribed ? 'day' : 'week'}.
                             {isSubscribed ? ' Your next insight will be ready tomorrow.' : ' Subscribers unlock personalized daily wisdom.'}
                         </Text>
 

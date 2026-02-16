@@ -4,7 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { notificationService } from '../services/notifications';
 
 export type UserRole = 'member' | 'moderator' | 'admin' | 'platform_admin';
-export type BeliefType = 'Christian' | 'Muslim' | 'Secular' | 'Exploring' | 'Open';
+import { BeliefType } from '../types';
+export { BeliefType };
 
 export interface DailyGoals {
     dailyReflection: boolean;
@@ -36,6 +37,7 @@ export interface CreatedCircle {
     country: string;
     description: string;
     lastActivity: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     reflections: any[];
     createdAt: number;
     theme?: string;
@@ -151,7 +153,7 @@ export const useStore = create<UserState>()(
                         profilePicture: null,
                         biometricsEnabled: false,
                         securityPin: null,
-                        beliefType: null,
+                        beliefType: 'Spiritual',
                         themes: [],
                         dailyGoals: {
                             dailyReflection: true,

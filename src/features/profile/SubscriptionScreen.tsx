@@ -1,4 +1,4 @@
-/* eslint-disable truenorth-performance/no-scrollview */
+/* eslint-disable @typescript-eslint/no-explicit-any, truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -112,18 +112,12 @@ const styles = StyleSheet.create({
     benefitTitle: { fontFamily: theme.typography.sansBold, fontSize: 16, color: theme.colors.text, marginBottom: 2 },
     benefitDesc: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText },
     plans: { gap: theme.spacing.md, marginBottom: theme.spacing.xxl },
-    planCard: {
-        padding: theme.spacing.xl, borderRadius: theme.borderRadius.lg, backgroundColor: theme.colors.surface,
-        borderWidth: 1, borderColor: theme.colors.border
-    },
     planCardActive: {
         padding: theme.spacing.xl, borderRadius: theme.borderRadius.lg, backgroundColor: '#FFFDF9',
         borderWidth: 2, borderColor: palette.softGold
     },
     planHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
     planName: { fontFamily: theme.typography.serifBold, fontSize: 18, color: theme.colors.text },
-    saveBadge: { backgroundColor: palette.softGold, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
-    saveBadgeText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 10 },
     planPrice: { fontFamily: theme.typography.sansBold, fontSize: 20, color: theme.colors.text, marginBottom: 4 },
     planNote: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText },
     planSelect: { position: 'absolute', top: 12, right: 12, width: 28, height: 28, borderRadius: 14, backgroundColor: palette.softGold, alignItems: 'center', justifyContent: 'center' },

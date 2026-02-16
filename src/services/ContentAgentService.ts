@@ -1,4 +1,4 @@
-export type BeliefType = 'Christian' | 'Muslim' | 'Secular' | 'Exploring' | 'Open';
+import { BeliefType } from '../types';
 
 export interface GhostReflection {
     id: string;
@@ -43,6 +43,10 @@ const GHOST_USERS: Record<BeliefType, string[]> = {
     ],
     Exploring: [
         'Sam T.', 'Kim L.', 'Pat M.', 'Chris D.', 'Lee S.', 'Jan K.', 'Ren B.', 'Val P.', 'Noa J.', 'Ari V.'
+    ],
+    Spiritual: [
+        'Alex R.', 'Jamie L.', 'Riley M.', 'Jordan S.', 'Casey K.', 'Taylor B.', 'Morgan P.', 'Skyler J.', 'Charlie V.', 'Quinn D.',
+        'Sasha F.', 'Robin G.', 'Avery H.', 'Drew T.', 'Peyton B.', 'River O.', 'Dakota W.', 'Phoenix S.', 'Sage K.', 'Emerson J.'
     ]
 };
 
@@ -90,6 +94,27 @@ const REFLECTION_TEMPLATES: Record<BeliefType, Record<string, string[]>> = {
         ]
     },
     Secular: {
+        Purpose: [
+            "Spent some time today realigning my actions with my core values. Hard work, but so rewarding.",
+            "Thinking about 'Ikigai'—finding that sweet spot between what I love and what the world needs.",
+            "If you're feeling lost, remember that direction is more important than speed.",
+            "Living intentionally is a practice, not a destination. Grateful for this community's focus.",
+            "What's one thing you're doing today that your future self will thank you for?"
+        ],
+        Gratitude: [
+            "Today I'm grateful for the small things: a hot cup of coffee and a kind word from a stranger.",
+            "Perspective shift: focusing on what I have rather than what I'm missing. Life feels lighter.",
+            "Three good things today: finished a project, long walk, and this community. What's yours?",
+            "Practicing radical gratitude today. Even for the challenges that are teaching me resilience.",
+            "Happiness is a byproduct of being grateful. Noticing the beauty in the ordinary."
+        ],
+        Peace: [
+            "Silence is so underrated. Just five minutes of it changed my whole morning mood.",
+            "Learning to let go of things I can't control. It's a weight off my shoulders.",
+            "May your day be as calm as you need it to be. Breathing through the rush."
+        ]
+    },
+    Spiritual: {
         Purpose: [
             "Spent some time today realigning my actions with my core values. Hard work, but so rewarding.",
             "Thinking about 'Ikigai'—finding that sweet spot between what I love and what the world needs.",
@@ -210,6 +235,7 @@ const constructSystemPrompt = (belief: BeliefType, context: string) => {
         Christian: "Use Biblical resonance and focus on grace and divine purpose.",
         Muslim: "Use Quranic wisdom and focus on sabr, taqwa, and humble devotion.",
         Secular: "Use mindful, ethical, and philosophical language grounded in human experience.",
+        Spiritual: "Use mindful, ethical, and philosophical language grounded in human experience.",
         Exploring: "Use universalist, open-ended language focused on light, energy, and truth.",
         Open: "Use inclusive, heart-centered language applicable to all spiritual seekers."
     };
@@ -317,6 +343,11 @@ export const contentAgentService = {
                     "{{name}}, as you explore {{theme}}, keep your heart open to the wisdom found in unexpected places today.",
                     "Truth reveals itself in the quiet, {{name}}. Your pursuit of {{theme}} is a beautiful endeavor.",
                     "Keep seeking {{theme}}, {{name}}. The questions are more important than the answers right now."
+                ],
+                Spiritual: [
+                    "{{name}}, focusing on {{theme}} today? Remember that consistency is better than intensity. What's one tiny step you can take right now?",
+                    "Your path in {{theme}} is becoming clearer, {{name}}. Trust the process and honor your boundaries today.",
+                    "{{name}}, science and stillness both agree: your growth in {{theme}} requires rest. Don't forget to unplug tonight."
                 ]
             };
 
@@ -530,6 +561,11 @@ export const contentAgentService = {
                     { text: "I am centered, I am grounded, I am exactly where I need to be.", verse: "True North" },
                     { text: "Compassion is my compass, and wisdom is my guide along this sacred path.", verse: "Peaceful Seeker" },
                     { text: "I choose to radiate peace and receive the abundance of this moment.", verse: "Sanctuary Breath" }
+                ],
+                Spiritual: [
+                    { text: "I am the architect of my own peace, building a life of intention and clarity.", verse: "Stoic Wisdom" },
+                    { text: "Growth is a quiet journey. I honor my progress and embrace the lessons of today.", verse: "Modern Philosophy" },
+                    { text: "Direction is more important than speed. I am aligned with my true values.", verse: "Mindfulness" }
                 ]
             };
 

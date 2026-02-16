@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { Platform } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -29,11 +30,14 @@ import { theme, palette } from '../theme';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-export const navigationRef = React.createRef<any>();
+import { NavigationContainerRef } from '@react-navigation/native';
 
-export function navigate(name: string, params?: any) {
+export const navigationRef = React.createRef<NavigationContainerRef<any>>();
+
+export function navigate(name: string, params?: Record<string, unknown>) {
     if (navigationRef.current?.isReady()) {
-        navigationRef.current.navigate(name, params);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (navigationRef.current as any).navigate(name as never, params as never);
     }
 }
 

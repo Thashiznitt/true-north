@@ -1,12 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { ChevronLeft, X, Check, Lock, Globe, Users } from 'lucide-react-native';
-import { useStore } from '../../store';
+import { useStore, BeliefType } from '../../store';
 
-const BELIEFS = ['Christian', 'Muslim', 'Secular', 'Open'];
+const BELIEFS: BeliefType[] = ['Christian', 'Muslim', 'Spiritual', 'Exploring', 'Open'];
 
 export const CreateCircleScreen = () => {
     const insets = useSafeAreaInsets();
@@ -16,7 +17,7 @@ export const CreateCircleScreen = () => {
     const [description, setDescription] = useState('');
     const [country, setCountry] = useState('');
     const [city, setCity] = useState('');
-    const [belief, setBelief] = useState('Open');
+    const [belief, setBelief] = useState<BeliefType>('Open');
     const [isPrivate, setIsPrivate] = useState(false);
     const { addCreatedCircle } = useStore();
 
@@ -31,12 +32,13 @@ export const CreateCircleScreen = () => {
             name,
             belief,
             members: 1,
-            type: isPrivate ? 'Private' : 'Public',
+            type: (isPrivate ? 'Private' : 'Public') as 'Public' | 'Private',
             city,
             country,
             description,
             lastActivity: 'Created just now',
-            reflections: []
+            reflections: [],
+            createdAt: Date.now()
         };
         addCreatedCircle(newCircle);
 

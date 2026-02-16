@@ -55,7 +55,7 @@ export const ThemeSettingsScreen = () => {
                 <View style={styles.introBox}>
                     <Sparkles size={24} color={palette.softGold} />
                     <Text style={styles.introText}>
-                        Select the themes that resonate most with your current journey. We'll tailor your daily affirmations and reflections based on these focus areas.
+                        Select the themes that resonate most with your current journey. We&apos;ll tailor your daily affirmations and reflections based on these focus areas.
                     </Text>
                 </View>
 

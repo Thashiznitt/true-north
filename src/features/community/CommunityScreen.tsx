@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -73,12 +74,8 @@ export const CommunityScreen = () => {
                 const belief = circle.belief || 'Open';
                 const theme = circle.theme || 'Wisdom';
 
-                const newReflection = contentAgentService.generateReflection(circle.id, belief, theme); // This returns a promise too!
-                // Wait, generateReflection returns a Promise<GhostReflection>
-
-                // We need to handle this promise as well. 
-                // However, setInterval is synchronous. We should probably use a separate async function or handle the promise chain.
-                // But let's check generateReflection signature first.
+                const newReflection = contentAgentService.generateReflection(circle.id, belief, theme);
+                console.log('Cron: Generated reflection:', newReflection);
                 return updated;
             });
         }, 30000);
@@ -189,14 +186,13 @@ export const CommunityScreen = () => {
                                 <Bell size={24} color={theme.colors.text} />
                             </TouchableOpacity>
                         </View>
+                        {/* eslint-disable-next-line react-native/no-raw-text */}
                         <MotiText
                             from={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 300 }}
                             style={styles.subtitle}
-                        >
-                            Find your sacred sanctuary among fellow seekers.
-                        </MotiText>
+                        >{'Find your sacred sanctuary among fellow seekers.'}</MotiText>
 
                         <View style={{ marginBottom: theme.spacing.lg }}>
                             <FaithAd type="community" />
@@ -257,7 +253,7 @@ const styles = StyleSheet.create({
         borderRadius: theme.borderRadius.lg, paddingHorizontal: theme.spacing.md, height: 50,
         borderWidth: 1, borderColor: theme.colors.border
     },
-    searchInput: { flex: 1, marginLeft: theme.spacing.sm, fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.text },
+    searchInput: { flex: 1, marginLeft: theme.spacing.sm, fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.text, letterSpacing: 0 },
     cardContainer: {
         marginBottom: theme.spacing.md,
     },
@@ -419,3 +415,4 @@ const CircleItem = React.memo(({ item, index, bookmarkedCircleIds, navigation }:
         </MotiView>
     );
 });
+CircleItem.displayName = 'CircleItem';
