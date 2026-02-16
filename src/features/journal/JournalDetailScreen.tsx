@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Share, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Share, Alert } from 'react-native';
+import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { ChevronLeft, Share2, Sparkles, Tag, X } from 'lucide-react-native';
@@ -17,9 +18,11 @@ interface JournalRouteParams {
     initialContent?: string;
 }
 
+const renderItem = () => null;
+
 export const JournalDetailScreen = () => {
     const insets = useSafeAreaInsets();
-    const navigation = useNavigation<any>();
+    const navigation = useNavigation<any>(); // eslint-disable-line @typescript-eslint/no-explicit-any
     const route = useRoute();
     const { entryId, entryTitle, entryContent, initialContent } = (route.params as JournalRouteParams) || {};
 
@@ -200,53 +203,57 @@ export const JournalDetailScreen = () => {
                 </View>
             </View>
 
-            {/* eslint-disable-next-line truenorth-performance/no-scrollview */}
-            <ScrollView
-                style={styles.content}
+            <TrueNorthFlashList
+                data={[]}
+                renderItem={renderItem}
+                keyExtractor={() => 'form'}
+                estimatedItemSize={600}
                 contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
-                <TextInput
-                    style={styles.titleInput}
-                    placeholder="Title"
-                    placeholderTextColor={theme.colors.secondaryText}
-                    value={title}
-                    onChangeText={setTitle}
-                    multiline
-                />
-                <Text style={styles.dateText}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
+                ListHeaderComponent={
+                    <>
+                        <TextInput
+                            style={styles.titleInput}
+                            placeholder="Title"
+                            placeholderTextColor={theme.colors.secondaryText}
+                            value={title}
+                            onChangeText={setTitle}
+                            multiline
+                        />
+                        <Text style={styles.dateText}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
 
-                <View style={styles.tagsContainer}>
-                    {tags.map(tag => (
-                        <View key={tag} style={styles.tag}>
-                            <Tag size={12} color={palette.softGold} style={{ marginRight: 4 }} />
-                            <Text style={styles.tagText}>{tag}</Text>
-                            <TouchableOpacity onPress={() => removeTag(tag)}>
-                                <X size={12} color={theme.colors.secondaryText} style={{ marginLeft: 4 }} />
-                            </TouchableOpacity>
+                        <View style={styles.tagsContainer}>
+                            {tags.map(tag => (
+                                <View key={tag} style={styles.tag}>
+                                    <Tag size={12} color={palette.softGold} style={styles.tagIcon} />
+                                    <Text style={styles.tagText}>{tag}</Text>
+                                    <TouchableOpacity onPress={() => removeTag(tag)}>
+                                        <X size={12} color={theme.colors.secondaryText} style={styles.tagRemoveIcon} />
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
+                            <TextInput
+                                style={styles.tagInput}
+                                placeholder="+ Add tag"
+                                placeholderTextColor={theme.colors.secondaryText}
+                                value={currentTag}
+                                onChangeText={setCurrentTag}
+                                onSubmitEditing={addTag}
+                                blurOnSubmit={false}
+                            />
                         </View>
-                    ))}
-                    <TextInput
-                        style={styles.tagInput}
-                        placeholder="+ Add tag"
-                        placeholderTextColor={theme.colors.secondaryText}
-                        value={currentTag}
-                        onChangeText={setCurrentTag}
-                        onSubmitEditing={addTag}
-                        blurOnSubmit={false}
-                    />
-                </View>
 
-                <TextInput
-                    style={styles.contentInput}
-                    placeholder={getPlaceholder()}
-                    placeholderTextColor={theme.colors.secondaryText}
-                    value={content}
-                    onChangeText={setContent}
-                    multiline
-                    textAlignVertical="top"
-                />
-            </ScrollView>
+                        <TextInput
+                            style={styles.contentInput}
+                            placeholder={getPlaceholder()}
+                            placeholderTextColor={theme.colors.secondaryText}
+                            value={content}
+                            onChangeText={setContent}
+                            multiline
+                            textAlignVertical="top"
+                        />
+                    </>
+                }
+            />
         </KeyboardAvoidingView>
     );
 };
@@ -259,7 +266,6 @@ const styles = StyleSheet.create({
     },
     headerActions: { flexDirection: 'row', gap: theme.spacing.md },
     actionButton: { padding: theme.spacing.sm },
-    content: { flex: 1 },
     scrollContent: { paddingHorizontal: theme.spacing.xl, paddingBottom: 40 },
     titleInput: {
         fontFamily: theme.typography.serifBold, fontSize: 32, color: theme.colors.text,
@@ -279,5 +285,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border
     },
     tagText: { fontFamily: theme.typography.sansMedium, fontSize: 13, color: theme.colors.text },
-    tagInput: { fontFamily: theme.typography.sans, fontSize: 14, color: theme.colors.text, minWidth: 80, padding: 0 }
+    tagInput: { fontFamily: theme.typography.sans, fontSize: 14, color: theme.colors.text, minWidth: 80, padding: 0 },
+    tagIcon: { marginRight: 4 },
+    tagRemoveIcon: { marginLeft: 4 }
 });

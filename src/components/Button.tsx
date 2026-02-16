@@ -8,7 +8,7 @@ interface ButtonProps {
     variant?: 'primary' | 'secondary' | 'outline';
     loading?: boolean;
     disabled?: boolean;
-    style?: any;
+    style?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export const Button = ({ title, onPress, variant = 'primary', loading, disabled, style }: ButtonProps) => {

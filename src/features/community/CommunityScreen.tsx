@@ -142,6 +142,7 @@ export const CommunityScreen = () => {
                     onPress={() => navigation.navigate('Subscription')}
                 >
                     <ImageBackground
+                        /* eslint-disable-next-line @typescript-eslint/no-require-imports */
                         source={require('../../../assets/journal_paywall_bg.png')}
                         style={styles.paywallBg}
                         imageStyle={{ borderRadius: theme.borderRadius.lg }}
@@ -188,12 +189,13 @@ export const CommunityScreen = () => {
                             </TouchableOpacity>
                         </View>
                         {/* eslint-disable-next-line react-native/no-raw-text */}
-                        <MotiText
+                        <MotiView
                             from={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 300 }}
-                            style={styles.subtitle}
-                        >{'Find your sacred sanctuary among fellow seekers.'}</MotiText>
+                        >
+                            <Text style={styles.subtitle}>Find your sacred sanctuary among fellow seekers.</Text>
+                        </MotiView>
 
                         <View style={{ marginBottom: theme.spacing.lg }}>
                             <FaithAd type="community" />

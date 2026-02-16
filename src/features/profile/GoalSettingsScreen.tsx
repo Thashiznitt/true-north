@@ -1,11 +1,14 @@
 /* eslint-disable truenorth-performance/no-scrollview */
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { ChevronLeft, BookOpen, Target } from 'lucide-react-native';
+import { ChevronLeft, Target } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../../store';
+import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
+
+const renderItem = () => null;
 
 export const GoalSettingsScreen = () => {
     const insets = useSafeAreaInsets();
@@ -22,48 +25,57 @@ export const GoalSettingsScreen = () => {
                 <View style={styles.spacer} />
             </View>
 
-            <ScrollView contentContainerStyle={styles.content}>
-                <View style={styles.introBox}>
-                    <Target size={24} color={palette.softGold} />
-                    <Text style={styles.introText}>
-                        Consistent tiny steps lead to massive transformation. Set your spiritual intentions and we&apos;ll help you stay on track.
-                    </Text>
-                </View>
+            <TrueNorthFlashList
+                data={[]}
+                renderItem={renderItem}
+                keyExtractor={() => 'form'}
+                estimatedItemSize={500}
+                contentContainerStyle={styles.content}
+                ListHeaderComponent={
+                    <>
+                        <View style={styles.introBox}>
+                            <Target size={24} color={palette.softGold} />
+                            <Text style={styles.introText}>
+                                Consistent tiny steps lead to massive transformation. Set your spiritual intentions and we&apos;ll help you stay on track.
+                            </Text>
+                        </View>
 
-                <View style={styles.goalSection}>
-                    <GoalItem
-                        title="Daily Reflection"
-                        desc="Read one affirmation every day"
-                        isEnabled={dailyGoals.dailyReflection}
-                        onToggle={() => toggleDailyGoal('dailyReflection')}
-                    />
-                    <GoalItem
-                        title="Morning Devotion"
-                        desc="5 minutes of stillness each morning"
-                        isEnabled={dailyGoals.morningDevotion}
-                        onToggle={() => toggleDailyGoal('morningDevotion')}
-                    />
-                    <GoalItem
-                        title="Evening Gratitude"
-                        desc="List 3 things you are grateful for"
-                        isEnabled={dailyGoals.eveningGratitude}
-                        onToggle={() => toggleDailyGoal('eveningGratitude')}
-                    />
-                    <GoalItem
-                        title="Community Connect"
-                        desc="Engage with your circles at least once a week"
-                        isEnabled={dailyGoals.weeklyCommunity}
-                        onToggle={() => toggleDailyGoal('weeklyCommunity')}
-                        isLast
-                    />
-                </View>
-            </ScrollView >
+                        <View style={styles.goalSection}>
+                            <GoalItem
+                                title="Daily Reflection"
+                                desc="Read one affirmation every day"
+                                isEnabled={dailyGoals.dailyReflection}
+                                onToggle={() => toggleDailyGoal('dailyReflection')}
+                            />
+                            <GoalItem
+                                title="Morning Devotion"
+                                desc="5 minutes of stillness each morning"
+                                isEnabled={dailyGoals.morningDevotion}
+                                onToggle={() => toggleDailyGoal('morningDevotion')}
+                            />
+                            <GoalItem
+                                title="Evening Gratitude"
+                                desc="List 3 things you are grateful for"
+                                isEnabled={dailyGoals.eveningGratitude}
+                                onToggle={() => toggleDailyGoal('eveningGratitude')}
+                            />
+                            <GoalItem
+                                title="Community Connect"
+                                desc="Engage with your circles at least once a week"
+                                isEnabled={dailyGoals.weeklyCommunity}
+                                onToggle={() => toggleDailyGoal('weeklyCommunity')}
+                                isLast
+                            />
+                        </View>
+                    </>
+                }
+            />
         </View >
     );
 };
 
 const GoalItem = ({ title, desc, isEnabled, onToggle, isLast }: { title: string, desc: string, isEnabled: boolean, onToggle: () => void, isLast?: boolean }) => (
-    <View style={[styles.goalItem, isLast && { borderBottomWidth: 0 }]}>
+    <View style={[styles.goalItem, isLast && styles.goalItemLast]}>
         <View style={styles.goalLeft}>
             <Text style={styles.goalTitle}>{title}</Text>
             <Text style={styles.goalDesc}>{desc}</Text>
@@ -102,6 +114,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         padding: theme.spacing.xl, borderBottomWidth: 1, borderBottomColor: theme.colors.border
     },
+    goalItemLast: { borderBottomWidth: 0 },
     goalLeft: { flex: 1, marginRight: theme.spacing.md },
     goalTitle: { fontFamily: theme.typography.sansBold, fontSize: 16, color: theme.colors.text, marginBottom: 2 },
     goalDesc: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText },

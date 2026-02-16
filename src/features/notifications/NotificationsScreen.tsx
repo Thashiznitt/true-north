@@ -38,7 +38,7 @@ export const NotificationsScreen = () => {
         return 'just now';
     };
 
-    const renderNotification = ({ item }: any) => {
+    const renderNotification = ({ item }: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         const Icon = getIcon(item.type);
         return (
             <View style={styles.card}>
@@ -67,7 +67,7 @@ export const NotificationsScreen = () => {
             <TrueNorthFlashList
                 data={notificationsList}
                 renderItem={renderNotification}
-                keyExtractor={(item: any) => item.id}
+                keyExtractor={(item: any) => item.id} // eslint-disable-line @typescript-eslint/no-explicit-any
                 estimatedItemSize={80}
                 contentContainerStyle={styles.list}
                 showsVerticalScrollIndicator={false}

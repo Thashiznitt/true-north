@@ -40,7 +40,7 @@ export const JournalScreen = () => {
     const [isLocked, setIsLocked] = useState(biometricsEnabled || !!securityPin);
     const [bioError, setBioError] = useState(false);
 
-    const navigation = useNavigation<any>();
+    const navigation = useNavigation<any>(); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     React.useEffect(() => {
         if (isSubscribed && (biometricsEnabled || securityPin)) {
@@ -202,7 +202,7 @@ export const JournalScreen = () => {
             <TrueNorthFlashList
                 data={filteredEntries}
                 renderItem={renderEntry}
-                keyExtractor={(item: any) => item.id}
+                keyExtractor={(item: any) => item.id} // eslint-disable-line @typescript-eslint/no-explicit-any
                 estimatedItemSize={140}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
@@ -301,56 +301,6 @@ const styles = StyleSheet.create({
     },
     emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: 120 },
     emptyStateText: { fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.secondaryText },
-    paywall: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: theme.spacing.xxl },
-    paywallTitle: {
-        fontFamily: theme.typography.serifBold, fontSize: 26, textAlign: 'center',
-        color: theme.colors.text, marginBottom: theme.spacing.md, letterSpacing: -0.5
-    },
-    paywallSubtitle: {
-        fontFamily: theme.typography.sans, fontSize: 16, textAlign: 'center',
-        color: theme.colors.secondaryText, marginBottom: theme.spacing.xxl, lineHeight: 24
-    },
-    benefitList: {
-        width: '100%',
-        marginBottom: 40,
-        gap: 16,
-    },
-    benefitRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    benefitText: {
-        fontFamily: theme.typography.sansMedium,
-        fontSize: 15,
-        color: palette.ivory,
-    },
-    paywallFooter: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 40,
-        gap: 8,
-    },
-    footerLink: {
-        fontFamily: theme.typography.sansMedium,
-        fontSize: 12,
-        color: palette.ivory,
-        opacity: 0.5,
-    },
-    footerDot: {
-        width: 3,
-        height: 3,
-        borderRadius: 1.5,
-        backgroundColor: palette.ivory,
-        opacity: 0.3,
-    },
-    subscribeButton: {
-        backgroundColor: theme.colors.primary, paddingVertical: 18,
-        paddingHorizontal: theme.spacing.xxl, borderRadius: theme.borderRadius.full,
-        width: '100%', alignItems: 'center'
-    },
-    subscribeButtonText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 16 },
     gratitudePrompt: {
         backgroundColor: palette.softGold + '15',
         marginHorizontal: 0,

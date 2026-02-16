@@ -1,16 +1,17 @@
-/* eslint-disable truenorth-performance/no-scrollview */
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { OptimizedImage } from '../../components/performance/OptimizedImage';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { useStore } from '../../store';
-import { User, Settings, BookOpen, Crown, ChevronRight, LogOut, Bell, CreditCard, Shield, Sparkles, Camera, Heart, ShieldCheck } from 'lucide-react-native';
+import { BookOpen, ChevronRight, LogOut, Bell, CreditCard, Shield, Sparkles, Camera, Heart, ShieldCheck, LucideIcon } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 
 export const ProfileScreen = () => {
     const insets = useSafeAreaInsets();
-    const navigation = useNavigation<any>();
+    const navigation = useNavigation<any>(); // eslint-disable-line @typescript-eslint/no-explicit-any
     const {
         username,
         beliefType,
@@ -18,21 +19,16 @@ export const ProfileScreen = () => {
         themes,
         journalEntries,
         notificationsList,
-        profilePicture
+        setProfilePicture,
+        profilePicture,
+        logout
     } = useStore();
+
     const isSubscribed = subscriptionTier !== 'free';
-    const { setLoggedIn, setProfilePicture } = useStore();
-
-    const blessingCount = notificationsList.filter(n => n.type === 'blessing').length;
-    const reflectionCount = journalEntries.length;
-
-    const handleLogout = () => {
-        setLoggedIn(false);
-    };
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.8,
@@ -41,6 +37,21 @@ export const ProfileScreen = () => {
         if (!result.canceled) {
             setProfilePicture(result.assets[0].uri);
         }
+    };
+
+    const handleLogout = () => {
+        Alert.alert(
+            "Sign Out",
+            "Are you sure you want to sign out?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Sign Out",
+                    style: "destructive",
+                    onPress: () => logout()
+                }
+            ]
+        );
     };
 
     const Section = ({ title, children }: { title: string, children: React.ReactNode }) => (
@@ -52,9 +63,18 @@ export const ProfileScreen = () => {
         </View>
     );
 
-    const MenuItem = ({ icon: Icon, label, value, onPress, isLast = false, color = theme.colors.text }: any) => (
+    interface MenuItemProps {
+        icon: LucideIcon;
+        label: string;
+        value?: string;
+        onPress: () => void;
+        isLast?: boolean;
+        color?: string;
+    }
+
+    const MenuItem = ({ icon: Icon, label, value, onPress, isLast = false, color = theme.colors.text }: MenuItemProps) => (
         <TouchableOpacity
-            style={[styles.menuItem, isLast && { borderBottomWidth: 0 }]}
+            style={[styles.menuItem, isLast && styles.menuItemLast]}
             onPress={onPress}
         >
             <View style={styles.menuItemLeft}>
@@ -70,154 +90,141 @@ export const ProfileScreen = () => {
         </TouchableOpacity>
     );
 
+    const renderItem = () => null;
+
     return (
-        <ScrollView
-            style={styles.container}
-            contentContainerStyle={{ paddingBottom: 120 }}
-            showsVerticalScrollIndicator={false}
-        >
-            <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-                <TouchableOpacity style={styles.avatarWrapper} onPress={pickImage}>
-                    <View style={styles.avatarContainer}>
-                        {profilePicture ? (
-                            <OptimizedImage source={{ uri: profilePicture }} style={styles.avatarImage} />
-                        ) : (
-                            <Text style={styles.avatarText}>{username ? username[0].toUpperCase() : 'U'}</Text>
-                        )}
-                        {isSubscribed && (
-                            <View style={styles.premiumBadge}>
-                                <Sparkles size={12} color={palette.ivory} />
+        <View style={styles.container}>
+            <TrueNorthFlashList
+                data={[]}
+                renderItem={renderItem}
+                keyExtractor={() => 'profile'}
+                estimatedItemSize={800}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+                ListHeaderComponent={
+                    <>
+                        <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
+                            <TouchableOpacity style={styles.avatarWrapper} onPress={pickImage}>
+                                <View style={styles.avatarContainer}>
+                                    {profilePicture ? (
+                                        <OptimizedImage source={{ uri: profilePicture }} style={styles.avatarImage} />
+                                    ) : (
+                                        <Text style={styles.avatarText}>{username ? username[0].toUpperCase() : 'U'}</Text>
+                                    )}
+                                    {isSubscribed && (
+                                        <View style={styles.premiumBadge}>
+                                            <Sparkles size={12} color={palette.ivory} />
+                                        </View>
+                                    )}
+                                </View>
+                                <View style={styles.cameraIconContainer}>
+                                    <Camera size={14} color={palette.ivory} />
+                                </View>
+                            </TouchableOpacity>
+
+                            <Text style={styles.username}>{username || 'Sacred Voyager'}</Text>
+
+                            <TouchableOpacity style={styles.beliefChip}>
+                                <Text style={styles.beliefText}>{beliefType || 'Exploring'}</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.statsRow}>
+                            <View style={styles.statItem}>
+                                <Heart size={20} color={palette.softGold} />
+                                <Text style={styles.statNumber}>{themes.length}</Text>
+                                <Text style={styles.statLabel}>Themes</Text>
                             </View>
-                        )}
-                    </View>
-                    <View style={styles.cameraIconContainer}>
-                        <Camera size={14} color={palette.ivory} />
-                    </View>
-                </TouchableOpacity>
-                <Text style={styles.username}>{username || 'Sacred Searcher'}</Text>
-                <View style={styles.beliefChip}>
-                    <Text style={styles.beliefText}>{beliefType || 'Exploring'}</Text>
-                </View>
-            </View>
+                            <View style={styles.statDivider} />
+                            <View style={styles.statItem}>
+                                <BookOpen size={20} color={palette.softGold} />
+                                <Text style={styles.statNumber}>{journalEntries.length}</Text>
+                                <Text style={styles.statLabel}>Reflections</Text>
+                            </View>
+                            <View style={styles.statDivider} />
+                            <View style={styles.statItem}>
+                                <Bell size={20} color={palette.softGold} />
+                                <Text style={styles.statNumber}>{notificationsList.length}</Text>
+                                <Text style={styles.statLabel}>Alerts</Text>
+                            </View>
+                        </View>
 
-            <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                    <Heart size={20} color={palette.softGold} fill={palette.softGold} />
-                    <Text style={styles.statNumber}>{blessingCount}</Text>
-                    <Text style={styles.statLabel}>Blessings</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={styles.statItem}>
-                    <BookOpen size={20} color={palette.softGold} />
-                    <Text style={styles.statNumber}>{reflectionCount}</Text>
-                    <Text style={styles.statLabel}>Reflections</Text>
-                </View>
-            </View>
+                        <Section title="Sanctuary Settings">
+                            <MenuItem
+                                icon={CreditCard}
+                                label="Subscription"
+                                value={subscriptionTier.charAt(0).toUpperCase() + subscriptionTier.slice(1).replace('_', ' ')}
+                                onPress={() => navigation.navigate('Subscription')}
+                            />
+                            <MenuItem
+                                icon={ShieldCheck}
+                                label="Belief System"
+                                value={beliefType || undefined}
+                                onPress={() => navigation.navigate('BeliefSettings')}
+                            />
+                            <MenuItem
+                                icon={Bell}
+                                label="Notifications"
+                                onPress={() => navigation.navigate('NotificationSettings')}
+                            />
+                            <MenuItem
+                                icon={Lock as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+                                label="Privacy & Security"
+                                onPress={() => navigation.navigate('PrivacySettings')}
+                                isLast
+                            />
+                        </Section>
 
-            <Section title="My Journey">
-                {(__DEV__ || username === 'Superadmin' || (useStore.getState().email === 'remyngatia@gmail.com' || useStore.getState().email === 'remy_shiznitt@hotmail.com')) && (
-                    <MenuItem
-                        icon={Shield}
-                        label="Superadmin Portal"
-                        onPress={() => {
-                            console.log('Navigating to SuperAdmin');
-                            navigation.navigate('SuperAdmin');
-                        }}
-                    />
-                )}
-                <MenuItem
-                    icon={ShieldCheck}
-                    label="Belief System"
-                    value={beliefType}
-                    onPress={() => {
-                        try {
-                            console.log('Navigating to BeliefSettings');
-                            navigation.navigate('BeliefSettings');
-                        } catch (e) {
-                            console.error('Navigation Error:', e);
-                        }
-                    }}
-                />
-                <MenuItem
-                    icon={Sparkles}
-                    label="Focus Themes"
-                    value={themes.join(', ')}
-                    onPress={() => {
-                        try {
-                            console.log('Navigating to ThemeSettings');
-                            navigation.navigate('ThemeSettings');
-                        } catch (e) {
-                            console.error('Navigation Error:', e);
-                        }
-                    }}
-                />
-                <MenuItem
-                    icon={BookOpen}
-                    label="Daily Goals"
-                    onPress={() => {
-                        console.log('Navigating to GoalSettings');
-                        navigation.navigate('GoalSettings');
-                    }}
-                    isLast
-                />
-            </Section>
+                        <Section title="Experience">
+                            <MenuItem
+                                icon={Sparkles}
+                                label="Sacred Themes"
+                                value={`${themes.length} Active`}
+                                onPress={() => navigation.navigate('ThemeSettings')}
+                            />
+                            <MenuItem
+                                icon={Heart}
+                                label="Daily Goals"
+                                onPress={() => navigation.navigate('GoalSettings')}
+                                isLast
+                            />
+                        </Section>
 
-            <Section title="Sanctuary Settings">
-                <MenuItem
-                    icon={Bell}
-                    label="Notifications"
-                    value="7:30 AM"
-                    onPress={() => {
-                        console.log('Navigating to Notifications');
-                        navigation.navigate('Notifications');
-                    }}
-                />
-                <MenuItem
-                    icon={CreditCard}
-                    label="Subscription"
-                    value={subscriptionTier === 'free' ? 'Free' : subscriptionTier.replace('_', ' ').toUpperCase()}
-                    onPress={() => {
-                        console.log('Navigating to Subscription');
-                        navigation.navigate('Subscription');
-                    }}
-                    isLast
-                />
-            </Section>
+                        <Section title="Support">
+                            <MenuItem
+                                icon={BookOpen}
+                                label="Guide & FAQ"
+                                onPress={() => navigation.navigate('HelpCenter')}
+                            />
+                            <MenuItem
+                                icon={Shield}
+                                label="Terms of Service"
+                                onPress={() => navigation.navigate('TermsOfService')}
+                                isLast
+                            />
+                        </Section>
 
-            <Section title="Account">
-                <MenuItem
-                    icon={Shield}
-                    label="Terms of Service"
-                    onPress={() => navigation.navigate('TermsOfService')}
-                />
-                <MenuItem
-                    icon={LogOut}
-                    label="Sign Out"
-                    onPress={handleLogout}
-                    color={palette.softGold}
-                    isLast={!__DEV__}
-                />
-                {__DEV__ && (
-                    <MenuItem
-                        icon={ShieldCheck}
-                        label="Reset Onboarding (Dev)"
-                        onPress={() => {
-                            useStore.getState().setOnboarded(false);
-                            Alert.alert("Reset", "Onboarding reset. proper restart required.");
-                        }}
-                        color="red"
-                        isLast
-                    />
-                )}
-            </Section>
+                        <Section title="Account">
+                            <MenuItem
+                                icon={LogOut}
+                                label="Sign Out"
+                                onPress={handleLogout}
+                                color={palette.softGold}
+                                isLast
+                            />
+                        </Section>
 
-            <Text style={styles.versionText}>True North v1.0.0</Text>
-        </ScrollView>
+                        <Text style={styles.versionText}>True North v1.0.0</Text>
+                    </>
+                }
+            />
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
+    scrollContent: { paddingBottom: 120 },
     header: { alignItems: 'center', marginBottom: theme.spacing.xxl },
     avatarWrapper: { position: 'relative', marginBottom: theme.spacing.md },
     avatarContainer: {
@@ -267,6 +274,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         padding: theme.spacing.lg, borderBottomWidth: 1, borderBottomColor: theme.colors.border
     },
+    menuItemLast: { borderBottomWidth: 0 },
     menuItemLeft: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md, flex: 1 },
     iconContainer: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
     menuLabel: { fontFamily: theme.typography.sansMedium, fontSize: 16, flexShrink: 1 },

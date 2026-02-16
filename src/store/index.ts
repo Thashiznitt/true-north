@@ -99,6 +99,7 @@ interface UserState {
     addJournalEntry: (entry: Omit<JournalEntry, 'id'>) => void;
     updateJournalEntry: (id: string, entry: Partial<JournalEntry>) => void;
     deleteJournalEntry: (id: string) => void;
+    logout: () => void;
 }
 
 export const useStore = create<UserState>()(
@@ -237,6 +238,7 @@ export const useStore = create<UserState>()(
             deleteJournalEntry: (id) => set((state) => ({
                 journalEntries: state.journalEntries.filter(e => e.id !== id)
             })),
+            logout: () => set({ isLoggedIn: false, subscriptionTier: 'free', username: '', profilePicture: null }),
         }),
         {
             name: 'true-north-storage',

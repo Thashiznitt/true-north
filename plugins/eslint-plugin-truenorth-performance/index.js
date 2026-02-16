@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const noScrollView = require('./rules/no-scrollview');
 const enforceFlashList = require('./rules/enforce-flashlist');
 const noRnImage = require('./rules/no-rn-image');

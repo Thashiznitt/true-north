@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, ActionSheetIOS, Share, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, ActionSheetIOS, Share } from 'react-native'; // eslint-disable-line react-native/split-platform-components
+import { Image } from 'expo-image';
+import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
+import { GhostReflection } from '../../services/ContentAgentService';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { Users, Lock, ChevronLeft, Heart, Share2, MoreVertical, Plus, Send, Clock, MapPin, Sparkles, X, Image as ImageIcon, Flag, Link } from 'lucide-react-native';
@@ -19,7 +22,7 @@ export const CircleDetailScreen = () => {
     const route = useRoute();
     const isFocused = useIsFocused();
     const { createdCircles, bookmarkedCircleIds, toggleBookmark, deleteCreatedCircle } = useStore();
-    const { circleId, circleName: initialName } = (route.params as any) || {};
+    const { circleId, circleName: initialName } = (route.params as any) || {}; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     // Check in both ghost circles and user-created circles
     const ghostCircle = LIFE_CIRCLES.find(c => c.id === circleId);
@@ -31,7 +34,7 @@ export const CircleDetailScreen = () => {
     const isGhostCircle = circleId?.startsWith('c');
 
     // State for local reflections so we can see updates
-    const [reflections, setReflections] = useState<any[]>([]);
+    const [reflections, setReflections] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
     const isBookmarked = bookmarkedCircleIds.includes(circleId);
 
     useEffect(() => {
@@ -81,7 +84,7 @@ export const CircleDetailScreen = () => {
                 "Sharing reflections in public circles is a True North feature. Upgrade to join the conversation.",
                 [
                     { text: "Later", style: "cancel" },
-                    { text: "Upgrade", onPress: () => (navigation as any).navigate('Subscription') }
+                    { text: "Upgrade", onPress: () => (navigation as any).navigate('Subscription') } // eslint-disable-line @typescript-eslint/no-explicit-any
                 ]
             );
             return;
@@ -119,7 +122,7 @@ export const CircleDetailScreen = () => {
     };
 
     const handleInvite = async () => {
-        const circleId = (route.params as any)?.circleId || '1';
+        const circleId = (route.params as any)?.circleId || '1'; // eslint-disable-line @typescript-eslint/no-explicit-any
         const inviteUrl = Linking.createURL(`invite / ${circleId} `);
         // For WhatsApp, we want a message that includes the link
         // We can also use a "store redirect" link if we want, but usually expo-linking handles this if configured correctly
@@ -185,7 +188,7 @@ export const CircleDetailScreen = () => {
                 }
             );
         } else {
-            const buttons: any[] = [
+            const buttons: any[] = [ // eslint-disable-line @typescript-eslint/no-explicit-any
                 { text: "Cancel", style: "cancel" },
                 { text: "Flag Sanctuary", onPress: handleFlagCircle }
             ];
@@ -223,7 +226,7 @@ export const CircleDetailScreen = () => {
         );
     };
 
-    const renderEvent = ({ item }: any) => (
+    const renderEvent = ({ item }: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
         <View style={styles.eventCard}>
             <View style={styles.eventInfo}>
                 <Text style={styles.eventTitle}>{item.title}</Text>
@@ -239,8 +242,8 @@ export const CircleDetailScreen = () => {
         </View>
     );
 
-    const renderPost = ({ item }: any) => {
-        const userName = item.user || 'Anonymous';
+    const renderPost = ({ item }: { item: any }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+        const userName = item.userName || item.user || 'Anonymous';
         return (
             <View style={styles.postCard}>
                 <View style={styles.postHeader}>
@@ -313,10 +316,11 @@ export const CircleDetailScreen = () => {
                 </View>
             </View>
 
-            <FlatList
+            <TrueNorthFlashList
                 data={MOCK_POSTS}
                 renderItem={renderPost}
-                keyExtractor={item => item.id}
+                keyExtractor={(item: any) => item.id} // eslint-disable-line @typescript-eslint/no-explicit-any
+                estimatedItemSize={250}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 ListHeaderComponent={
@@ -331,17 +335,15 @@ export const CircleDetailScreen = () => {
                                         </TouchableOpacity>
                                     )}
                                 </View>
-                                <ScrollView
+                                <TrueNorthFlashList
                                     horizontal
+                                    data={MOCK_EVENTS}
+                                    renderItem={renderEvent}
+                                    keyExtractor={(item) => item.id}
                                     showsHorizontalScrollIndicator={false}
                                     contentContainerStyle={styles.eventList}
-                                >
-                                    {MOCK_EVENTS.map(event => (
-                                        <React.Fragment key={event.id}>
-                                            {renderEvent({ item: event })}
-                                        </React.Fragment>
-                                    ))}
-                                </ScrollView>
+                                    estimatedItemSize={200}
+                                />
                                 <View style={styles.sectionDivider} />
                             </>
                         )}

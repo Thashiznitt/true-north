@@ -12,10 +12,11 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
  * 2. Uses a large drawing distance to pre-warm images.
  * 3. Removes clipped subviews for memory efficiency.
  */
-export function TrueNorthFlashList<T>(props: FlashListProps<T>) {
+export function TrueNorthFlashList<T>({ estimatedItemSize = 250, ...props }: FlashListProps<T>) {
     return (
         <FlashList
             {...props}
+            estimatedItemSize={estimatedItemSize}
             drawDistance={2 * SCREEN_HEIGHT}
             removeClippedSubviews={true}
             keyboardDismissMode="on-drag"

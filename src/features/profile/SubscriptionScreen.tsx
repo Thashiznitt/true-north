@@ -1,14 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { ChevronLeft, Check, Compass as CompassIcon, Star, Zap } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { subscriptionService } from '../../services/subscription';
+import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { MotiView } from 'moti';
 
 type Tier = 'compass' | 'true_north' | 'zenith';
+
+const renderItem = () => null;
+const keyExtractor = () => 'dummy';
 
 export const SubscriptionScreen = () => {
     const insets = useSafeAreaInsets();
@@ -34,62 +38,69 @@ export const SubscriptionScreen = () => {
                 <View style={styles.spacer} />
             </View>
 
-            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-                <View style={styles.tierContainer}>
-                    <TierCard
-                        tier="compass"
-                        name="Compass"
-                        price="$5.99"
-                        period="/ month"
-                        subtext="Billed Annually ($71.88/yr)"
-                        benefits={["Unlimited Private Reflections (Journal)", "Join up to 5 Circles", "Standard Daily Guidance"]}
-                        icon={CompassIcon}
-                        isSelected={selectedTier === 'compass'}
-                        onSelect={() => setSelectedTier('compass')}
-                    />
+            <TrueNorthFlashList
+                data={[]}
+                renderItem={renderItem}
+                keyExtractor={keyExtractor}
+                estimatedItemSize={800}
+                contentContainerStyle={styles.content}
+                showsVerticalScrollIndicator={false}
+                ListHeaderComponent={
+                    <>
+                        <View style={styles.tierContainer}>
+                            <TierCard
+                                name="Compass"
+                                price="$5.99"
+                                period="/ month"
+                                subtext="Billed Annually ($71.88/yr)"
+                                benefits={["Unlimited Private Reflections (Journal)", "Join up to 5 Circles", "Standard Daily Guidance"]}
+                                icon={CompassIcon}
+                                isSelected={selectedTier === 'compass'}
+                                onSelect={() => setSelectedTier('compass')}
+                            />
 
-                    <TierCard
-                        tier="true_north"
-                        name="True North"
-                        price="$12.99"
-                        period="/ month"
-                        subtext="Monthly Alignment"
-                        benefits={["Unlimited Community Reflections", "AI Spiritual Guidance (Private)", "Join Unlimited Circles", "Create up to 2 Circles"]}
-                        icon={Star}
-                        isSelected={selectedTier === 'true_north'}
-                        onSelect={() => setSelectedTier('true_north')}
-                        isPopular
-                    />
+                            <TierCard
+                                name="True North"
+                                price="$12.99"
+                                period="/ month"
+                                subtext="Monthly Alignment"
+                                benefits={["Unlimited Community Reflections", "AI Spiritual Guidance (Private)", "Join Unlimited Circles", "Create up to 2 Circles"]}
+                                icon={Star}
+                                isSelected={selectedTier === 'true_north'}
+                                onSelect={() => setSelectedTier('true_north')}
+                                isPopular
+                            />
 
-                    <TierCard
-                        tier="zenith"
-                        name="Zenith"
-                        price="$19.99"
-                        period="/ month"
-                        subtext="Peak Spiritual IQ"
-                        benefits={["Elite AI Spiritual Mentoring", "Deep Community Analysis", "Unlimited Circle Creation", "Location Intelligence"]}
-                        icon={Zap}
-                        isSelected={selectedTier === 'zenith'}
-                        onSelect={() => setSelectedTier('zenith')}
-                    />
-                </View>
+                            <TierCard
+                                name="Zenith"
+                                price="$19.99"
+                                period="/ month"
+                                subtext="Peak Spiritual IQ"
+                                benefits={["Elite AI Spiritual Mentoring", "Deep Community Analysis", "Unlimited Circle Creation", "Location Intelligence"]}
+                                icon={Zap}
+                                isSelected={selectedTier === 'zenith'}
+                                onSelect={() => setSelectedTier('zenith')}
+                            />
+                        </View>
 
-                <TouchableOpacity style={styles.ctaButton} onPress={handleSubscribe}>
-                    <Text style={styles.ctaButtonText}>
-                        {selectedTier === 'compass' ? 'Start Annual Journey' : 'Begin Monthly Alignment'}
-                    </Text>
-                    <Text style={styles.ctaButtonSub}>
-                        {selectedTier === 'compass' ? '$71.88 / year' : `${selectedTier === 'true_north' ? '$12.99' : '$19.99'} / month`}
-                    </Text>
-                </TouchableOpacity>
+                        <TouchableOpacity style={styles.ctaButton} onPress={handleSubscribe}>
+                            <Text style={styles.ctaButtonText}>
+                                {selectedTier === 'compass' ? 'Start Annual Journey' : 'Begin Monthly Alignment'}
+                            </Text>
+                            <Text style={styles.ctaButtonSub}>
+                                {selectedTier === 'compass' ? '$71.88 / year' : `${selectedTier === 'true_north' ? '$12.99' : '$19.99'} / month`}
+                            </Text>
+                        </TouchableOpacity>
 
-                <Text style={styles.footerNote}>Secured and encrypted. Cancel anytime.</Text>
-            </ScrollView>
+                        <Text style={styles.footerNote}>Secured and encrypted. Cancel anytime.</Text>
+                    </>
+                }
+            />
         </View>
     );
 };
 
-const TierCard = ({ tier, name, price, period, subtext, benefits, icon: Icon, isSelected, onSelect, isPopular }: any) => (
+const TierCard = ({ name, price, period, subtext, benefits, icon: Icon, isSelected, onSelect, isPopular }: any) => (
     <TouchableOpacity
         activeOpacity={0.9}
         onPress={onSelect}

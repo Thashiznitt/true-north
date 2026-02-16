@@ -1,279 +1,234 @@
-import React from 'react';
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Share, Alert, Animated } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ImageBackground, Share, Platform, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { Heart, Share2, PenLine, Music, Sparkles, Bell, Image as ImageIcon, HandHelping, X as CloseIcon, ChevronRight } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
-import { useQuery } from '@tanstack/react-query';
-import { affirmationService } from '../../services/api';
-import * as MediaLibrary from 'expo-media-library';
-import ViewShot, { captureRef } from 'react-native-view-shot';
 import { useStore } from '../../store';
-import { FaithAd } from '../../components/FaithAd';
-import { Modal, ScrollView as RnScrollView } from 'react-native';
+import {
+    Heart,
+    Share2,
+    Copy,
+    Sparkles,
+    X,
+    MessageSquare
+} from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
+import ViewShot from 'react-native-view-shot';
+import * as MediaLibrary from 'expo-media-library';
 import { contentAgentService } from '../../services/ContentAgentService';
-import { MotiView, MotiText } from 'moti';
+import { FaithAd } from '../../components/FaithAd';
+import { View as MotiView } from 'moti';
+import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
+
+// Define aliases for icons to avoid name conflicts with common words
+const HeartIcon = Heart;
+const ShareIcon = Share2;
+const CopyIcon = Copy;
+const AdviceIcon = MessageSquare;
+const CloseIcon = X;
+
+const BACKGROUNDS = [
+    'https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=2000&auto=format&fit=crop', // Lush mountains
+    'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2000&auto=format&fit=crop', // Sunlight in woods
+    'https://images.unsplash.com/photo-1500673922987-e212871fec22?q=80&w=2000&auto=format&fit=crop', // Lake sunset
+    'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=2000&auto=format&fit=crop', // Morning mist
+    'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=2000&auto=format&fit=crop', // Forest path
+];
+
+const AFFIRMATIONS = [
+    { text: "My spirit is anchored in the peace that surpasses all understanding.", author: "Sacred Truth" },
+    { text: "I am a vessel of divine light, radiating love to everyone I meet.", author: "Daily Grace" },
+    { text: "Today, I walk with purpose and intentionality.", author: "Faithful Path" },
+    { text: "Every breath I take is a gift of grace.", author: "True North" },
+    { text: "I focus my heart on what is pure, lovely, and of good report.", author: "Alignment" },
+];
 
 export const AffirmationScreen = () => {
+    const renderItem = () => null;
     const insets = useSafeAreaInsets();
-    const navigation = useNavigation<any>();
-    const viewShotRef = React.useRef<any>(null);
-    const [isWallpaperMode, setIsWallpaperMode] = React.useState(false);
-    const [saving, setSaving] = React.useState(false);
-    const [showAdvice, setShowAdvice] = React.useState(false);
-    const [showLimitModal, setShowLimitModal] = React.useState(false);
-    const [showPrayerModal, setShowPrayerModal] = React.useState(false);
-    const [prayerData, setPrayerData] = React.useState<any>(null);
-    const [blessed, setBlessed] = React.useState(false);
-    const fadeAnim = React.useRef(new Animated.Value(1)).current;
-    const scaleAnim = React.useRef(new Animated.Value(1)).current;
-    const glowAnim = React.useRef(new Animated.Value(0)).current;
-
-    const { subscriptionTier, beliefType, themes, username, lastAdviceTimestamp, setLastAdviceTimestamp } = useStore();
+    const navigation = useNavigation<any>(); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const viewShotRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const { beliefType, subscriptionTier } = useStore();
     const isSubscribed = subscriptionTier !== 'free';
 
-    // Phase 9: Dynamic Daily Backgrounds
-    const BACKGROUND_URLS = [
-        "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80", // Mountains
-        "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1000&q=80", // Forest
-        "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1000&q=80", // Mist
-        "https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=1000&q=80", // Valley
-        "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1000&q=80", // Nature
-        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80", // Peaks
-        "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?auto=format&fit=crop&w=1000&q=80", // Morning sun
-    ];
+    const [currentIdx, setCurrentIdx] = useState(0);
+    const [bgIdx, setBgIdx] = useState(0);
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [showAdvice, setShowAdvice] = useState(false);
+    const [adviceContent, setAdviceContent] = useState('');
+    const [loadingAdvice, setLoadingAdvice] = useState(false);
+    const [isWallpaperMode, setIsWallpaperMode] = useState(false);
+    const [saving, setSaving] = useState(false);
 
-    const getDailyBackground = () => {
-        const now = new Date();
-        const start = new Date(now.getFullYear(), 0, 0);
-        const diff = (now.getTime() - start.getTime()) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
-        const oneDay = 1000 * 60 * 60 * 24;
-        const dayOfYear = Math.floor(diff / oneDay);
-        return BACKGROUND_URLS[dayOfYear % BACKGROUND_URLS.length];
-    };
+    useEffect(() => {
+        // Daily cycling based on date
+        const day = new Date().getDate();
+        setCurrentIdx(day % AFFIRMATIONS.length);
+        setBgIdx(day % BACKGROUNDS.length);
+    }, []);
 
-    const { data: affirmation } = useQuery({
-        queryKey: ['daily-affirmation', beliefType, themes[0]],
-        queryFn: () => contentAgentService.getDailyAffirmation(beliefType || 'Open', themes),
-    });
+    const current = AFFIRMATIONS[currentIdx];
 
-    const mockAffirmation = {
-        text: "Today, I walk in the strength of my purpose, guided by wisdom and fueled by love.",
-        verse: "Isaiah 40:31",
-        imageUrl: getDailyBackground(),
-    };
-
-    const current = affirmation ? { ...affirmation, imageUrl: getDailyBackground() } : mockAffirmation;
-
-    const canGetAdvice = () => {
-        if (!lastAdviceTimestamp) return true;
-        const now = Date.now();
-        const diff = now - lastAdviceTimestamp;
-        const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-        const ONE_WEEK_MS = 7 * ONE_DAY_MS;
-        return isSubscribed ? diff >= ONE_DAY_MS : diff >= ONE_WEEK_MS;
-    };
-
-    const [adviceContent, setAdviceContent] = React.useState('');
-    const [loadingAdvice, setLoadingAdvice] = React.useState(false);
-
-    const handleAdvicePress = async () => {
-        if (canGetAdvice()) {
-            setLoadingAdvice(true);
-            try {
-                const advice = await contentAgentService.getDailyAdvice(username || 'friend', beliefType || 'Open', themes);
-                setAdviceContent(advice);
-                setShowAdvice(true);
-                setLastAdviceTimestamp(Date.now());
-            } catch (error) {
-                console.error('Failed to get advice', error);
-            } finally {
-                setLoadingAdvice(false);
-            }
-        } else {
-            setShowLimitModal(true);
-        }
-    };
-
-    const handleBless = () => {
-        setBlessed(true);
-
-        // Spiritual animation sequence
-        Animated.parallel([
-            Animated.sequence([
-                Animated.timing(scaleAnim, { toValue: 1.05, duration: 400, useNativeDriver: true }),
-                Animated.timing(scaleAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-            ]),
-            Animated.sequence([
-                Animated.timing(glowAnim, { toValue: 1, duration: 400, useNativeDriver: false }),
-                Animated.timing(glowAnim, { toValue: 0, duration: 1200, useNativeDriver: false }),
-            ])
-        ]).start(() => setBlessed(false));
-    };
-
-    // ... existing onShare and saveWallpaper ...
-
-    const onShare = async () => {
+    const copyToClipboard = async () => {
+        // Fallback to share if clipboard is not available
         try {
             await Share.share({
-                message: `${current.text}\n\n— ${current.verse || 'True North'}`,
+                message: `"${current.text}" - ${current.author}`,
             });
         } catch (error) {
             console.error(error);
+        }
+    };
+
+    const handleShare = async () => {
+        try {
+            await Share.share({
+                message: `Today's True North Affirmation:\n\n"${current.text}"\n\nDownload True North for your daily spiritual alignment.`,
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const toggleFavorite = () => {
+        setIsFavorite(!isFavorite);
+    };
+
+    const handleGetAdvice = async () => {
+        if (!isSubscribed) {
+            navigation.navigate('Subscription');
+            return;
+        }
+
+        setLoadingAdvice(true);
+        setShowAdvice(true);
+        setAdviceContent('Receiving spiritual guidance...');
+
+        try {
+            const advice = await contentAgentService.getSpiritualAnalysis(
+                current.text,
+                beliefType || 'Spiritual'
+            );
+            setAdviceContent(advice.message);
+        } catch (error) {
+            setAdviceContent("Rest in the silence. The guidance will come clear soon.");
+        } finally {
+            setLoadingAdvice(false);
         }
     };
 
     const saveWallpaper = async () => {
         try {
+            setSaving(true);
             const { status } = await MediaLibrary.requestPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permission needed', 'Please allow gallery access to save wallpapers.');
+                Alert.alert("Permission Required", "Allow access to photos to save your wallpaper.");
                 return;
             }
 
-            setSaving(true);
-            const uri = await captureRef(viewShotRef, {
-                format: 'jpg',
-                quality: 0.9,
-            });
-
+            const uri = await viewShotRef.current.capture();
             await MediaLibrary.saveToLibraryAsync(uri);
-            Alert.alert('Success', 'Sanctuary wallpaper saved to your gallery.');
+            Alert.alert("Sanctuary Saved", "Your sacred wallpaper is now in your photo library.");
+            setIsWallpaperMode(false);
         } catch (error) {
-            console.error(error);
-            Alert.alert('Error', 'Failed to save wallpaper.');
+            Alert.alert("Error", "Could not save the wallpaper.");
         } finally {
             setSaving(false);
-            setIsWallpaperMode(false);
         }
     };
 
     return (
         <View style={styles.container}>
-            <ViewShot ref={viewShotRef} style={{ flex: 1 }} options={{ format: 'jpg', quality: 0.9 }}>
+            <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.9 }} style={{ flex: 1 }}>
                 <ImageBackground
-                    source={{ uri: current.imageUrl }}
+                    source={{ uri: BACKGROUNDS[bgIdx] }}
                     style={styles.background}
-                    resizeMode="cover"
                 >
-                    <LinearGradient
-                        colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.6)']}
-                        style={StyleSheet.absoluteFill}
-                    />
+                    <View style={styles.overlay} />
 
-                    <Animated.View style={[
-                        StyleSheet.absoluteFill,
-                        {
-                            backgroundColor: palette.softGold,
-                            opacity: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.15] })
-                        }
-                    ]} />
-
-                    <Animated.ScrollView
-                        style={{ flex: 1, transform: [{ scale: scaleAnim }] }}
-                        contentContainerStyle={[
-                            styles.content,
-                            {
-                                paddingTop: insets.top + 20,
-                                paddingBottom: insets.bottom + 120, // Extra padding for tab bar + ad
-                                flexGrow: 1,
-                                flex: 0,
-                            }
-                        ]}
+                    <TrueNorthFlashList
+                        data={[]}
+                        renderItem={renderItem}
+                        keyExtractor={() => 'affirmation'}
+                        estimatedItemSize={800}
+                        contentContainerStyle={isWallpaperMode ? styles.scrollContentWallpaper : styles.scrollContent}
                         showsVerticalScrollIndicator={false}
-                    >
-                        {!isWallpaperMode ? (
-                            <View style={styles.topNav}>
-                                <Text style={styles.date}>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</Text>
-                                <View style={styles.topActions}>
-                                    <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notifications')}>
-                                        <Bell color={palette.ivory} size={20} />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={styles.iconButton} onPress={onShare}>
-                                        <Share2 color={palette.ivory} size={20} />
-                                    </TouchableOpacity>
+                        ListHeaderComponent={
+                            <>
+                                <View style={styles.content}>
+                                    <MotiView
+                                        from={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                    >
+                                        <Text style={styles.quoteText}>&quot;{current.text}&quot;</Text>
+                                    </MotiView>
+                                    <View style={{ height: 20 }} />
+                                    <MotiView
+                                        from={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                    >
+                                        <Text style={styles.authorText}>{current.author}</Text>
+                                    </MotiView>
+
+                                    {!isWallpaperMode && (
+                                        <View style={styles.actions}>
+                                            <TouchableOpacity style={styles.actionButton} onPress={copyToClipboard}>
+                                                <CopyIcon color={palette.softGold} size={24} />
+                                            </TouchableOpacity>
+                                            <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+                                                <ShareIcon color={palette.softGold} size={24} />
+                                            </TouchableOpacity>
+                                            <TouchableOpacity style={styles.actionButton} onPress={toggleFavorite}>
+                                                <HeartIcon
+                                                    color={isFavorite ? palette.softGold : palette.ivory + '80'}
+                                                    fill={isFavorite ? palette.softGold : 'transparent'}
+                                                    size={24}
+                                                />
+                                            </TouchableOpacity>
+                                            <TouchableOpacity style={styles.actionButton} onPress={handleGetAdvice}>
+                                                <AdviceIcon color={palette.softGold} size={24} />
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
                                 </View>
-                            </View>
-                        ) : <View style={{ height: 40 }} />}
 
-                        <MotiView
-                            from={{ opacity: 0, translateY: 20 }}
-                            animate={{ opacity: 1, translateY: 0 }}
-                            transition={{ type: 'timing', duration: 1000, delay: 300 }}
-                            style={styles.affirmationContainer}
-                        >
-                            <Sparkles color={palette.softGold} size={32} style={{ marginBottom: theme.spacing.xl }} />
-                            <MotiText
-                                from={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ type: 'timing', duration: 1500, delay: 600 }}
-                                style={styles.text}
-                            >
-                                {current.text}
-                            </MotiText>
-                            {current.verse && (
-                                <MotiText
-                                    from={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ type: 'timing', duration: 1000, delay: 1200 }}
-                                    style={styles.reference}
-                                >
-                                    {current.verse}
-                                </MotiText>
-                            )}
-                        </MotiView>
+                                {!isWallpaperMode ? (
+                                    <View style={styles.bottomActions}>
+                                        <TouchableOpacity
+                                            style={styles.wallpaperButton}
+                                            onPress={() => setIsWallpaperMode(true)}
+                                        >
+                                            <Text style={styles.wallpaperButtonText}>Sacred Wallpaper</Text>
+                                        </TouchableOpacity>
 
-                        {!isWallpaperMode ? (
-                            <View style={styles.footer}>
-                                <View style={styles.actions}>
-                                    <TouchableOpacity style={styles.blessButton} onPress={handleBless}>
-                                        <Heart
-                                            color={palette.softGold}
-                                            size={24}
-                                            fill={palette.softGold}
-                                            style={blessed && { transform: [{ scale: 1.2 }] }}
-                                        />
-                                        <Text style={styles.blessText}>{blessed ? 'Blessed' : 'Bless'}</Text>
-                                    </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={styles.journalButton}
+                                            onPress={() => navigation.navigate('JournalDetail', {
+                                                isNew: true,
+                                                initialContent: `Reflecting on today's affirmation:\n\n"${current.text}"\n\n`
+                                            })}
+                                        >
+                                            <Text style={styles.journalButtonText}>Reflect in Journal</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                ) : (
+                                    <View style={styles.wallpaperActions}>
+                                        <TouchableOpacity style={styles.wallpaperButton} onPress={() => setIsWallpaperMode(false)}>
+                                            <Text style={styles.wallpaperButtonText}>Cancel</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={[styles.wallpaperButton, styles.saveButton]} onPress={saveWallpaper} disabled={saving}>
+                                            <Text style={styles.saveButtonText}>{saving ? 'Saving...' : 'Save Wallpaper'}</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
 
-                                    <View style={styles.divider} />
-
-                                    <TouchableOpacity style={styles.actionIcon} onPress={() => setIsWallpaperMode(true)}>
-                                        <ImageIcon color={palette.ivory} size={24} />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={styles.actionIcon} onPress={handleAdvicePress} disabled={loadingAdvice}>
-                                        <HandHelping color={palette.ivory} size={24} style={{ opacity: loadingAdvice ? 0.5 : 1 }} />
-                                        {canGetAdvice() && <View style={styles.availableIndicator} />}
-                                    </TouchableOpacity>
-                                </View>
-                                <TouchableOpacity
-                                    style={styles.journalButton}
-                                    onPress={() => navigation.navigate('JournalDetail', {
-                                        isNew: true,
-                                        initialContent: `Reflecting on today's affirmation:\n\n"${current.text}"\n\n`
-                                    })}
-                                >
-                                    <Text style={styles.journalButtonText}>Reflect in Journal</Text>
-                                </TouchableOpacity>
-                            </View>
-                        ) : (
-                            <View style={styles.wallpaperActions}>
-                                <TouchableOpacity style={styles.wallpaperButton} onPress={() => setIsWallpaperMode(false)}>
-                                    <Text style={styles.wallpaperButtonText}>Cancel</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={[styles.wallpaperButton, styles.saveButton]} onPress={saveWallpaper} disabled={saving}>
-                                    <Text style={styles.saveButtonText}>{saving ? 'Saving...' : 'Save Wallpaper'}</Text>
-                                </TouchableOpacity>
-                            </View>
-                        )}
-
-                        {!isSubscribed && !isWallpaperMode && (
-                            <View style={{ marginTop: theme.spacing.md }}>
-                                <FaithAd type="community" />
-                            </View>
-                        )}
-                    </Animated.ScrollView>
+                                {!isSubscribed && !isWallpaperMode && (
+                                    <View style={{ marginTop: theme.spacing.md }}>
+                                        <FaithAd type="community" />
+                                    </View>
+                                )}
+                            </>
+                        }
+                    />
                 </ImageBackground>
             </ViewShot>
 
@@ -295,127 +250,24 @@ export const AffirmationScreen = () => {
                             </TouchableOpacity>
                         </View>
 
-                        <RnScrollView style={styles.adviceScroll}>
-                            <Text style={styles.adviceText}>
-                                {adviceContent}
-                            </Text>
-
-                            {!isSubscribed && (
-                                <TouchableOpacity
-                                    style={styles.nudgeBox}
-                                    onPress={() => {
-                                        setShowAdvice(false);
-                                        navigation.navigate('Subscription');
-                                    }}
-                                >
-                                    <LinearGradient
-                                        colors={[palette.softGold, '#D4AF37']}
-                                        style={styles.nudgeGradient}
-                                    >
-                                        <Sparkles color={palette.ivory} size={20} />
-                                        <View style={{ flex: 1 }}>
-                                            <Text style={styles.nudgeTitle}>Unlock Daily Guidance</Text>
-                                            <Text style={styles.nudgeDesc}>Get personalized spiritual wisdom every single day with Premium.</Text>
-                                        </View>
-                                        <ChevronRight color={palette.ivory} size={20} />
-                                    </LinearGradient>
-                                </TouchableOpacity>
-                            )}
-                        </RnScrollView>
+                        <TrueNorthFlashList
+                            data={[]}
+                            renderItem={renderItem}
+                            keyExtractor={() => 'advice'}
+                            estimatedItemSize={400}
+                            contentContainerStyle={styles.adviceScroll}
+                            ListHeaderComponent={
+                                <Text style={styles.adviceText}>
+                                    {adviceContent}
+                                </Text>
+                            }
+                        />
 
                         <TouchableOpacity
-                            style={styles.closeButton}
-                            onPress={async () => {
-                                const data = await contentAgentService.getDailyPrayerOrQuote(username || 'friend', beliefType || 'Open');
-                                setPrayerData(data);
-                                setShowAdvice(false);
-                                setShowPrayerModal(true);
-                            }}
+                            style={styles.closeBtn}
+                            onPress={() => setShowAdvice(false)}
                         >
-                            <Text style={styles.closeButtonText}>Continue</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
-
-            <Modal
-                visible={showPrayerModal}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setShowPrayerModal(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <View style={styles.modalHeaderLeft}>
-                                <Sparkles color={palette.softGold} size={20} />
-                                <Text style={styles.modalTitle}>{prayerData?.title || 'Daily Wisdom'}</Text>
-                            </View>
-                            <TouchableOpacity onPress={() => setShowPrayerModal(false)}>
-                                <CloseIcon color={theme.colors.text} size={24} />
-                            </TouchableOpacity>
-                        </View>
-
-                        <RnScrollView style={styles.adviceScroll}>
-                            <Text style={styles.adviceText}>{prayerData?.content}</Text>
-                        </RnScrollView>
-
-                        <TouchableOpacity
-                            style={styles.closeButton}
-                            onPress={() => setShowPrayerModal(false)}
-                        >
-                            <Text style={styles.closeButtonText}>{prayerData?.buttonLabel || 'Amen'}</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
-
-            <Modal
-                visible={showLimitModal}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setShowLimitModal(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <View style={styles.modalHeaderLeft}>
-                                <Sparkles color={palette.softGold} size={20} />
-                                <Text style={styles.modalTitle}>Divine Patience</Text>
-                            </View>
-                            <TouchableOpacity onPress={() => setShowLimitModal(false)}>
-                                <CloseIcon color={theme.colors.text} size={24} />
-                            </TouchableOpacity>
-                        </View>
-
-                        <Text style={styles.adviceText}>
-                            You&apos;ve received your spiritual guidance for this {isSubscribed ? 'day' : 'week'}.
-                            {isSubscribed ? ' Your next insight will be ready tomorrow.' : ' Subscribers unlock personalized daily wisdom.'}
-                        </Text>
-
-                        {!isSubscribed ? (
-                            <TouchableOpacity
-                                style={styles.premiumNudgeButton}
-                                onPress={() => {
-                                    setShowLimitModal(false);
-                                    navigation.navigate('Subscription');
-                                }}
-                            >
-                                <LinearGradient
-                                    colors={[palette.softGold, '#D4AF37']}
-                                    style={styles.premiumNudgeGradient}
-                                >
-                                    <Text style={styles.premiumNudgeText}>Upgrade to Daily Advice</Text>
-                                    <ChevronRight color={palette.ivory} size={20} />
-                                </LinearGradient>
-                            </TouchableOpacity>
-                        ) : null}
-
-                        <TouchableOpacity
-                            style={styles.closeButton}
-                            onPress={() => setShowLimitModal(false)}
-                        >
-                            <Text style={styles.closeButtonText}>Continue</Text>
+                            <Text style={styles.closeBtnText}>Return to Presence</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -425,83 +277,44 @@ export const AffirmationScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.colors.text },
-    background: { flex: 1 },
-    content: { flex: 1, justifyContent: 'space-between', paddingHorizontal: theme.spacing.xl },
-    topNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    topActions: { flexDirection: 'row', gap: theme.spacing.sm },
-    date: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 13, textTransform: 'uppercase', letterSpacing: 2, opacity: 0.8 },
-    iconButton: { padding: theme.spacing.sm },
-    affirmationContainer: { alignItems: 'center', marginBottom: theme.spacing.xxl },
-    text: {
-        fontFamily: theme.typography.serif, fontSize: 38, color: palette.ivory,
-        textAlign: 'center', lineHeight: 52, marginBottom: theme.spacing.xl,
-        letterSpacing: -0.5
+    container: { flex: 1, backgroundColor: '#000' },
+    background: { flex: 1, width: '100%', height: '100%' },
+    overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
+    scrollContent: { flexGrow: 1, paddingHorizontal: theme.spacing.xl, paddingBottom: 60, paddingTop: 100 },
+    scrollContentWallpaper: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: theme.spacing.xxl },
+    content: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    quoteText: {
+        fontFamily: theme.typography.serifBold, fontSize: 36, color: palette.ivory,
+        textAlign: 'center', lineHeight: 48, letterSpacing: -0.5
     },
-    reference: {
-        fontFamily: theme.typography.sansBold, fontSize: 15, color: palette.softGold,
-        textTransform: 'uppercase', letterSpacing: 4
+    authorText: {
+        fontFamily: theme.typography.sansBold, fontSize: 13, color: palette.softGold,
+        textTransform: 'uppercase', letterSpacing: 2, marginTop: theme.spacing.lg
     },
-    footer: { gap: theme.spacing.xl, marginBottom: 20 },
-    actions: {
-        flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: theme.spacing.xl,
-        backgroundColor: 'rgba(0,0,0,0.3)', paddingHorizontal: theme.spacing.md, paddingVertical: 12, borderRadius: theme.borderRadius.full,
-        overflow: 'visible'
-    },
-    blessButton: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, paddingHorizontal: theme.spacing.md, paddingVertical: 4 },
-    blessText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 16 },
-    divider: { width: 1, height: 24, backgroundColor: 'rgba(255,255,255,0.2)' },
-    actionIcon: { padding: theme.spacing.xs },
-    journalButton: {
-        backgroundColor: palette.ivory, height: 60, borderRadius: theme.borderRadius.full,
-        alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10
-    },
-    journalButtonText: {
-        color: theme.colors.text, fontFamily: theme.typography.sansBold, fontSize: 17
-    },
-    wallpaperActions: { flexDirection: 'row', gap: theme.spacing.md, marginBottom: 20 },
+    actions: { flexDirection: 'row', marginTop: theme.spacing.xxl, gap: theme.spacing.xxl },
+    actionButton: { width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },
+    bottomActions: { marginTop: theme.spacing.xl, gap: theme.spacing.md },
     wallpaperButton: {
-        flex: 1, height: 50, borderRadius: 25, backgroundColor: 'rgba(0,0,0,0.5)',
-        alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)'
+        paddingVertical: 14, paddingHorizontal: 24, borderRadius: 30,
+        backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+        alignItems: 'center'
     },
-    saveButton: { backgroundColor: palette.softGold },
-    wallpaperButtonText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 14 },
-    saveButtonText: { color: theme.colors.text, fontFamily: theme.typography.sansBold, fontSize: 14 },
-    modalOverlay: {
-        flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', padding: theme.spacing.xl
-    },
+    wallpaperButtonText: { fontFamily: theme.typography.sansMedium, fontSize: 15, color: palette.ivory },
+    journalButton: { paddingVertical: 14, paddingHorizontal: 24, borderRadius: 30, backgroundColor: palette.softGold, alignItems: 'center' },
+    journalButtonText: { fontFamily: theme.typography.sansBold, fontSize: 15, color: palette.charcoal },
+    wallpaperActions: { flexDirection: 'row', gap: theme.spacing.md, marginTop: 40 },
+    saveButton: { backgroundColor: palette.softGold, borderColor: palette.softGold },
+    saveButtonText: { fontFamily: theme.typography.sansBold, fontSize: 15, color: palette.charcoal },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: theme.spacing.xl },
     modalContent: {
-        backgroundColor: theme.colors.background, borderRadius: theme.borderRadius.lg, width: '100%',
-        maxHeight: '80%', padding: theme.spacing.xl, overflow: 'hidden'
+        width: '100%', backgroundColor: theme.colors.surface, borderRadius: 24, padding: theme.spacing.xl,
+        maxHeight: '80%', borderWidth: 1, borderColor: theme.colors.border
     },
     modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.xl },
-    modalHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    modalTitle: { fontFamily: theme.typography.serifBold, fontSize: 22, color: theme.colors.text },
-    adviceScroll: { marginBottom: theme.spacing.xl },
-    adviceText: {
-        fontFamily: theme.typography.sans, fontSize: 17, color: theme.colors.text,
-        lineHeight: 28, opacity: 0.9, marginBottom: theme.spacing.xl
-    },
-    nudgeBox: { marginTop: theme.spacing.md, borderRadius: theme.borderRadius.lg, overflow: 'hidden' },
-    nudgeGradient: { flexDirection: 'row', alignItems: 'center', padding: theme.spacing.lg, gap: theme.spacing.md },
-    nudgeTitle: { fontFamily: theme.typography.sansBold, fontSize: 15, color: palette.ivory },
-    nudgeDesc: { fontFamily: theme.typography.sans, fontSize: 13, color: palette.ivory, opacity: 0.9 },
-    closeButton: {
-        backgroundColor: theme.colors.text, height: 50, borderRadius: 25,
-        alignItems: 'center', justifyContent: 'center'
-    },
-    closeButtonText: { color: theme.colors.background, fontFamily: theme.typography.sansBold, fontSize: 16 },
-    availableIndicator: {
-        position: 'absolute', top: 0, right: 0, width: 8, height: 8,
-        borderRadius: 4, backgroundColor: '#FF3B30', borderWidth: 1, borderColor: palette.ivory
-    },
-    premiumNudgeButton: {
-        borderRadius: theme.borderRadius.lg, overflow: 'hidden', marginBottom: theme.spacing.xl
-    },
-    premiumNudgeGradient: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 10
-    },
-    premiumNudgeText: {
-        color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 16
-    }
+    modalHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
+    modalTitle: { fontFamily: theme.typography.serifBold, fontSize: 20, color: theme.colors.text },
+    adviceScroll: { paddingBottom: theme.spacing.xl },
+    adviceText: { fontFamily: theme.typography.serif, fontSize: 18, color: theme.colors.text, lineHeight: 28, textAlign: 'center' },
+    closeBtn: { paddingVertical: 14, borderRadius: 12, backgroundColor: theme.colors.text, alignItems: 'center' },
+    closeBtnText: { fontFamily: theme.typography.sansBold, fontSize: 14, color: theme.colors.background, textTransform: 'uppercase', letterSpacing: 1 }
 });

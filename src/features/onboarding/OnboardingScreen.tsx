@@ -109,7 +109,7 @@ export const OnboardingScreen = () => {
     const handleSubscribe = async () => {
         setLoading(true);
         try {
-            await subscriptionService.subscribe('monthly_journey');
+            await subscriptionService.subscribe('compass');
             finishOnboarding();
         } catch (error) {
             Alert.alert("Subscription Failed", "Please try again or continue with the limited version.");
@@ -494,6 +494,7 @@ export const OnboardingScreen = () => {
                 {renderHeader("Unlock Full Potential", "Start your journey with full access.")}
 
                 <View style={styles.premiumCard}>
+                    {/* eslint-disable-next-line @typescript-eslint/no-require-imports */}
                     <ImageBackground source={require('../../../assets/journal_paywall_bg.png')} style={StyleSheet.absoluteFill} resizeMode="cover" />
                     <LinearGradient
                         colors={['transparent', 'rgba(0,0,0,0.8)', 'rgba(0,0,0,0.95)']}

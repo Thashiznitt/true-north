@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { Image } from 'expo-image';
 import { ExternalLink, Sparkles, X } from 'lucide-react-native';
 import { theme, palette } from '../theme';
 import { useNavigation } from '@react-navigation/native';
@@ -43,7 +43,7 @@ const MOCK_ADS = [
 ];
 
 export const FaithAd = ({ type, onClose }: FaithAdProps) => {
-    const navigation = useNavigation<any>();
+    const navigation = useNavigation<any>(); // eslint-disable-line @typescript-eslint/no-explicit-any
     const ad = type
         ? MOCK_ADS.find(a => a.type === type) || MOCK_ADS[0]
         : MOCK_ADS[Math.floor(Math.random() * MOCK_ADS.length)];
@@ -114,16 +114,6 @@ const styles = StyleSheet.create({
         fontSize: 9,
         color: theme.colors.secondaryText,
         letterSpacing: 0.5,
-    },
-    upsellBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-    },
-    upsellText: {
-        fontFamily: theme.typography.sansMedium,
-        fontSize: 11,
-        color: palette.softGold,
     },
     content: {
         flexDirection: 'row',
