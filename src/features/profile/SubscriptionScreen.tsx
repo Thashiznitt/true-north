@@ -1,24 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { ChevronLeft, Check, Sparkles, ShieldCheck, Heart } from 'lucide-react-native';
+import { ChevronLeft, Check, Compass as CompassIcon, Star, Zap } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { subscriptionService } from '../../services/subscription';
+import { MotiView } from 'moti';
+
+type Tier = 'compass' | 'true_north' | 'zenith';
 
 export const SubscriptionScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<any>();
+    const [selectedTier, setSelectedTier] = useState<Tier>('true_north');
 
     const handleSubscribe = async () => {
         try {
-            await subscriptionService.subscribe('monthly_journey');
+            await subscriptionService.subscribe(selectedTier);
             navigation.goBack();
         } catch (error) {
             console.error("Subscription failed:", error);
-            // Handle error UI
         }
     };
 
@@ -28,66 +30,109 @@ export const SubscriptionScreen = () => {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <ChevronLeft size={28} color={theme.colors.text} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Sanctuary Premium</Text>
-                <View style={{ width: 40 }} />
+                <Text style={styles.headerTitle}>Choose Your Path</Text>
+                <View style={styles.spacer} />
             </View>
 
-            <ScrollView contentContainerStyle={styles.content}>
-                <ImageBackground
-                    source={{ uri: 'https://images.unsplash.com/photo-1518081461904-9d8f136351c2?auto=format&fit=crop&q=80&w=800' }}
-                    style={styles.heroImage}
-                    borderRadius={20}
-                >
-                    <LinearGradient
-                        colors={['transparent', 'rgba(0,0,0,0.7)']}
-                        style={styles.heroGradient}
-                    >
-                        <View style={styles.heroContent}>
-                            <Sparkles size={32} color={palette.softGold} />
-                            <Text style={styles.heroTitle}>Unlock Full Potential</Text>
-                            <Text style={styles.heroSub}>Experience True North without limits.</Text>
-                        </View>
-                    </LinearGradient>
-                </ImageBackground>
+            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+                <View style={styles.tierContainer}>
+                    <TierCard
+                        tier="compass"
+                        name="Compass"
+                        price="$5.99"
+                        period="/ month"
+                        subtext="Billed Annually ($71.88/yr)"
+                        benefits={["Unlimited Private Reflections (Journal)", "Join up to 5 Circles", "Standard Daily Guidance"]}
+                        icon={CompassIcon}
+                        isSelected={selectedTier === 'compass'}
+                        onSelect={() => setSelectedTier('compass')}
+                    />
 
-                <View style={styles.benefits}>
-                    <BenefitItem icon={ShieldCheck} title="Complete Privacy" desc="Advanced end-to-end security for your personal reflections." />
-                    <BenefitItem icon={Sparkles} title="Establish Your Sanctuary" desc="Exclusive ability to create and lead your own digital circles." />
-                    <BenefitItem icon={Heart} title="Unlimited Access" desc="Join and engage with every community in the collective." />
-                </View>
+                    <TierCard
+                        tier="true_north"
+                        name="True North"
+                        price="$12.99"
+                        period="/ month"
+                        subtext="Monthly Alignment"
+                        benefits={["Unlimited Community Reflections", "AI Spiritual Guidance (Private)", "Join Unlimited Circles", "Create up to 2 Circles"]}
+                        icon={Star}
+                        isSelected={selectedTier === 'true_north'}
+                        onSelect={() => setSelectedTier('true_north')}
+                        isPopular
+                    />
 
-                <View style={styles.plans}>
-                    <TouchableOpacity style={styles.planCardActive}>
-                        <View style={styles.planHeader}>
-                            <Text style={styles.planName}>Monthly Journey</Text>
-                            <View style={styles.planSelect}>
-                                <Check size={20} color={palette.ivory} />
-                            </View>
-                        </View>
-                        <Text style={styles.planPrice}>$12.99 / month</Text>
-                        <Text style={styles.planNote}>Full access to daily personalized divine guidance</Text>
-                    </TouchableOpacity>
+                    <TierCard
+                        tier="zenith"
+                        name="Zenith"
+                        price="$19.99"
+                        period="/ month"
+                        subtext="Peak Spiritual IQ"
+                        benefits={["Elite AI Spiritual Mentoring", "Deep Community Analysis", "Unlimited Circle Creation", "Location Intelligence"]}
+                        icon={Zap}
+                        isSelected={selectedTier === 'zenith'}
+                        onSelect={() => setSelectedTier('zenith')}
+                    />
                 </View>
 
                 <TouchableOpacity style={styles.ctaButton} onPress={handleSubscribe}>
-                    <Text style={styles.ctaButtonText}>Subscribe $12.99 / mo</Text>
+                    <Text style={styles.ctaButtonText}>
+                        {selectedTier === 'compass' ? 'Start Annual Journey' : 'Begin Monthly Alignment'}
+                    </Text>
+                    <Text style={styles.ctaButtonSub}>
+                        {selectedTier === 'compass' ? '$71.88 / year' : `${selectedTier === 'true_north' ? '$12.99' : '$19.99'} / month`}
+                    </Text>
                 </TouchableOpacity>
-                <Text style={styles.footerNote}>Secured and encrypted by App Store</Text>
+
+                <Text style={styles.footerNote}>Secured and encrypted. Cancel anytime.</Text>
             </ScrollView>
         </View>
     );
 };
 
-const BenefitItem = ({ icon: Icon, title, desc }: any) => (
-    <View style={styles.benefitItem}>
-        <View style={styles.benefitIcon}>
-            <Icon size={20} color={palette.softGold} />
+const TierCard = ({ tier, name, price, period, subtext, benefits, icon: Icon, isSelected, onSelect, isPopular }: any) => (
+    <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={onSelect}
+        style={[
+            styles.tierCard,
+            isSelected && styles.tierCardSelected,
+        ]}
+    >
+        {isPopular && (
+            <View style={styles.popularBadge}>
+                <Text style={styles.popularText}>MOST ALIGNED</Text>
+            </View>
+        )}
+        <View style={styles.tierHeader}>
+            <View style={[styles.tierIcon, isSelected && styles.tierIconSelected]}>
+                <Icon size={24} color={isSelected ? palette.ivory : palette.softGold} />
+            </View>
+            <View style={styles.flex1}>
+                <Text style={[styles.tierName, styles.tierNameSelected]}>{name}</Text>
+                <Text style={styles.tierSubtext}>{subtext}</Text>
+            </View>
+            <View style={styles.priceContainer}>
+                <Text style={[styles.tierPrice, isSelected && styles.tierPriceSelected]}>{price}</Text>
+                <Text style={styles.tierPeriod}>{period}</Text>
+            </View>
         </View>
-        <View style={styles.benefitText}>
-            <Text style={styles.benefitTitle}>{title}</Text>
-            <Text style={styles.benefitDesc}>{desc}</Text>
-        </View>
-    </View>
+
+        {isSelected && (
+            <MotiView
+                from={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                style={styles.benefitContainer as any}
+            >
+                <View style={styles.divider} />
+                {benefits.map((benefit: string, i: number) => (
+                    <View key={i} style={styles.benefitRow}>
+                        <Check size={16} color={palette.softGold} />
+                        <Text style={styles.benefitText}>{benefit}</Text>
+                    </View>
+                ))}
+            </MotiView>
+        )}
+    </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
@@ -95,36 +140,48 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         paddingHorizontal: theme.spacing.xl, paddingBottom: theme.spacing.md,
-        borderBottomWidth: 1, borderBottomColor: theme.colors.border
     },
     backButton: { width: 40, height: 40, justifyContent: 'center' },
+    spacer: { width: 40 },
     headerTitle: { fontFamily: theme.typography.serifBold, fontSize: 20, color: theme.colors.text },
-    content: { padding: theme.spacing.xl, paddingBottom: 60 },
-    heroImage: { height: 200, marginBottom: theme.spacing.xxl, overflow: 'hidden' },
-    heroGradient: { flex: 1, justifyContent: 'flex-end', padding: theme.spacing.xl },
-    heroContent: { alignItems: 'center' },
-    heroTitle: { fontFamily: theme.typography.serifBold, fontSize: 24, color: palette.ivory, marginBottom: 4 },
-    heroSub: { fontFamily: theme.typography.sans, fontSize: 14, color: 'rgba(255,255,255,0.8)' },
-    benefits: { marginBottom: theme.spacing.xxl },
-    benefitItem: { flexDirection: 'row', gap: theme.spacing.lg, marginBottom: theme.spacing.xl },
-    benefitIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border },
-    benefitText: { flex: 1 },
-    benefitTitle: { fontFamily: theme.typography.sansBold, fontSize: 16, color: theme.colors.text, marginBottom: 2 },
-    benefitDesc: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText },
-    plans: { gap: theme.spacing.md, marginBottom: theme.spacing.xxl },
-    planCardActive: {
-        padding: theme.spacing.xl, borderRadius: theme.borderRadius.lg, backgroundColor: '#FFFDF9',
-        borderWidth: 2, borderColor: palette.softGold
+    content: { padding: theme.spacing.xl, paddingBottom: 100 },
+    tierContainer: { gap: theme.spacing.lg, marginBottom: theme.spacing.xxl },
+    tierCard: {
+        padding: theme.spacing.xl, borderRadius: theme.borderRadius.lg,
+        backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border,
     },
-    planHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-    planName: { fontFamily: theme.typography.serifBold, fontSize: 18, color: theme.colors.text },
-    planPrice: { fontFamily: theme.typography.sansBold, fontSize: 20, color: theme.colors.text, marginBottom: 4 },
-    planNote: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText },
-    planSelect: { position: 'absolute', top: 12, right: 12, width: 28, height: 28, borderRadius: 14, backgroundColor: palette.softGold, alignItems: 'center', justifyContent: 'center' },
+    tierCardSelected: {
+        borderColor: palette.softGold, backgroundColor: '#FFFDF9',
+        shadowColor: palette.softGold, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 4
+    },
+    popularBadge: {
+        position: 'absolute', top: -10, right: 20, backgroundColor: palette.softGold,
+        paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
+    },
+    popularText: { fontFamily: theme.typography.sansBold, fontSize: 10, color: palette.ivory, letterSpacing: 0.5 },
+    tierHeader: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
+    flex1: { flex: 1 },
+    tierIcon: {
+        width: 48, height: 48, borderRadius: 14, backgroundColor: theme.colors.background,
+        alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border
+    },
+    tierIconSelected: { backgroundColor: palette.softGold, borderColor: palette.softGold },
+    tierName: { fontFamily: theme.typography.serifBold, fontSize: 20, color: theme.colors.text },
+    tierNameSelected: { color: palette.softGold },
+    tierSubtext: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText },
+    priceContainer: { alignItems: 'flex-end' },
+    tierPrice: { fontFamily: theme.typography.serifBold, fontSize: 22, color: theme.colors.text, textAlign: 'right' },
+    tierPriceSelected: { color: palette.softGold },
+    tierPeriod: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText, textAlign: 'right' },
+    benefitContainer: { marginTop: theme.spacing.lg, overflow: 'hidden' },
+    divider: { height: 1, backgroundColor: theme.colors.border, marginBottom: theme.spacing.lg, opacity: 0.5 },
+    benefitRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, marginBottom: theme.spacing.sm },
+    benefitText: { fontFamily: theme.typography.sans, fontSize: 14, color: theme.colors.text, opacity: 0.8 },
     ctaButton: {
-        backgroundColor: theme.colors.text, height: 60, borderRadius: theme.borderRadius.full,
+        backgroundColor: theme.colors.text, paddingVertical: 16, borderRadius: theme.borderRadius.full,
         alignItems: 'center', justifyContent: 'center', marginBottom: theme.spacing.lg
     },
-    ctaButtonText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 18 },
+    ctaButtonText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 18, marginBottom: 2 },
+    ctaButtonSub: { color: 'rgba(255,255,255,0.6)', fontFamily: theme.typography.sans, fontSize: 12 },
     footerNote: { textAlign: 'center', fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText }
 });

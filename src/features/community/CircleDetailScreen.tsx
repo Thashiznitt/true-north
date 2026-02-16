@@ -72,6 +72,21 @@ export const CircleDetailScreen = () => {
         const phoneRegex = /(\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9})/g;
         const paymentKeywords = [/\$/g, /Ksh/gi, /payment/gi, /send money/gi, /donate/gi, /M-Pesa/gi];
 
+        const subscriptionTier = useStore.getState().subscriptionTier;
+        const canPostInCircles = subscriptionTier === 'true_north' || subscriptionTier === 'zenith';
+
+        if (!canPostInCircles) {
+            Alert.alert(
+                "Community Reflection",
+                "Sharing reflections in public circles is a True North feature. Upgrade to join the conversation.",
+                [
+                    { text: "Later", style: "cancel" },
+                    { text: "Upgrade", onPress: () => (navigation as any).navigate('Subscription') }
+                ]
+            );
+            return;
+        }
+
         if (phoneRegex.test(newPostContent)) {
             Alert.alert("Sacred Space Policy", "To ensure the safety of our community, sharing phone numbers is not permitted in public circles.");
             return;
@@ -268,7 +283,25 @@ export const CircleDetailScreen = () => {
                     <Text style={styles.headerSubtitle}>{circleType || 'Public Circle'}</Text>
                 </View>
                 <View style={styles.headerActions}>
-                    <TouchableOpacity onPress={() => toggleBookmark(circleId)} style={styles.headerAction}>
+                    <TouchableOpacity
+                        onPress={() => {
+                            const subscriptionTier = useStore.getState().subscriptionTier;
+                            const isCurrentlyBookmarked = bookmarkedCircleIds.includes(circleId);
+
+                            if (!isCurrentlyBookmarked) {
+                                if (subscriptionTier === 'free' && bookmarkedCircleIds.length >= 1) {
+                                    Alert.alert("Join Limit", "The Seeker Tier allows joining 1 Circle. Upgrade to Compass to join up to 5 Circles.");
+                                    return;
+                                }
+                                if (subscriptionTier === 'compass' && bookmarkedCircleIds.length >= 5) {
+                                    Alert.alert("Join Limit", "The Compass Tier allows joining 5 Circles. Upgrade to True North for unlimited access.");
+                                    return;
+                                }
+                            }
+                            toggleBookmark(circleId);
+                        }}
+                        style={styles.headerAction}
+                    >
                         <Heart size={24} color={isBookmarked ? palette.softGold : theme.colors.text} fill={isBookmarked ? palette.softGold : 'transparent'} />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.headerAction} onPress={handleInvite}>

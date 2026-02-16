@@ -31,7 +31,8 @@ export const CommunityScreen = () => {
     const [circles, setCircles] = useState<any[]>([]);
     const circlesRef = useRef<any[]>([]);
     const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
-    const { createdCircles, bookmarkedCircleIds, isSubscribed, dailyGoals } = useStore();
+    const { createdCircles, bookmarkedCircleIds, subscriptionTier, dailyGoals } = useStore();
+    const isSubscribed = subscriptionTier !== 'free';
 
     useEffect(() => {
         const getLocation = async () => {
@@ -227,7 +228,12 @@ export const CommunityScreen = () => {
             <TouchableOpacity
                 style={styles.fab}
                 onPress={() => {
-                    if (isSubscribed) {
+                    if (subscriptionTier === 'true_north' || subscriptionTier === 'zenith') {
+                        // Limit True North to 2 circles
+                        if (subscriptionTier === 'true_north' && createdCircles.length >= 2) {
+                            alert("You've reached the limit of 2 Circles for the True North tier. Upgrade to Zenith for unlimited creation.");
+                            return;
+                        }
                         navigation.navigate('CreateCircle');
                     } else {
                         navigation.navigate('Subscription');

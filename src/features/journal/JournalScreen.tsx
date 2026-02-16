@@ -26,9 +26,10 @@ const JOURNAL_BG = require('../../../assets/journal_paywall_bg.png'); // Need to
 
 export const JournalScreen = () => {
     const insets = useSafeAreaInsets();
-    const isSubscribed = useStore(state => state.isSubscribed);
+    const subscriptionTier = useStore(state => state.subscriptionTier);
+    const isSubscribed = subscriptionTier !== 'free';
     const dailyGoals = useStore(state => state.dailyGoals);
-    const setSubscribed = useStore(state => state.setSubscribed);
+    const setSubscriptionTier = useStore(state => state.setSubscriptionTier);
     const beliefType = useStore(state => state.beliefType);
     const biometricsEnabled = useStore(state => state.biometricsEnabled);
     const securityPin = useStore(state => state.securityPin);
@@ -114,7 +115,7 @@ export const JournalScreen = () => {
     };
 
     const handleSubscribe = () => {
-        setSubscribed(true);
+        setSubscriptionTier('true_north');
     };
 
     const getBeliefTrait = () => {
@@ -149,54 +150,10 @@ export const JournalScreen = () => {
         );
     };
 
-    if (!isSubscribed) {
-        return (
-            <View style={styles.container}>
-                <ImageBackground source={JOURNAL_BG} style={StyleSheet.absoluteFill} resizeMode="cover" />
-                <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.8)', 'rgba(0,0,0,0.95)']}
-                    style={StyleSheet.absoluteFill}
-                />
+    // Removed hard paywall - free users can now enter but are limited by count
 
-                <View style={[styles.paywall, { paddingTop: insets.top + 100 }]}>
-                    <Sparkles size={48} color={palette.softGold} style={{ marginBottom: 20 }} />
-                    <Text style={[styles.paywallTitle, { color: palette.ivory, fontSize: 32 }]}>
-                        Your Private Sanctuary
-                    </Text>
-                    <Text style={[styles.paywallSubtitle, { color: palette.ivory, opacity: 0.8, marginBottom: 40 }]}>
-                        Unlock your daily reflection space, track your journey to alignment, and take notes from your {getBeliefTrait()} as well.
-                    </Text>
 
-                    <View style={styles.benefitList}>
-                        <View style={styles.benefitRow}>
-                            <LucideLock size={20} color={palette.softGold} />
-                            <Text style={styles.benefitText}>End-to-end encrypted journal</Text>
-                        </View>
-                        <View style={styles.benefitRow}>
-                            <Sparkles size={20} color={palette.softGold} />
-                            <Text style={styles.benefitText}>Spiritual Wisdom & Insights</Text>
-                        </View>
-                        <View style={styles.benefitRow}>
-                            <Heart size={20} color={palette.softGold} />
-                            <Text style={styles.benefitText}>Community reflection prompts</Text>
-                        </View>
-                    </View>
-
-                    <TouchableOpacity style={[styles.subscribeButton, { backgroundColor: palette.softGold }]} onPress={handleSubscribe}>
-                        <Text style={[styles.subscribeButtonText, { color: palette.ivory }]}>Subscribe $12.99 / mo</Text>
-                    </TouchableOpacity>
-
-                    <View style={styles.paywallFooter}>
-                        <Text style={styles.footerLink}>Restore Purchases</Text>
-                        <View style={styles.footerDot} />
-                        <Text style={styles.footerLink}>Terms of Service</Text>
-                    </View>
-                </View>
-            </View>
-        );
-    }
-
-    if (isLocked) {
+    if (isLocked && subscriptionTier !== 'free') {
         return (
             <SanctuaryLock
                 onUnlock={authenticate}
@@ -278,7 +235,24 @@ export const JournalScreen = () => {
 
             <TouchableOpacity
                 style={[styles.fab, { bottom: insets.bottom + 20 }]}
-                onPress={() => navigation.navigate('JournalDetail', { isNew: true })}
+                onPress={() => {
+                    if (subscriptionTier === 'free') {
+                        const today = new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                        const todayEntries = journalEntries.filter(e => e.date === today);
+                        if (todayEntries.length >= 3) {
+                            Alert.alert(
+                                "Journal Limit",
+                                "The Seeker Tier allows 3 reflections per day. Upgrade to Compass or higher for unlimited journaling.",
+                                [
+                                    { text: "Later", style: "cancel" },
+                                    { text: "Upgrade", onPress: () => navigation.navigate('Subscription') }
+                                ]
+                            );
+                            return;
+                        }
+                    }
+                    navigation.navigate('JournalDetail', { isNew: true });
+                }}
             >
                 <Plus size={28} color={palette.ivory} />
             </TouchableOpacity>

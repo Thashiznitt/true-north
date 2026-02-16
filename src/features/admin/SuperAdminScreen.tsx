@@ -16,18 +16,29 @@ const MOCK_FLAGS = [
 ];
 
 const MOCK_USERS = [
-    { id: '1', name: 'Sophie K.', email: 'sophie@example.com', status: 'active', role: 'Member' },
-    { id: '2', name: 'John D.', email: 'john@example.com', status: 'active', role: 'Member' },
-    { id: '3', name: 'Spammer123', email: 'spam@test.com', status: 'suspended', role: 'Member' },
+    { id: '1', name: 'Sophie K.', email: 'sophie@example.com', status: 'active', role: 'Member', tier: 'zenith' },
+    { id: '2', name: 'John D.', email: 'john@example.com', status: 'active', role: 'Member', tier: 'compass' },
+    { id: '3', name: 'Spammer123', email: 'spam@test.com', status: 'suspended', role: 'Member', tier: 'free' },
+    { id: '4', name: 'Amani W.', email: 'amani@example.com', status: 'active', role: 'Admin', tier: 'true_north' },
 ];
 
 const MOCK_SALES = {
-    revenue: { total: '$12,450', monthly: '$1,290', growth: '+12%' },
-    subscriptions: { active: 145, trials: 32, cancelled: 8 },
+    revenue: { total: '$14,680', monthly: '$2,140', growth: '+18%' },
+    subscriptions: {
+        active: 162,
+        breakdown: {
+            compass: 45,
+            true_north: 82,
+            zenith: 35
+        },
+        trials: 28,
+        cancelled: 12
+    },
     transactions: [
-        { id: '1', user: 'Sophie K.', amount: '$12.99', date: 'Today, 2:30 PM', status: 'Success' },
-        { id: '2', user: 'John D.', amount: '$12.99', date: 'Yesterday', status: 'Success' },
-        { id: '3', user: 'Mike R.', amount: '$12.99', date: 'Oct 22', status: 'Failed' },
+        { id: '1', user: 'Sophie K.', amount: '$19.99', tier: 'Zenith', date: 'Today, 2:30 PM', status: 'Success' },
+        { id: '2', user: 'Amani W.', amount: '$12.99', tier: 'True North', date: 'Today, 10:15 AM', status: 'Success' },
+        { id: '3', user: 'John D.', amount: '$5.99', tier: 'Compass', date: 'Yesterday', status: 'Success' },
+        { id: '4', user: 'Mike R.', amount: '$12.99', tier: 'True North', date: 'Oct 22', status: 'Failed' },
     ]
 };
 
@@ -152,14 +163,16 @@ export const SuperAdminScreen = () => {
                         </View>
                     </View>
                     <View style={styles.userActions}>
+                        <View style={[styles.tierBadge, { backgroundColor: user.tier === 'free' ? theme.colors.border : palette.softGold + '20' }]}>
+                            <Text style={[styles.tierText, { color: user.tier === 'free' ? theme.colors.secondaryText : palette.softGold }]}>
+                                {user.tier.replace('_', ' ')}
+                            </Text>
+                        </View>
                         <View style={[styles.statusBadge, { backgroundColor: user.status === 'active' ? '#E6F4EA' : '#FCE8E6' }]}>
                             <Text style={[styles.statusText, { color: user.status === 'active' ? '#137333' : '#C5221F' }]}>
                                 {user.status}
                             </Text>
                         </View>
-                        <TouchableOpacity onPress={() => Alert.alert("User Options", "Edit, Suspend, or Delete user.")}>
-                            <MoreVertical size={20} color={theme.colors.secondaryText} />
-                        </TouchableOpacity>
                     </View>
                 </View>
             ))}
@@ -322,12 +335,33 @@ export const SuperAdminScreen = () => {
             <View style={styles.sectionCard}>
                 <View style={styles.cardHeader}>
                     <TrendingUp size={20} color={theme.colors.text} />
-                    <Text style={styles.cardTitle}>Subscription Health</Text>
+                    <Text style={styles.cardTitle}>Tier Breakdown</Text>
+                </View>
+                <View style={styles.tierStats}>
+                    <View style={styles.tierStatItem}>
+                        <Text style={styles.tierStatValue}>{MOCK_SALES.subscriptions.breakdown.compass}</Text>
+                        <Text style={styles.tierStatLabel}>Compass</Text>
+                    </View>
+                    <View style={styles.tierStatItem}>
+                        <Text style={styles.tierStatValue}>{MOCK_SALES.subscriptions.breakdown.true_north}</Text>
+                        <Text style={styles.tierStatLabel}>True North</Text>
+                    </View>
+                    <View style={styles.tierStatItem}>
+                        <Text style={styles.tierStatValue}>{MOCK_SALES.subscriptions.breakdown.zenith}</Text>
+                        <Text style={styles.tierStatLabel}>Zenith</Text>
+                    </View>
+                </View>
+            </View>
+
+            <View style={styles.sectionCard}>
+                <View style={styles.cardHeader}>
+                    <Shield size={20} color={theme.colors.text} />
+                    <Text style={styles.cardTitle}>Retention Health</Text>
                 </View>
                 <View style={styles.healthStats}>
                     <View style={styles.healthItem}>
                         <Text style={styles.healthValue}>{MOCK_SALES.subscriptions.active}</Text>
-                        <Text style={styles.healthLabel}>Active</Text>
+                        <Text style={styles.healthLabel}>Total Active</Text>
                     </View>
                     <View style={styles.divider} />
                     <View style={styles.healthItem}>
@@ -356,6 +390,7 @@ export const SuperAdminScreen = () => {
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
                         <Text style={styles.userName}>{tx.amount}</Text>
+                        <Text style={styles.tierTextSmal}>{tx.tier}</Text>
                         <Text style={[styles.userEmail, { color: tx.status === 'Success' ? '#137333' : '#C5221F' }]}>{tx.status}</Text>
                     </View>
                 </View>
@@ -601,5 +636,12 @@ const styles = StyleSheet.create({
     adActionButton: { flex: 1, padding: 10, borderRadius: theme.borderRadius.md, alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border },
     adActionText: { fontFamily: theme.typography.sansBold, fontSize: 13, color: theme.colors.text },
     adPauseButton: { backgroundColor: 'transparent' },
-    adPauseText: { fontFamily: theme.typography.sansBold, fontSize: 13, color: '#EA4335' }
+    adPauseText: { fontFamily: theme.typography.sansBold, fontSize: 13, color: '#EA4335' },
+    tierBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, marginBottom: 4 },
+    tierText: { fontFamily: theme.typography.sansBold, fontSize: 10, textTransform: 'uppercase' },
+    tierTextSmal: { fontFamily: theme.typography.sansMedium, fontSize: 10, color: palette.softGold, textTransform: 'uppercase' },
+    tierStats: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8 },
+    tierStatItem: { alignItems: 'center', flex: 1 },
+    tierStatValue: { fontFamily: theme.typography.sansBold, fontSize: 18, color: palette.softGold },
+    tierStatLabel: { fontFamily: theme.typography.sans, fontSize: 11, color: theme.colors.secondaryText, marginTop: 4 },
 });

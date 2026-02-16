@@ -31,7 +31,8 @@ export const JournalDetailScreen = () => {
     const beliefType = useStore((state) => state.beliefType);
     const biometricsEnabled = useStore((state) => state.biometricsEnabled);
     const securityPin = useStore((state) => state.securityPin);
-    const isSubscribed = useStore((state) => state.isSubscribed);
+    const subscriptionTier = useStore((state) => state.subscriptionTier);
+    const isSubscribed = subscriptionTier !== 'free';
     const addJournalEntry = useStore((state) => state.addJournalEntry);
     const updateJournalEntry = useStore((state) => state.updateJournalEntry);
 
@@ -188,9 +189,11 @@ export const JournalDetailScreen = () => {
                     <TouchableOpacity style={styles.actionButton} onPress={handleSave}>
                         <Check size={24} color={palette.success} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionButton} onPress={handleAIAssist}>
-                        <Sparkles size={22} color={palette.softGold} />
-                    </TouchableOpacity>
+                    {(subscriptionTier === 'true_north' || subscriptionTier === 'zenith') && (
+                        <TouchableOpacity style={styles.actionButton} onPress={handleAIAssist}>
+                            <Sparkles size={22} color={palette.softGold} />
+                        </TouchableOpacity>
+                    )}
                     <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
                         <Share2 size={22} color={theme.colors.text} />
                     </TouchableOpacity>

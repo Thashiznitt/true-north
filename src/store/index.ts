@@ -53,7 +53,7 @@ export interface JournalEntry {
 
 interface UserState {
     isOnboarded: boolean;
-    isSubscribed: boolean;
+    subscriptionTier: 'free' | 'compass' | 'true_north' | 'zenith';
     username: string;
     email: string | null;
     profilePicture: string | null;
@@ -76,7 +76,7 @@ interface UserState {
     createdCircles: CreatedCircle[];
     journalEntries: JournalEntry[];
     setOnboarded: (value: boolean) => Promise<void>;
-    setSubscribed: (value: boolean) => Promise<void>;
+    setSubscriptionTier: (tier: 'free' | 'compass' | 'true_north' | 'zenith') => Promise<void>;
     setUsername: (username: string) => void;
     setEmail: (email: string | null) => void;
     setProfilePicture: (uri: string | null) => void;
@@ -105,7 +105,7 @@ export const useStore = create<UserState>()(
     persist(
         (set, get) => ({
             isOnboarded: false,
-            isSubscribed: false,
+            subscriptionTier: 'free',
             username: '',
             email: null,
             profilePicture: null,
@@ -142,13 +142,13 @@ export const useStore = create<UserState>()(
                 if (isOnboarded) {
                     const hasPermission = await notificationService.requestPermissions();
                     if (hasPermission) {
-                        await notificationService.scheduleDailyAffirmation(get().isSubscribed);
+                        await notificationService.scheduleDailyAffirmation(get().subscriptionTier);
                     }
                 } else {
                     // Reset ALL user state when resetting onboarding
                     set({
                         isLoggedIn: false,
-                        isSubscribed: false,
+                        subscriptionTier: 'free',
                         username: '',
                         profilePicture: null,
                         biometricsEnabled: false,
@@ -168,9 +168,9 @@ export const useStore = create<UserState>()(
             setLoggedIn: (isLoggedIn) => set({ isLoggedIn }),
             setBiometricsEnabled: (biometricsEnabled) => set({ biometricsEnabled }),
             setSecurityPin: (securityPin) => set({ securityPin }),
-            setSubscribed: async (isSubscribed: boolean) => {
-                set({ isSubscribed });
-                await notificationService.scheduleDailyAffirmation(isSubscribed);
+            setSubscriptionTier: async (tier: 'free' | 'compass' | 'true_north' | 'zenith') => {
+                set({ subscriptionTier: tier });
+                await notificationService.scheduleDailyAffirmation(tier);
             },
             setUsername: (username) => set({ username }),
             setEmail: (email) => set({ email }),

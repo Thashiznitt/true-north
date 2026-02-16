@@ -21,8 +21,8 @@ export const LoginScreen = () => {
 
             // Allow state to update
             setTimeout(() => {
-                const { isSubscribed } = useStore.getState();
-                if (!isSubscribed) {
+                const { subscriptionTier } = useStore.getState();
+                if (subscriptionTier === 'free') {
                     // Navigate to subscription if not subscribed
                     // We need to use root navigation to ensure we can go to the Subscription screen
                     // forcing navigation to subscription

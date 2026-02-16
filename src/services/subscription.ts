@@ -13,30 +13,26 @@ export const subscriptionService = {
         return true;
     },
 
-    subscribe: async (packageId: string) => {
+    subscribe: async (tier: 'compass' | 'true_north' | 'zenith') => {
         if (env.useMockServices) {
-            console.log(`[MockSubscription] Purchasing package: ${packageId}...`);
-            const setSubscribed = useStore.getState().setSubscribed;
+            console.log(`[MockSubscription] Purchasing tier: ${tier}...`);
+            const setSubscriptionTier = useStore.getState().setSubscriptionTier;
 
             // Simulate API call
             return new Promise((resolve) => {
-                setTimeout(() => {
-                    setSubscribed(true);
+                setTimeout(async () => {
+                    await setSubscriptionTier(tier);
                     resolve(true);
                 }, 1000);
             });
         }
 
         // In production, call Purchases.purchasePackage(package)
-        console.log(`[Subscription] Purchasing package: ${packageId} (Real Implementation)...`);
+        console.log(`[Subscription] Purchasing package for tier: ${tier} (Real Implementation)...`);
         throw new Error("Real subscription not yet implemented.");
     },
 
     checkSubscriptionStatus: async () => {
-        if (env.useMockServices) {
-            return useStore.getState().isSubscribed;
-        }
-        // In production, check customer info from RevenueCat
-        return false;
+        return useStore.getState().subscriptionTier;
     }
 };

@@ -14,12 +14,13 @@ export const ProfileScreen = () => {
     const {
         username,
         beliefType,
-        isSubscribed,
+        subscriptionTier,
         themes,
         journalEntries,
         notificationsList,
         profilePicture
     } = useStore();
+    const isSubscribed = subscriptionTier !== 'free';
     const { setLoggedIn, setProfilePicture } = useStore();
 
     const blessingCount = notificationsList.filter(n => n.type === 'blessing').length;
@@ -174,7 +175,7 @@ export const ProfileScreen = () => {
                 <MenuItem
                     icon={CreditCard}
                     label="Subscription"
-                    value={isSubscribed ? 'Premium' : 'Free'}
+                    value={subscriptionTier === 'free' ? 'Free' : subscriptionTier.replace('_', ' ').toUpperCase()}
                     onPress={() => {
                         console.log('Navigating to Subscription');
                         navigation.navigate('Subscription');

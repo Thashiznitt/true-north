@@ -21,18 +21,18 @@ export const notificationService = {
         return finalStatus === 'granted';
     },
 
-    scheduleDailyAffirmation: async (isSubscribed: boolean) => {
+    scheduleDailyAffirmation: async (tier: 'free' | 'compass' | 'true_north' | 'zenith') => {
         await Notifications.cancelAllScheduledNotificationsAsync();
 
         const hour = 7;
         const minute = 30;
 
-        // If not subscribed, they only get it on Mondays (weekday 2 in Expo)
-        if (!isSubscribed) {
+        // If 'free', they only get it on Mondays (weekday 2 in Expo)
+        if (tier === 'free') {
             await Notifications.scheduleNotificationAsync({
                 content: {
                     title: "Your Weekly True North",
-                    body: "Tap to see your affirmation for the week.",
+                    body: "Tap to see your weekly affirmation.",
                 },
                 trigger: {
                     type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
@@ -43,9 +43,10 @@ export const notificationService = {
                 } as Notifications.CalendarTriggerInput,
             });
         } else {
+            // Compass, True North, and Zenith get daily affirmations
             await Notifications.scheduleNotificationAsync({
                 content: {
-                    title: "Your Daily True North",
+                    title: `Your Daily True North (${tier.replace('_', ' ').toUpperCase()})`,
                     body: "Start your morning with alignment.",
                 },
                 trigger: {

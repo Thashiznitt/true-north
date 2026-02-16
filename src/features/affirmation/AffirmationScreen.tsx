@@ -30,7 +30,8 @@ export const AffirmationScreen = () => {
     const scaleAnim = React.useRef(new Animated.Value(1)).current;
     const glowAnim = React.useRef(new Animated.Value(0)).current;
 
-    const { isSubscribed, beliefType, themes, username, lastAdviceTimestamp, setLastAdviceTimestamp } = useStore();
+    const { subscriptionTier, beliefType, themes, username, lastAdviceTimestamp, setLastAdviceTimestamp } = useStore();
+    const isSubscribed = subscriptionTier !== 'free';
 
     // Phase 9: Dynamic Daily Backgrounds
     const BACKGROUND_URLS = [
