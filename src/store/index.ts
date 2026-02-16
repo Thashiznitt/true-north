@@ -6,10 +6,39 @@ import { notificationService } from '../services/notifications';
 export type UserRole = 'member' | 'moderator' | 'admin' | 'platform_admin';
 export type BeliefType = 'Christian' | 'Muslim' | 'Secular' | 'Exploring' | 'Open';
 
+export interface DailyGoals {
+    dailyReflection: boolean;
+    morningDevotion: boolean;
+    eveningGratitude: boolean;
+    weeklyCommunity: boolean;
+}
+
+export interface NotificationSettings {
+    enabled: boolean;
+    time: string;
+}
+
+export interface NotificationItem {
+    id: string;
+    title: string;
+    message: string;
+    type: 'affirmation' | 'blessing' | 'event' | 'community';
+    createdAt: number;
+}
+
+export interface CreatedCircle {
+    id: string;
+    name: string;
+    description: string;
+    belief: BeliefType;
+    createdAt: number;
+}
+
 interface UserState {
     isOnboarded: boolean;
     isSubscribed: boolean;
     username: string;
+    email: string | null;
     profilePicture: string | null;
     role: UserRole;
     isLoggedIn: boolean;
@@ -23,17 +52,15 @@ interface UserState {
         eveningGratitude: boolean;
         weeklyCommunity: boolean;
     };
-    notifications: {
-        enabled: boolean;
-        time: string;
-    };
+    notifications: NotificationSettings;
     lastAdviceTimestamp: number | null;
     bookmarkedCircleIds: string[];
-    notificationsList: any[];
-    createdCircles: any[];
+    notificationsList: NotificationItem[];
+    createdCircles: CreatedCircle[];
     setOnboarded: (value: boolean) => Promise<void>;
     setSubscribed: (value: boolean) => Promise<void>;
     setUsername: (username: string) => void;
+    setEmail: (email: string | null) => void;
     setProfilePicture: (uri: string | null) => void;
     setRole: (role: UserRole) => void;
     setLoggedIn: (value: boolean) => void;
@@ -41,16 +68,16 @@ interface UserState {
     setSecurityPin: (pin: string | null) => void;
     setBeliefType: (belief: BeliefType | null) => void;
     setThemes: (themes: string[]) => void;
-    setPreferences: (belief: BeliefType, themes: string[], goals: any) => void;
+    setPreferences: (belief: BeliefType, themes: string[], goals: DailyGoals) => void;
     updateNotificationSettings: (enabled: boolean, time: string) => void;
-    addCreatedCircle: (circle: any) => void;
+    addCreatedCircle: (circle: CreatedCircle) => void;
     deleteCreatedCircle: (circleId: string) => void;
     flagCircle: (circleId: string) => void;
     toggleBookmark: (circleId: string) => void;
     setLastAdviceTimestamp: (timestamp: number) => void;
-    addNotification: (notification: any) => void;
+    addNotification: (notification: NotificationItem) => void;
     cleanupOldNotifications: () => void;
-    toggleDailyGoal: (key: string) => void;
+    toggleDailyGoal: (key: keyof DailyGoals) => void;
 }
 
 export const useStore = create<UserState>()(
@@ -59,6 +86,7 @@ export const useStore = create<UserState>()(
             isOnboarded: false,
             isSubscribed: false,
             username: '',
+            email: null,
             profilePicture: null,
             role: 'member',
             isLoggedIn: false,
@@ -91,8 +119,23 @@ export const useStore = create<UserState>()(
                         await notificationService.scheduleDailyAffirmation(get().isSubscribed);
                     }
                 } else {
-                    // Reset login state if un-onboarding (effectively logging out)
-                    set({ isLoggedIn: false });
+                    // Reset ALL user state when resetting onboarding
+                    set({
+                        isLoggedIn: false,
+                        isSubscribed: false,
+                        username: '',
+                        profilePicture: null,
+                        biometricsEnabled: false,
+                        securityPin: null,
+                        beliefType: null,
+                        themes: [],
+                        dailyGoals: {
+                            dailyReflection: true,
+                            morningDevotion: true,
+                            eveningGratitude: false,
+                            weeklyCommunity: true,
+                        }
+                    });
                 }
                 set({ isOnboarded });
             },
@@ -104,6 +147,7 @@ export const useStore = create<UserState>()(
                 await notificationService.scheduleDailyAffirmation(isSubscribed);
             },
             setUsername: (username) => set({ username }),
+            setEmail: (email) => set({ email }),
             setProfilePicture: (profilePicture) => set({ profilePicture }),
             setRole: (role) => set({ role }),
             setBeliefType: (beliefType) => set({ beliefType }),
@@ -117,19 +161,22 @@ export const useStore = create<UserState>()(
 
                 // Add notification about deletion
                 if (circle) {
-                    const notification = {
+                    const notification: NotificationItem = {
+                        id: Math.random().toString(36).substr(2, 9),
                         title: 'Sanctuary Closed',
                         message: `The sanctuary "${circle.name}" has been closed by the admin.`,
-                        type: 'community'
+                        type: 'community',
+                        createdAt: Date.now()
                     };
                     return {
                         createdCircles: newCreatedCircles,
-                        notificationsList: [{ ...notification, id: Math.random().toString(36).substr(2, 9), createdAt: Date.now() }, ...state.notificationsList]
+                        notificationsList: [notification, ...state.notificationsList]
                     };
                 }
                 return { createdCircles: newCreatedCircles };
             }),
             flagCircle: (circleId) => {
+                console.log('Flagging circle:', circleId);
                 // In a real app, this would send to a moderation API
                 // For now, we simulate the logic in the component but could store flag state here
             },

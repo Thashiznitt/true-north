@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Share, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { ChevronLeft, Share2, Sparkles, Tag, X } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useStore } from '../../store';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { Alert } from 'react-native';
+import { contentAgentService } from '../../services/ContentAgentService';
 import { SanctuaryLock } from '../../components/SanctuaryLock';
 
 export const JournalDetailScreen = () => {
@@ -118,6 +118,32 @@ export const JournalDetailScreen = () => {
         );
     }
 
+    const handleShare = async () => {
+        try {
+            await Share.share({
+                message: `${title}\n\n${content}\n\n— My True North Reflection`,
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleAIAssist = () => {
+        if (!content || content.length < 10) {
+            Alert.alert("Reflect a bit more", "Write a little more about how you're feeling so I can offer meaningful spiritual guidance.");
+            return;
+        }
+
+        const currentBelief = beliefType || 'Open';
+        const analysis = contentAgentService.getSpiritualAnalysis(content, currentBelief);
+
+        Alert.alert(
+            analysis.title,
+            analysis.message,
+            [{ text: analysis.action }]
+        );
+    };
+
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -128,10 +154,10 @@ export const JournalDetailScreen = () => {
                     <ChevronLeft size={28} color={theme.colors.text} />
                 </TouchableOpacity>
                 <View style={styles.headerActions}>
-                    <TouchableOpacity style={styles.actionButton}>
+                    <TouchableOpacity style={styles.actionButton} onPress={handleAIAssist}>
                         <Sparkles size={22} color={palette.softGold} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionButton}>
+                    <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
                         <Share2 size={22} color={theme.colors.text} />
                     </TouchableOpacity>
                 </View>

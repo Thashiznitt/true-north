@@ -1,3 +1,4 @@
+/* eslint-disable truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

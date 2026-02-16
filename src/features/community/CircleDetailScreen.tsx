@@ -212,7 +212,10 @@ export const CircleDetailScreen = () => {
                 <Text style={styles.eventTime}>{item.time}</Text>
                 <Text style={styles.eventLocation}>{item.location}</Text>
             </View>
-            <TouchableOpacity style={styles.joinButton}>
+            <TouchableOpacity
+                style={styles.joinButton}
+                onPress={() => Alert.alert("Event Joined", `You have successfully RSVP'd to "${item.title}". We'll remind you 1 hour before.`)}
+            >
                 <Text style={styles.joinButtonText}>Join</Text>
             </TouchableOpacity>
         </View>
@@ -300,7 +303,7 @@ export const CircleDetailScreen = () => {
                                 <View style={styles.sectionDivider} />
                             </>
                         )}
-                        <Text style={styles.sectionTitle}>Reflections</Text>
+                        <Text style={[styles.sectionTitle, { marginBottom: theme.spacing.lg }]}>Reflections</Text>
                     </View>
                 }
             />

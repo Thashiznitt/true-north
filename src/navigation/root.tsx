@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useStore } from '../store';
-import { Home, BookOpen, Users, User, Bell } from 'lucide-react-native';
+import { Home, BookOpen, Users, User } from 'lucide-react-native';
 import * as Linking from 'expo-linking';
-import { useNavigation } from '@react-navigation/native';
+
 
 // Screens
 import { AffirmationScreen } from '../features/affirmation/AffirmationScreen';
@@ -22,6 +22,7 @@ import { ThemeSettingsScreen } from '../features/profile/ThemeSettingsScreen';
 import { GoalSettingsScreen } from '../features/profile/GoalSettingsScreen';
 import { SubscriptionScreen } from '../features/profile/SubscriptionScreen';
 import { CreateCircleScreen } from '../features/community/CreateCircleScreen';
+import { SuperAdminScreen } from '../features/admin/SuperAdminScreen';
 import { theme, palette } from '../theme';
 
 const Stack = createNativeStackNavigator();
@@ -107,12 +108,15 @@ export const RootNavigator = () => {
         });
 
         return () => subscription.remove();
-    }, [isOnboarded]);
+    }, [isOnboarded, isLoggedIn]);
 
     return (
         <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
             {!isOnboarded ? (
-                <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+                <Stack.Group>
+                    <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+                    <Stack.Screen name="Login" component={LoginScreen} />
+                </Stack.Group>
             ) : !isLoggedIn ? (
                 <Stack.Screen name="Login" component={LoginScreen} />
             ) : (
@@ -132,6 +136,11 @@ export const RootNavigator = () => {
                     <Stack.Screen name="CreateCircle" component={CreateCircleScreen} />
                 </Stack.Group>
             )}
+            <Stack.Screen
+                name="SuperAdmin"
+                component={SuperAdminScreen}
+                options={{ headerShown: false }}
+            />
         </Stack.Navigator>
     );
 };

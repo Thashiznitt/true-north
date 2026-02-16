@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, LayoutAnimation, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, LayoutAnimation, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { theme, palette } from '../../theme';
@@ -8,6 +8,8 @@ import { useStore } from '../../store';
 import { FaithAd } from '../../components/FaithAd';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { SanctuaryLock } from '../../components/SanctuaryLock';
+import { MotiView } from 'moti';
+import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 
 interface JournalEntry {
     id: string;
@@ -120,19 +122,25 @@ export const JournalScreen = () => {
         return 'favorite talks';
     };
 
-    const renderEntry = ({ item }: { item: JournalEntry }) => (
-        <TouchableOpacity
-            style={styles.entryCard}
-            onPress={() => navigation.navigate('JournalDetail', {
-                entryId: item.id,
-                entryTitle: item.title,
-                entryContent: item.content
-            })}
+    const renderEntry = ({ item, index }: { item: JournalEntry, index: number }) => (
+        <MotiView
+            from={{ opacity: 0, translateX: -20 }}
+            animate={{ opacity: 1, translateX: 0 }}
+            transition={{ type: 'timing', duration: 500, delay: index * 100 }}
         >
-            <Text style={styles.entryDate}>{item.date}</Text>
-            <Text style={styles.entryTitle}>{item.title}</Text>
-            <Text style={styles.entryPreview} numberOfLines={2}>{item.content}</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.entryCard}
+                onPress={() => navigation.navigate('JournalDetail', {
+                    entryId: item.id,
+                    entryTitle: item.title,
+                    entryContent: item.content
+                })}
+            >
+                <Text style={styles.entryDate}>{item.date}</Text>
+                <Text style={styles.entryTitle}>{item.title}</Text>
+                <Text style={styles.entryPreview} numberOfLines={2}>{item.content}</Text>
+            </TouchableOpacity>
+        </MotiView>
     );
 
     if (!isSubscribed) {
@@ -192,10 +200,11 @@ export const JournalScreen = () => {
                 )}
             </View>
 
-            <FlatList
+            <TrueNorthFlashList
                 data={filteredEntries}
                 renderItem={renderEntry}
-                keyExtractor={item => item.id}
+                keyExtractor={(item: any) => item.id}
+                estimatedItemSize={140}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 ListHeaderComponent={

@@ -90,8 +90,6 @@ const styles = StyleSheet.create({
         borderRadius: theme.borderRadius.lg,
         borderWidth: 1,
         borderColor: theme.colors.border,
-        marginHorizontal: theme.spacing.xl,
-        marginBottom: theme.spacing.lg,
         overflow: 'hidden',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },

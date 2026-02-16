@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id              String           @id @default(uuid())
+  email           String           @unique
+  username        String?
+  avatarUrl       String?          @map("avatar_url")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  role            String           @default("member")
+  
+  // Relations
+  preferences     UserPreference?
+  goals           UserGoal?
+  entries         JournalEntry[]
+  circles         Circle[]         @relation("CreatedCircles")
+  joinedCircles   CircleMember[]
+
+  @@map("users")
+}
+
+model UserPreference {
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  beliefType      String?  @map("belief_type")
+  themes          String[] // Stored as array
+  isOnboarded     Boolean  @default(false) @map("is_onboarded")
+  biometricsEnabled Boolean @default(false) @map("biometrics_enabled")
+  securityPin     String?  @map("security_pin")
+  
+  // Notification settings
+  notificationsEnabled Boolean @default(true) @map("notifications_enabled")
+  notificationTime     String  @default("07:30") @map("notification_time")
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+model UserGoal {
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  
+  // Daily goals state
+  dailyReflection Boolean  @default(true) @map("daily_reflection")
+  morningDevotion Boolean  @default(true) @map("morning_devotion")
+  eveningGratitude Boolean @default(false) @map("evening_gratitude")
+  weeklyCommunity Boolean  @default(true) @map("weekly_community")
+  
+  // Specific area goals
+  spirituality    String?
+  spouse          String?
+  career          String?
+  business        String?
+  health          String?
+  family          String?
+  children        String?
+  friends         String?
+  finances        String?
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_goals")
+}
+
+model JournalEntry {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  content   String
+  mood      String?
+  tags      String[]
+  isPrivate Boolean  @default(true) @map("is_private")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("journal_entries")
+}
+
+model Circle {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  creatorId   String   @map("creator_id")
+  isPrivate   Boolean  @default(false) @map("is_private")
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  creator     User     @relation("CreatedCircles", fields: [creatorId], references: [id])
+  members     CircleMember[]
+
+  @@map("circles")
+}
+
+model CircleMember {
+  id        String   @id @default(uuid())
+  circleId  String   @map("circle_id")
+  userId    String   @map("user_id")
+  role      String   @default("member") // member, admin
+  joinedAt  DateTime @default(now()) @map("joined_at")
+
+  circle    Circle   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([circleId, userId])
+  @@map("circle_members")
+}

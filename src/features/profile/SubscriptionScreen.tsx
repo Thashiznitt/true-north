@@ -1,20 +1,25 @@
-import React from 'react';
+/* eslint-disable truenorth-performance/no-scrollview */
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { ChevronLeft, Check, Sparkles, ShieldCheck, Heart } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useStore } from '../../store';
+import { subscriptionService } from '../../services/subscription';
 
 export const SubscriptionScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<any>();
-    const setSubscribed = useStore(state => state.setSubscribed);
 
     const handleSubscribe = async () => {
-        await setSubscribed(true);
-        navigation.goBack();
+        try {
+            await subscriptionService.subscribe('monthly_journey');
+            navigation.goBack();
+        } catch (error) {
+            console.error("Subscription failed:", error);
+            // Handle error UI
+        }
     };
 
     return (

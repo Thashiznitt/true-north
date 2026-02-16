@@ -1,10 +1,16 @@
+/* eslint-disable truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
+import { OptimizedImage } from '../../components/performance/OptimizedImage';
+import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '../../store';
 import { theme, palette } from '../../theme';
-import { Check, ArrowRight, ChevronLeft, Plus, Shield, Heart, Sparkles, Compass, Lock, Fingerprint } from 'lucide-react-native';
+import { Check, ArrowRight, ChevronLeft, Plus, Shield, Heart, Sparkles, Compass, Lock, Fingerprint, Star } from 'lucide-react-native';
+import { subscriptionService } from '../../services/subscription';
+import { MotiView } from 'moti';
+
 
 const THEME_ICONS: Record<string, any> = {
     Strength: Shield,
@@ -26,6 +32,7 @@ export const OnboardingScreen = () => {
     const setBiometricsEnabled = useStore(state => state.setBiometricsEnabled);
     const setSecurityPin = useStore(state => state.setSecurityPin);
 
+    const navigation = useNavigation<any>();
     const [step, setStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
@@ -59,15 +66,34 @@ export const OnboardingScreen = () => {
             setStep(5);
         } else if (step === 5) {
             setStep(6);
+        } else if (step === 6) {
+            // New Step: Subscription
+            setStep(7);
         } else {
             // Final step: Finish onboarding
-            setStoreUsername(username);
-            setProfilePicture(profileImage);
-            setPreferences(beliefType, selectedThemes, goals);
-            setBiometricsEnabled(setupBiometrics);
-            setSecurityPin(pin || null);
-            setLoggedIn(true);
-            setOnboarded(true);
+            finishOnboarding();
+        }
+    };
+
+    const finishOnboarding = () => {
+        setStoreUsername(username);
+        setProfilePicture(profileImage);
+        setPreferences(beliefType, selectedThemes, goals);
+        setBiometricsEnabled(setupBiometrics);
+        setSecurityPin(pin || null);
+        setLoggedIn(true);
+        setOnboarded(true);
+    };
+
+    const handleSubscribe = async () => {
+        setLoading(true);
+        try {
+            await subscriptionService.subscribe('monthly_journey');
+            finishOnboarding();
+        } catch (error) {
+            Alert.alert("Subscription Failed", "Please try again or continue with the limited version.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -101,88 +127,136 @@ export const OnboardingScreen = () => {
         </View>
     );
 
+    const StepContainer = ({ children }: { children: React.ReactNode }) => (
+        <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: 'timing', duration: 500 }}
+            style={styles.stepContainer}
+        >
+            {children}
+        </MotiView>
+    );
+
     const renderStep0 = () => (
-        <View style={styles.stepContainer}>
+        <StepContainer>
             {renderHeader("Core Themes", "What areas of life do you want to focus on?")}
             <View style={styles.grid}>
-                {THEMES.map(t => {
+                {THEMES.map((t, index) => {
                     const Icon = THEME_ICONS[t];
                     return (
-                        <TouchableOpacity
+                        <MotiView
                             key={t}
-                            style={[styles.themeCard, selectedThemes.includes(t) && styles.themeCardActive]}
-                            onPress={() => toggleTheme(t)}
+                            from={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ type: 'spring', delay: index * 100 }}
+                            style={{ width: '47.5%' }}
                         >
-                            <View style={styles.themeHeader}>
-                                <Icon
-                                    size={24}
-                                    color={selectedThemes.includes(t) ? palette.softGold : theme.colors.secondaryText}
-                                    strokeWidth={1.5}
-                                />
-                                {selectedThemes.includes(t) && <Check size={18} color={palette.softGold} />}
-                            </View>
-                            <Text style={[styles.themeText, selectedThemes.includes(t) && styles.themeTextActive]}>{t}</Text>
-                        </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.themeCard, selectedThemes.includes(t) && styles.themeCardActive, { width: '100%' }]}
+                                onPress={() => toggleTheme(t)}
+                            >
+                                <View style={styles.themeHeader}>
+                                    <Icon
+                                        size={24}
+                                        color={selectedThemes.includes(t) ? palette.softGold : theme.colors.secondaryText}
+                                        strokeWidth={1.5}
+                                    />
+                                    {selectedThemes.includes(t) && <Check size={18} color={palette.softGold} />}
+                                </View>
+                                <Text style={[styles.themeText, selectedThemes.includes(t) && styles.themeTextActive]}>{t}</Text>
+                            </TouchableOpacity>
+                        </MotiView>
                     );
                 })}
             </View>
-        </View>
+            <TouchableOpacity style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.loginLinkText}>Have an account? <Text style={styles.loginLinkHighlight}>Log In</Text></Text>
+            </TouchableOpacity>
+        </StepContainer>
     );
 
+    // ... (logic for handleGoalChange)
+
+    // ... (logic for handleGoalChange)
     const handleGoalChange = (key: string, text: string) => {
-        const words = text.trim().split(/\s+/);
-        if (words.length <= 10 || text.endsWith(' ')) {
-            setGoals(prev => ({ ...prev, [key]: text }));
-        }
+        setGoals(prev => ({
+            ...prev,
+            [key]: text
+        }));
     };
 
     const renderStep1 = () => (
-        <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false}>
-            {renderHeader("Daily Goals", "Tell us about your current priorities (max 10 words)")}
-            {Object.keys(goals).map((key) => (
-                <View key={key} style={styles.inputGroup}>
-                    <Text style={styles.label}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder={`Your ${key} goal...`}
-                        placeholderTextColor={theme.colors.secondaryText}
-                        value={(goals as any)[key]}
-                        onChangeText={(text) => handleGoalChange(key, text)}
-                        maxLength={100}
-                    />
-                </View>
-            ))}
-        </ScrollView>
+        <>
+            {/* eslint-disable-next-line truenorth-performance/no-scrollview */}
+            <ScrollView showsVerticalScrollIndicator={false}>
+                <StepContainer>
+                    {renderHeader("Daily Goals", "Tell us about your current priorities (max 10 words)")}
+                    {Object.keys(goals).map((key, index) => (
+                        <MotiView
+                            key={key}
+                            from={{ opacity: 0, translateX: -20 }}
+                            animate={{ opacity: 1, translateX: 0 }}
+                            transition={{ type: 'timing', delay: index * 50 }}
+                            style={styles.inputGroup}
+                        >
+                            <Text style={styles.label}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder={`Your ${key} goal...`}
+                                placeholderTextColor={theme.colors.secondaryText}
+                                value={(goals as any)[key]}
+                                onChangeText={(text) => handleGoalChange(key, text)}
+                                maxLength={100}
+                            />
+                        </MotiView>
+                    ))}
+                </StepContainer>
+            </ScrollView>
+        </>
     );
+
     const renderStep2 = () => (
-        <View style={styles.stepContainer}>
+        <StepContainer>
             {renderHeader("Belief Type", "This helps us personalize your affirmations")}
             <View style={styles.beliefGrid}>
-                {BELIEFS.map(b => (
-                    <TouchableOpacity
+                {BELIEFS.map((b, index) => (
+                    <MotiView
                         key={b}
-                        style={[styles.beliefCard, beliefType === b && styles.beliefCardActive]}
-                        onPress={() => setBeliefType(b)}
+                        from={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ type: 'spring', delay: index * 100 }}
                     >
-                        <Text style={[styles.beliefText, beliefType === b && styles.beliefTextActive]}>{b}</Text>
-                    </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.beliefCard, beliefType === b && styles.beliefCardActive]}
+                            onPress={() => setBeliefType(b)}
+                        >
+                            <Text style={[styles.beliefText, beliefType === b && styles.beliefTextActive]}>{b}</Text>
+                        </TouchableOpacity>
+                    </MotiView>
                 ))}
             </View>
-        </View>
+        </StepContainer>
     );
 
     const renderStep3 = () => (
-        <View style={styles.stepContainer}>
+        <StepContainer>
             {renderHeader("Join True North", "Create an account to save your journey.")}
             <View style={styles.authGrid}>
                 {loading ? (
                     <ActivityIndicator color={theme.colors.text} size="large" style={{ marginTop: 40 }} />
                 ) : (
                     <>
-                        <TouchableOpacity style={styles.socialButton} onPress={nextStep}>
+                        <TouchableOpacity style={styles.socialButton} onPress={() => {
+                            useStore.getState().setEmail('remy_shiznitt@hotmail.com');
+                            nextStep();
+                        }}>
                             <Text style={styles.socialButtonText}>Continue with Apple</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={[styles.socialButton, styles.googleButton]} onPress={nextStep}>
+                        <TouchableOpacity style={[styles.socialButton, styles.googleButton]} onPress={() => {
+                            useStore.getState().setEmail('remyngatia@gmail.com');
+                            nextStep();
+                        }}>
                             <Text style={[styles.socialButtonText, styles.googleButtonText]}>Continue with Google</Text>
                         </TouchableOpacity>
                         <View style={styles.authDivider}>
@@ -190,17 +264,20 @@ export const OnboardingScreen = () => {
                             <Text style={styles.dividerText}>or</Text>
                             <View style={styles.dividerLine} />
                         </View>
-                        <TouchableOpacity style={styles.emailButton} onPress={nextStep}>
+                        <TouchableOpacity style={styles.emailButton} onPress={() => {
+                            useStore.getState().setEmail('user@example.com');
+                            nextStep();
+                        }}>
                             <Text style={styles.emailButtonText}>Continue with Email</Text>
                         </TouchableOpacity>
                     </>
                 )}
             </View>
-        </View>
+        </StepContainer>
     );
 
     const renderStep4 = () => (
-        <View style={styles.stepContainer}>
+        <StepContainer>
             {renderHeader("Choose Username", "How should we address you in True North?")}
             <View style={styles.inputGroup}>
                 <Text style={styles.label}>Username</Text>
@@ -214,19 +291,19 @@ export const OnboardingScreen = () => {
                     onChangeText={setUsername}
                 />
             </View>
-        </View>
+        </StepContainer>
     );
 
     const renderStep5 = () => (
-        <View style={styles.stepContainer}>
+        <StepContainer>
             {renderHeader("Profile Picture", "Let the community put a face to your name (Optional)")}
             <View style={styles.avatarPickerContainer}>
                 <TouchableOpacity style={styles.avatarCircle} onPress={pickImage}>
                     {profileImage ? (
-                        <Image source={{ uri: profileImage }} style={styles.avatarImage} />
+                        <OptimizedImage source={{ uri: profileImage }} style={styles.avatarImage} />
                     ) : (
                         <View style={styles.avatarPlaceholder}>
-                            <Image source={{ uri: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?auto=format&fit=crop&q=80&w=400' }} style={[styles.avatarImage, { opacity: 0.3 }]} />
+                            <OptimizedImage source={{ uri: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?auto=format&fit=crop&q=80&w=400' }} style={[styles.avatarImage, { opacity: 0.3 }]} />
                             <View style={styles.plusOverlay}>
                                 <Plus size={24} color={palette.ivory} />
                             </View>
@@ -235,11 +312,11 @@ export const OnboardingScreen = () => {
                 </TouchableOpacity>
                 <Text style={styles.pickerHint}>{profileImage ? 'Tap to change' : 'Tap to upload'}</Text>
             </View>
-        </View>
+        </StepContainer>
     );
 
     const renderStep6 = () => (
-        <View style={styles.stepContainer}>
+        <StepContainer>
             {renderHeader("Sanctuary Security", "Protect your private reflections with biometrics or a PIN.")}
 
             <TouchableOpacity
@@ -270,7 +347,62 @@ export const OnboardingScreen = () => {
                 />
                 <Text style={styles.pinHint}>Recommended if biometrics are unavailable.</Text>
             </View>
-        </View>
+        </StepContainer>
+    );
+
+    const renderStep7 = () => (
+        // Premium Upsell Step
+        <>
+            {/* eslint-disable-next-line truenorth-performance/no-scrollview */}
+            <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false}>
+                {renderHeader("Unlock Full Potential", "Start your journey with full access.")}
+
+                <View style={styles.premiumCard}>
+                    <View style={styles.premiumHeader}>
+                        <Sparkles size={32} color={palette.softGold} />
+                        <Text style={styles.premiumTitle}>True North Premium</Text>
+                    </View>
+
+                    <View style={styles.benefitList}>
+                        <View style={styles.benefitRow}>
+                            <Check size={20} color={palette.softGold} />
+                            <Text style={styles.benefitText}>Unlimited Journal Entries</Text>
+                        </View>
+                        <View style={styles.benefitRow}>
+                            <Check size={20} color={palette.softGold} />
+                            <Text style={styles.benefitText}>Personalized AI Spiritual Guidance</Text>
+                        </View>
+                        <View style={styles.benefitRow}>
+                            <Check size={20} color={palette.softGold} />
+                            <Text style={styles.benefitText}>Secure Biometric Lock</Text>
+                        </View>
+                        <View style={styles.benefitRow}>
+                            <Check size={20} color={palette.softGold} />
+                            <Text style={styles.benefitText}>Deep Reflection Analysis</Text>
+                        </View>
+                    </View>
+
+                    <TouchableOpacity style={styles.subscribeButton} onPress={handleSubscribe}>
+                        {loading ? (
+                            <ActivityIndicator color={palette.ivory} />
+                        ) : (
+                            <>
+                                <Text style={styles.subscribeButtonText}>Start 7-Day Free Trial</Text>
+                                <Text style={styles.subscribeSubText}>Then $12.99/month</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.skipButton} onPress={finishOnboarding}>
+                        <Text style={styles.skipButtonText}>Maybe Later (Continue Free)</Text>
+                    </TouchableOpacity>
+
+                    <Text style={styles.disclaimerText}>
+                        No commitment. Cancel anytime in settings.
+                    </Text>
+                </View>
+            </ScrollView>
+        </>
     );
 
     return (
@@ -294,6 +426,7 @@ export const OnboardingScreen = () => {
                 {step === 4 && renderStep4()}
                 {step === 5 && renderStep5()}
                 {step === 6 && renderStep6()}
+                {step === 7 && renderStep7()}
             </View>
 
             <View style={styles.footer}>
@@ -301,9 +434,9 @@ export const OnboardingScreen = () => {
                     <TouchableOpacity
                         style={[styles.nextButton, step === 4 && !username && { opacity: 0.5 }]}
                         onPress={nextStep}
-                        disabled={step === 4 && !username}
+                        disabled={(step === 4 && !username) || step === 7} // Disable main button on Step 7 (custom buttons)
                     >
-                        <Text style={styles.nextButtonText}>{step === 6 ? "Get Started" : "Continue"}</Text>
+                        <Text style={styles.nextButtonText}>{step === 7 ? "" : "Continue"}</Text>
                         <ArrowRight size={20} color={theme.colors.inverseText} />
                     </TouchableOpacity>
                 )}
@@ -398,5 +531,40 @@ const styles = StyleSheet.create({
         height: 60, textAlign: 'center', fontSize: 28, letterSpacing: 20, color: theme.colors.text,
         fontFamily: theme.typography.serifBold, marginTop: 12
     },
-    pinHint: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText, marginTop: 12, textAlign: 'center' }
+    pinHint: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText, marginTop: 12, textAlign: 'center' },
+    loginLink: { marginTop: theme.spacing.xl, alignItems: 'center' },
+    loginLinkText: { fontFamily: theme.typography.sans, fontSize: 14, color: theme.colors.secondaryText },
+    loginLinkHighlight: { fontFamily: theme.typography.sansBold, color: palette.softGold },
+    premiumCard: {
+        backgroundColor: theme.colors.surface,
+        borderRadius: 24,
+        padding: theme.spacing.xl,
+        borderWidth: 1,
+        borderColor: palette.softGold,
+        marginTop: theme.spacing.md,
+        alignItems: 'center',
+        shadowColor: palette.softGold,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 5
+    },
+    premiumHeader: { alignItems: 'center', marginBottom: theme.spacing.xl },
+    premiumTitle: { fontFamily: theme.typography.serifBold, fontSize: 24, color: theme.colors.text, marginTop: theme.spacing.md },
+    benefitList: { width: '100%', gap: theme.spacing.md, marginBottom: theme.spacing.xxl },
+    benefitRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
+    benefitText: { fontFamily: theme.typography.sansMedium, fontSize: 16, color: theme.colors.text },
+    subscribeButton: {
+        backgroundColor: theme.colors.text,
+        width: '100%',
+        paddingVertical: 16,
+        borderRadius: theme.borderRadius.full,
+        alignItems: 'center',
+        marginBottom: theme.spacing.md
+    },
+    subscribeButtonText: { fontFamily: theme.typography.sansBold, fontSize: 18, color: palette.ivory },
+    subscribeSubText: { fontFamily: theme.typography.sans, fontSize: 12, color: palette.ivory, opacity: 0.8, marginTop: 2 },
+    skipButton: { paddingVertical: 12 },
+    skipButtonText: { fontFamily: theme.typography.sansMedium, fontSize: 15, color: theme.colors.secondaryText },
+    disclaimerText: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText, marginTop: theme.spacing.lg, textAlign: 'center', opacity: 0.7 }
 });

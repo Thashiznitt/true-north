@@ -1,0 +1,11 @@
+{
+    "name": "eslint-plugin-truenorth-performance",
+    "version": "1.0.0",
+    "main": "index.js",
+    "devDependencies": {
+        "eslint": "^8.0.0"
+    },
+    "peerDependencies": {
+        "eslint": ">=8.0.0"
+    }
+}

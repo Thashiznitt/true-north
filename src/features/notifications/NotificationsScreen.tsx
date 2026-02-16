@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
+import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { Bell, LucideIcon, Heart, Sparkles, MessageCircle, ChevronLeft, X } from 'lucide-react-native';
@@ -63,10 +64,11 @@ export const NotificationsScreen = () => {
                 <View style={{ width: 40 }} />
             </View>
 
-            <FlatList
+            <TrueNorthFlashList
                 data={notificationsList}
                 renderItem={renderNotification}
-                keyExtractor={item => item.id}
+                keyExtractor={(item: any) => item.id}
+                estimatedItemSize={80}
                 contentContainerStyle={styles.list}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={

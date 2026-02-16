@@ -135,14 +135,19 @@ export const AffirmationScreen = () => {
                         }
                     ]} />
 
-                    <Animated.View style={[
-                        styles.content,
-                        {
-                            paddingTop: insets.top + 20,
-                            paddingBottom: insets.bottom + 20,
-                            transform: [{ scale: scaleAnim }]
-                        }
-                    ]}>
+                    <Animated.ScrollView
+                        style={{ flex: 1, transform: [{ scale: scaleAnim }] }}
+                        contentContainerStyle={[
+                            styles.content,
+                            {
+                                paddingTop: insets.top + 20,
+                                paddingBottom: insets.bottom + 120, // Extra padding for tab bar + ad
+                                flexGrow: 1,
+                                flex: 0,
+                            }
+                        ]}
+                        showsVerticalScrollIndicator={false}
+                    >
                         {!isWallpaperMode ? (
                             <View style={styles.topNav}>
                                 <Text style={styles.date}>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</Text>
@@ -186,7 +191,13 @@ export const AffirmationScreen = () => {
                                         {canGetAdvice() && <View style={styles.availableIndicator} />}
                                     </TouchableOpacity>
                                 </View>
-                                <TouchableOpacity style={styles.journalButton} onPress={() => navigation.navigate('Journal')}>
+                                <TouchableOpacity
+                                    style={styles.journalButton}
+                                    onPress={() => navigation.navigate('JournalDetail', {
+                                        isNew: true,
+                                        initialContent: `Reflecting on today's affirmation:\n\n"${current.text}"\n\n`
+                                    })}
+                                >
                                     <Text style={styles.journalButtonText}>Reflect in Journal</Text>
                                 </TouchableOpacity>
                             </View>
@@ -202,11 +213,11 @@ export const AffirmationScreen = () => {
                         )}
 
                         {!isSubscribed && !isWallpaperMode && (
-                            <View style={{ marginTop: theme.spacing.xl }}>
+                            <View style={{ marginTop: theme.spacing.md }}>
                                 <FaithAd type="community" />
                             </View>
                         )}
-                    </Animated.View>
+                    </Animated.ScrollView>
                 </ImageBackground>
             </ViewShot>
 
@@ -365,7 +376,7 @@ const styles = StyleSheet.create({
     topActions: { flexDirection: 'row', gap: theme.spacing.sm },
     date: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 13, textTransform: 'uppercase', letterSpacing: 2, opacity: 0.8 },
     iconButton: { padding: theme.spacing.sm },
-    affirmationContainer: { alignItems: 'center' },
+    affirmationContainer: { alignItems: 'center', marginBottom: theme.spacing.xxl },
     text: {
         fontFamily: theme.typography.serif, fontSize: 38, color: palette.ivory,
         textAlign: 'center', lineHeight: 52, marginBottom: theme.spacing.xl,

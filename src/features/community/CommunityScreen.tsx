@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { Users, Lock, ChevronRight, Heart, Search, Plus, Bell } from 'lucide-react-native';
+import { Users, Lock, ChevronRight, Heart, Search, Plus, Bell, BookOpen, Moon, Leaf, Sun, Compass } from 'lucide-react-native';
 import { contentAgentService, GhostCircle } from '../../services/ContentAgentService';
 import { useStore } from '../../store';
 import { FaithAd } from '../../components/FaithAd';
+import { MotiView } from 'moti';
+import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
+
+const getBeliefIcon = (belief: string) => {
+    switch (belief) {
+        case 'Christian': return BookOpen;
+        case 'Muslim': return Moon;
+        case 'Secular': return Leaf;
+        case 'Open': return Sun;
+        case 'Exploring': return Compass;
+        default: return Users;
+    }
+};
 
 export const CommunityScreen = () => {
     const insets = useSafeAreaInsets();
@@ -76,51 +89,64 @@ export const CommunityScreen = () => {
         return result;
     }, [filteredCircles, isSubscribed, searchQuery]);
 
-    const renderCircle = ({ item }: { item: any }) => {
+    const renderCircle = ({ item, index }: { item: any, index: number }) => {
         if (item.isAd) return <FaithAd />;
 
+        const BeliefIcon = getBeliefIcon(item.belief);
+
         return (
-            <TouchableOpacity
-                style={styles.card}
-                onPress={() => navigation.navigate('CircleDetail', {
-                    circleId: item.id,
-                    circleName: item.name,
-                    circleType: `${item.belief} Circle`
-                })}
+            <MotiView
+                from={{ opacity: 0, translateY: 20 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ type: 'timing', duration: 500, delay: index * 100 }}
             >
-                {bookmarkedCircleIds.includes(item.id) && (
-                    <View style={styles.bookmarkBadge}>
-                        <Heart size={12} color={palette.ivory} fill={palette.ivory} />
+                <TouchableOpacity
+                    style={styles.card}
+                    onPress={() => navigation.navigate('CircleDetail', {
+                        circleId: item.id,
+                        circleName: item.name,
+                        circleType: `${item.belief} Circle`
+                    })}
+                >
+                    {bookmarkedCircleIds.includes(item.id) && (
+                        <View style={styles.bookmarkBadge}>
+                            <Heart size={12} color={palette.ivory} fill={palette.ivory} />
+                        </View>
+                    )}
+                    <View style={styles.cardIconContainer}>
+                        <View style={styles.cardIcon}>
+                            {item.type === 'Private' ? (
+                                <Lock size={20} color={palette.softGold} />
+                            ) : (
+                                <BeliefIcon size={20} color={palette.softGold} />
+                            )}
+                        </View>
+                        <View style={styles.beliefBadge}>
+                            <Text style={styles.cardBelief}>{item.belief}</Text>
+                        </View>
                     </View>
-                )}
-                <View style={styles.cardIconContainer}>
-                    <View style={styles.cardIcon}>
-                        {item.type === 'Private' ? <Lock size={20} color={palette.softGold} /> : <Users size={20} color={palette.softGold} />}
+                    <View style={styles.cardContent}>
+                        <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
+                        <Text style={styles.cardLocation} numberOfLines={1}>{item.city}, {item.country}</Text>
+                        <View style={styles.cardStats}>
+                            <Text style={styles.cardDetail}>{item.members.toLocaleString()} members</Text>
+                            <View style={styles.statDot} />
+                            <Text style={styles.cardDetail}>{item.lastActivity}</Text>
+                        </View>
                     </View>
-                    <View style={styles.beliefBadge}>
-                        <Text style={styles.cardBelief}>{item.belief}</Text>
-                    </View>
-                </View>
-                <View style={styles.cardContent}>
-                    <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
-                    <Text style={styles.cardLocation} numberOfLines={1}>{item.city}, {item.country}</Text>
-                    <View style={styles.cardStats}>
-                        <Text style={styles.cardDetail}>{item.members.toLocaleString()} members</Text>
-                        <View style={styles.statDot} />
-                        <Text style={styles.cardDetail}>{item.lastActivity}</Text>
-                    </View>
-                </View>
-                <ChevronRight size={18} color={theme.colors.border} style={{ marginLeft: theme.spacing.sm }} />
-            </TouchableOpacity>
+                    <ChevronRight size={18} color={theme.colors.border} style={{ marginLeft: theme.spacing.sm }} />
+                </TouchableOpacity>
+            </MotiView>
         );
     };
 
     return (
         <View style={styles.container}>
-            <FlatList
+            <TrueNorthFlashList
                 data={dataWithAds}
                 renderItem={renderCircle}
-                keyExtractor={item => item.id}
+                keyExtractor={(item: any) => item.id}
+                estimatedItemSize={120}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 ListHeaderComponent={

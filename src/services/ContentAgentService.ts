@@ -190,20 +190,38 @@ export const LIFE_CIRCLES: GhostCircle[] = [
     { id: 'c30', name: 'New Muslim Support', belief: 'Muslim', theme: 'Wisdom', members: 1700, type: 'Public', city: 'Online', country: 'Global', description: 'Welcome to the Ummah.', lastActivity: '18m ago', reflections: [] },
 ];
 
+import { AIService } from './AIService';
+
+// ... (existing helper functions and constants)
+
 export const contentAgentService = {
-    generateReflection: (circleId: string, customBelief?: BeliefType, customTheme?: string): GhostReflection => {
+    generateReflection: async (circleId: string, customBelief?: BeliefType, customTheme?: string): Promise<GhostReflection> => {
         const circle = LIFE_CIRCLES.find(c => c.id === circleId);
         const belief = customBelief || (circle?.belief as BeliefType) || 'Open';
         const theme = customTheme || circle?.theme || 'Wisdom';
-
         const names = GHOST_USERS[belief as BeliefType] || GHOST_USERS.Open;
         const user = names[Math.floor(Math.random() * names.length)];
 
-        const templates = (REFLECTION_TEMPLATES[belief as BeliefType] && REFLECTION_TEMPLATES[belief as BeliefType][theme])
-            ? REFLECTION_TEMPLATES[belief as BeliefType][theme]
-            : GENERIC_TEMPLATES;
+        const provider = await AIService.getProvider();
 
-        const content = templates[Math.floor(Math.random() * templates.length)];
+        let content = '';
+
+        if (provider === 'LocalMock') {
+            const templates = (REFLECTION_TEMPLATES[belief as BeliefType] && REFLECTION_TEMPLATES[belief as BeliefType][theme])
+                ? REFLECTION_TEMPLATES[belief as BeliefType][theme]
+                : GENERIC_TEMPLATES;
+            content = templates[Math.floor(Math.random() * templates.length)];
+        } else {
+            try {
+                const systemPrompt = `You are a member of a ${belief} spiritual circle focused on ${theme}. Write a short, personal reflection (max 2 sentences) to share with the group. Be authentic, vulnerable, and supportive. Do not use hashtags or emojis.`;
+                const userPrompt = `Write a reflection about ${theme}.`;
+                content = await AIService.generateText(systemPrompt, userPrompt);
+            } catch (error) {
+                console.warn('AI Generation failed, falling back to templates', error);
+                const templates = GENERIC_TEMPLATES;
+                content = templates[Math.floor(Math.random() * templates.length)];
+            }
+        }
 
         return {
             id: Math.random().toString(36).substr(2, 9),
@@ -222,98 +240,225 @@ export const contentAgentService = {
         return reflections.filter(r => (now - r.createdAt) < SEVEN_DAYS_MS);
     },
 
-    initializeCircles: () => {
-        const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    initializeCircles: async () => {
+        // Keep initialization local/fast for now, or parallelize
+        // For performance, we might want to stick to templates for bulk/init
         return LIFE_CIRCLES.map(circle => ({
             ...circle,
-            reflections: Array.from({ length: 3 }).map((_, i) => {
-                const reflection = contentAgentService.generateReflection(circle.id);
-                // Spread them out slightly into the past for realism
-                reflection.createdAt = Date.now() - (i * 24 * 60 * 60 * 1000);
-                return reflection;
-            })
+            reflections: [] // Start empty or use a separate "fill" function later to avoid massive AI calls on startup
         }));
     },
 
-    getDailyAdvice: (username: string, belief: BeliefType, themes: string[], journalInput?: string): string => {
+    getDailyAdvice: async (username: string, belief: BeliefType, themes: string[], journalInput?: string): Promise<string> => {
         const theme = themes[0] || 'Wisdom';
+        const provider = await AIService.getProvider();
 
-        const adviceTemplates: Record<BeliefType, string[]> = {
-            Christian: [
-                "Dear {{name}}, based on your focus on {{theme}}, remember that your path is prepared. Lean into the stillness today.",
-                "{{name}}, I see you've been reflecting on {{theme}}. The word reminds us that grace is a marathon, not a sprint. Take a breath.",
-                "Your journey in {{theme}} is being noted, {{name}}. Take five minutes for prayerful silence this afternoon; the clarity you seek is already within you."
-            ],
-            Muslim: [
-                "{{name}}, reflecting on {{theme}}, remember that Sabr (patience) is your greatest ally today. Stay grounded in your intentions.",
-                "For your path in {{theme}}, {{name}}, consider how your small actions today echo your larger faith. Every step towards goodness is counted.",
-                "In the pursuit of {{theme}}, {{name}}, find tranquility in the remembrance of Allah. Your heart is being guided."
-            ],
-            Secular: [
-                "{{name}}, focusing on {{theme}} today? Remember that consistency is better than intensity. What's one tiny step you can take right now?",
-                "Your path in {{theme}} is becoming clearer, {{name}}. Trust the process and honor your boundaries today.",
-                "{{name}}, science and stillness both agree: your growth in {{theme}} requires rest. Don't forget to unplug tonight."
-            ],
-            Open: [
-                "{{name}}, the universe is reflecting your focus on {{theme}}. Stay open to the small signs appearing in your day.",
-                "Your journey toward {{theme}} is unique, {{name}}. Comparison is the thief of joy; stay centered in your own light.",
-                "In the flow of {{theme}}, {{name}}, remember that you are exactly where you need to be. Breathe through the transition."
-            ],
-            Exploring: [
-                "{{name}}, as you explore {{theme}}, keep your heart open to the wisdom found in unexpected places today.",
-                "Truth reveals itself in the quiet, {{name}}. Your pursuit of {{theme}} is a beautiful endeavor.",
-                "Keep seeking {{theme}}, {{name}}. The questions are more important than the answers right now."
-            ]
-        };
+        if (provider === 'LocalMock') {
+            const adviceTemplates: Record<BeliefType, string[]> = {
+                Christian: [
+                    "Dear {{name}}, based on your focus on {{theme}}, remember that your path is prepared. Lean into the stillness today.",
+                    "{{name}}, I see you've been reflecting on {{theme}}. The word reminds us that grace is a marathon, not a sprint. Take a breath.",
+                    "Your journey in {{theme}} is being noted, {{name}}. Take five minutes for prayerful silence this afternoon; the clarity you seek is already within you."
+                ],
+                Muslim: [
+                    "{{name}}, reflecting on {{theme}}, remember that Sabr (patience) is your greatest ally today. Stay grounded in your intentions.",
+                    "For your path in {{theme}}, {{name}}, consider how your small actions today echo your larger faith. Every step towards goodness is counted.",
+                    "In the pursuit of {{theme}}, {{name}}, find tranquility in the remembrance of Allah. Your heart is being guided."
+                ],
+                Secular: [
+                    "{{name}}, focusing on {{theme}} today? Remember that consistency is better than intensity. What's one tiny step you can take right now?",
+                    "Your path in {{theme}} is becoming clearer, {{name}}. Trust the process and honor your boundaries today.",
+                    "{{name}}, science and stillness both agree: your growth in {{theme}} requires rest. Don't forget to unplug tonight."
+                ],
+                Open: [
+                    "{{name}}, the universe is reflecting your focus on {{theme}}. Stay open to the small signs appearing in your day.",
+                    "Your journey toward {{theme}} is unique, {{name}}. Comparison is the thief of joy; stay centered in your own light.",
+                    "In the flow of {{theme}}, {{name}}, remember that you are exactly where you need to be. Breathe through the transition."
+                ],
+                Exploring: [
+                    "{{name}}, as you explore {{theme}}, keep your heart open to the wisdom found in unexpected places today.",
+                    "Truth reveals itself in the quiet, {{name}}. Your pursuit of {{theme}} is a beautiful endeavor.",
+                    "Keep seeking {{theme}}, {{name}}. The questions are more important than the answers right now."
+                ]
+            };
 
-        const templates = adviceTemplates[belief] || adviceTemplates.Open;
-        const template = templates[Math.floor(Math.random() * templates.length)];
+            const templates = adviceTemplates[belief] || adviceTemplates.Open;
+            const template = templates[Math.floor(Math.random() * templates.length)];
 
-        let advice = template.replace('{{theme}}', theme.toLowerCase()).replace('{{name}}', username || 'friend');
+            let advice = template.replace('{{theme}}', theme.toLowerCase()).replace('{{name}}', username || 'friend');
 
-        if (journalInput && journalInput.length > 20) {
-            advice += "\n\nI also noticed your recent journal entries touched on something deeper. Trust that those feelings are pointing you toward your True North.";
+            if (journalInput && journalInput.length > 20) {
+                advice += "\n\nI also noticed your recent journal entries touched on something deeper. Trust that those feelings are pointing you toward your True North.";
+            }
+            return advice;
+        } else {
+            try {
+                const systemPrompt = `You are a wise spiritual guide. The user is ${belief}. Their current focus is ${theme}. Provide personalized, compassionate advice (max 3 sentences).`;
+                let userPrompt = `User Name: ${username || 'Friend'}. Focus: ${theme}.`;
+                if (journalInput) {
+                    userPrompt += ` Recent thoughts: "${journalInput}".`;
+                }
+                return await AIService.generateText(systemPrompt, userPrompt);
+            } catch {
+                console.warn('AI daily advice failed');
+                return "Take a moment to breathe. Your answers are within.";
+            }
         }
-
-        return advice;
     },
 
-    getDailyPrayerOrQuote: (username: string, belief: BeliefType): { content: string, title: string, buttonLabel: string } => {
+    getDailyPrayerOrQuote: async (username: string, belief: BeliefType): Promise<{ content: string, title: string, buttonLabel: string }> => {
         const isReligious = belief === 'Christian' || belief === 'Muslim';
-        const name = username || 'friend';
+        const provider = await AIService.getProvider();
 
-        const prayers: Record<'Christian' | 'Muslim', string[]> = {
-            Christian: [
-                "Heavenly Father, we lift up {{name}} today. Grant them the strength to walk in Your light and the wisdom to see Your path. May Your peace, which surpasses all understanding, guard their heart and mind. Amen.",
-                "Lord, thank You for {{name}}. Bless their journey this day. Fill them with Your Spirit and guide their every step. May they be a beacon of Your love to everyone they meet. Amen."
-            ],
-            Muslim: [
-                "O Allah, we ask You to bless {{name}} with guidance, piety, and contentment. Grant them success in this life and the hereafter, and protect them from all harm. Ameen.",
-                "Allahumma, guide {{name}} to the straight path. Fill their day with barakah and grant them the patience and wisdom to navigate their challenges with faith. Ameen."
-            ]
-        };
-
-        const quotes: string[] = [
-            "{{name}}, remember that your potential is limitless. Today is a clean slate to build the life you envision. Stay focused, stay kind, and trust your inner strength.",
-            "The journey of a thousand miles begins with a single step, {{name}}. Honor your progress today, no matter how small it may seem. You are growing in ways you cannot yet see.",
-            "{{name}}, find stillness in the chaos. Your clarity comes from within. Trust yourself to handle whatever today brings with grace and resilience."
-        ];
-
-        if (isReligious && belief in prayers) {
-            const templates = prayers[belief as keyof typeof prayers];
-            const content = templates[Math.floor(Math.random() * templates.length)].replace('{{name}}', name);
-            return {
-                title: belief === 'Christian' ? "Daily Prayer" : "Daily Du'a",
-                content,
-                buttonLabel: belief === 'Christian' ? "Amen" : "Ameen"
+        if (provider === 'LocalMock') {
+            const name = username || 'friend';
+            const prayers: Record<'Christian' | 'Muslim', string[]> = {
+                Christian: [
+                    "Heavenly Father, we lift up {{name}} today. Grant them the strength to walk in Your light and the wisdom to see Your path. May Your peace, which surpasses all understanding, guard their heart and mind. Amen.",
+                    "Lord, thank You for {{name}}. Bless their journey this day. Fill them with Your Spirit and guide their every step. May they be a beacon of Your love to everyone they meet. Amen."
+                ],
+                Muslim: [
+                    "O Allah, we ask You to bless {{name}} with guidance, piety, and contentment. Grant them success in this life and the hereafter, and protect them from all harm. Ameen.",
+                    "Allahumma, guide {{name}} to the straight path. Fill their day with barakah and grant them the patience and wisdom to navigate their challenges with faith. Ameen."
+                ]
             };
+
+            const quotes: string[] = [
+                "{{name}}, remember that your potential is limitless. Today is a clean slate to build the life you envision. Stay focused, stay kind, and trust your inner strength.",
+                "The journey of a thousand miles begins with a single step, {{name}}. Honor your progress today, no matter how small it may seem. You are growing in ways you cannot yet see.",
+                "{{name}}, find stillness in the chaos. Your clarity comes from within. Trust yourself to handle whatever today brings with grace and resilience."
+            ];
+
+            if (isReligious && belief in prayers) {
+                const templates = prayers[belief as keyof typeof prayers];
+                const content = templates[Math.floor(Math.random() * templates.length)].replace('{{name}}', name);
+                return {
+                    title: belief === 'Christian' ? "Daily Prayer" : "Daily Du'a",
+                    content,
+                    buttonLabel: belief === 'Christian' ? "Amen" : "Ameen"
+                };
+            } else {
+                const content = quotes[Math.floor(Math.random() * quotes.length)].replace('{{name}}', name);
+                return {
+                    title: "Daily Wisdom",
+                    content,
+                    buttonLabel: "Reflect"
+                };
+            }
         } else {
-            const content = quotes[Math.floor(Math.random() * quotes.length)].replace('{{name}}', name);
-            return {
-                title: "Daily Wisdom",
-                content,
-                buttonLabel: "Reflect"
-            };
+            try {
+                const type = isReligious ? (belief === 'Christian' ? 'Prayer' : 'Dua') : 'Quote/Wisdom';
+                const systemPrompt = `You are a spiritual companion. Write a short ${type} for the user.`;
+                const userPrompt = `User: ${username}. Belief: ${belief}.`;
+                const content = await AIService.generateText(systemPrompt, userPrompt);
+
+                return {
+                    title: isReligious ? (belief === 'Christian' ? "Daily Prayer" : "Daily Du'a") : "Daily Wisdom",
+                    content,
+                    buttonLabel: isReligious ? (belief === 'Christian' ? "Amen" : "Ameen") : "Reflect"
+                };
+            } catch {
+                return { title: "Daily Wisdom", content: "Peace be with you today.", buttonLabel: "Reflect" };
+            }
+        }
+    },
+
+    getSpiritualAnalysis: async (content: string, belief: BeliefType): Promise<{ title: string, message: string, action: string }> => {
+        const provider = await AIService.getProvider();
+
+        if (provider === 'LocalMock') {
+            const text = content.toLowerCase();
+
+            // Keyword matching
+            const isAnxious = text.includes('anxi') || text.includes('worry') || text.includes('stress') || text.includes('fear') || text.includes('nervous');
+            const isSad = text.includes('sad') || text.includes('grief') || text.includes('lost') || text.includes('pain') || text.includes('hurt');
+            const isHappy = text.includes('happy') || text.includes('joy') || text.includes('great') || text.includes('excited') || text.includes('blessed');
+            const isWork = text.includes('work') || text.includes('job') || text.includes('career') || text.includes('boss') || text.includes('interview');
+
+            const title = "Spiritual Insight";
+            let message = "";
+            let action = "Reflect on this";
+
+            if (belief === 'Christian') {
+                if (isAnxious) {
+                    if (isWork) {
+                        message = "I sense some anxiety about your work. Remember Colossians 3:23: 'Whatever you do, work at it with all your heart, as working for the Lord.' Your value is not in the outcome, but in your faithfulness. Trust Him with the results.";
+                    } else {
+                        message = "In moments of anxiety, recall Philippians 4:6-7. 'Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God.' Breathe in His peace right now.";
+                    }
+                    action = "Pray for Peace";
+                } else if (isSad) {
+                    message = "The Lord is close to the brokenhearted (Psalm 34:18). It's okay to not be okay. Bring your authentic sorrow to Him; He is big enough to hold it.";
+                    action = "Receive Comfort";
+                } else if (isHappy) {
+                    message = "This joy is a gift! 'Every good and perfect gift is from above' (James 1:17). Take a moment to simply say 'Thank You' for this season of blessing.";
+                    action = "Offer Praise";
+                } else {
+                    message = "As you reflect today, ask yourself: Where did I see God's hand moving in the small details? He is present in the stillness.";
+                    action = "Seek Him";
+                }
+            }
+            else if (belief === 'Muslim') {
+                if (isAnxious) {
+                    if (isWork) {
+                        message = "Work is a form of worship (Ibadah), but results are from Allah. 'Tie your camel and trust in Allah.' Do your best, and leave the outcome to Al-Wakil (The Trustee).";
+                    } else {
+                        message = "When worry takes over, remember: 'Verily, in the remembrance of Allah do hearts find rest' (Quran 13:28). Recite 'HasbunAllahu wa ni'mal wakil' (Allah is sufficient for us).";
+                    }
+                    action = "Make Dua";
+                } else if (isSad) {
+                    message = "Allah does not burden a soul beyond that it can bear. Your pain is seen by Him. Turned to Him in simple, honest dua. He is Al-Sami (The All-Hearing).";
+                    action = "Seek Patience";
+                } else if (isHappy) {
+                    message = "Alhamdulillah for this happiness. 'If you are grateful, I will surely increase you' (Quran 14:7). Let your joy turn into gratitude and charity (Sadaqah).";
+                    action = "Say Alhamdulillah";
+                } else {
+                    message = "Reflect on your intention (Niyyah) today. Simply purifying your intention turns ordinary actions into rewards. What is your heart's direction?";
+                    action = "Renew Intention";
+                }
+            }
+            else { // Secular / Open / Exploring
+                if (isAnxious) {
+                    if (isWork) {
+                        message = "Work anxiety often comes from attaching our worth to our output. Remember: You are not your job. Your value is intrinsic. Focus on what is within your control, and release the rest.";
+                    } else {
+                        message = "Anxiety is often excitement without the breath. Take three deep, slow breaths. Ground yourself in this present moment. You have handled everything up to this point, and you can handle this too.";
+                    }
+                    action = "Breathe Deeply";
+                } else if (isSad) {
+                    message = "Honor this feeling. Sadness is often love with nowhere to go, or a sign that something mattered. Don't rush to 'fix' it. Just witness it with compassion.";
+                    action = "Be Kind to Self";
+                } else if (isHappy) {
+                    message = "Savor this feeling. Our brains are wired to overlook the good. Take 10 seconds to really feel this joy in your body. This stores it as resilience for later.";
+                    action = "Savor the Moment";
+                } else {
+                    message = "As you write, try to connect with your 'Why'. What values are guiding your actions today? Clarity often comes when we pause to listen to our own inner wisdom.";
+                    action = "Find Clarity";
+                }
+            }
+
+            return { title, message, action };
+        } else {
+            try {
+                const systemPrompt = `You are a spiritual counselor. Analyze the user's journal entry. Provide a compassionate insight, a quote/scripture based on their belief (${belief}), and a simple action step. Output JSON with keys: title, message, action.`;
+                const userPrompt = `Journal: "${content}"`;
+                const jsonStr = await AIService.generateText(systemPrompt, userPrompt);
+
+                // Try to parse JSON, if fails, fallback
+                try {
+                    const parsed = JSON.parse(jsonStr);
+                    return {
+                        title: parsed.title || "Spiritual Insight",
+                        message: parsed.message || "Keep reflecting.",
+                        action: parsed.action || "Reflect"
+                    };
+                } catch {
+                    return { title: "Insight", message: jsonStr, action: "Reflect" };
+                }
+
+            } catch {
+                return { title: "Insight", message: "Your thoughts are heard.", action: "Breathe" };
+            }
         }
     }
 };

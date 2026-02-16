@@ -16,6 +16,12 @@
 ## Running the App
 
 ### iOS
+To run on the iPhone 16e simulator:
+```bash
+npm run ios:16e
+```
+
+Or manually:
 ```bash
 npx expo run:ios --device "iPhone 16e"
 ```

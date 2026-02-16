@@ -1,9 +1,11 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+/* eslint-disable truenorth-performance/no-scrollview */
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { OptimizedImage } from '../../components/performance/OptimizedImage';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { useStore } from '../../store';
-import { ChevronRight, Bell, CreditCard, ShieldCheck, LogOut, Heart, BookOpen, Sparkles, Camera } from 'lucide-react-native';
+import { User, Settings, BookOpen, Crown, ChevronRight, LogOut, Bell, CreditCard, Shield, Sparkles, Camera, Heart, ShieldCheck } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 
 export const ProfileScreen = () => {
@@ -66,7 +68,7 @@ export const ProfileScreen = () => {
                 <TouchableOpacity style={styles.avatarWrapper} onPress={pickImage}>
                     <View style={styles.avatarContainer}>
                         {profilePicture ? (
-                            <Image source={{ uri: profilePicture }} style={styles.avatarImage} />
+                            <OptimizedImage source={{ uri: profilePicture }} style={styles.avatarImage} />
                         ) : (
                             <Text style={styles.avatarText}>{username ? username[0].toUpperCase() : 'U'}</Text>
                         )}
@@ -101,6 +103,16 @@ export const ProfileScreen = () => {
             </View>
 
             <Section title="My Journey">
+                {(__DEV__ || username === 'Superadmin' || (useStore.getState().email === 'remyngatia@gmail.com' || useStore.getState().email === 'remy_shiznitt@hotmail.com')) && (
+                    <MenuItem
+                        icon={Shield}
+                        label="Superadmin Portal"
+                        onPress={() => {
+                            console.log('Navigating to SuperAdmin');
+                            navigation.navigate('SuperAdmin');
+                        }}
+                    />
+                )}
                 <MenuItem
                     icon={ShieldCheck}
                     label="Belief System"
@@ -166,8 +178,19 @@ export const ProfileScreen = () => {
                     label="Sign Out"
                     onPress={handleLogout}
                     color={palette.softGold}
-                    isLast
                 />
+                {__DEV__ && (
+                    <MenuItem
+                        icon={ShieldCheck}
+                        label="Reset Onboarding (Dev)"
+                        onPress={() => {
+                            useStore.getState().setOnboarded(false);
+                            Alert.alert("Reset", "Onboarding reset. proper restart required.");
+                        }}
+                        color="red"
+                        isLast
+                    />
+                )}
             </Section>
 
             <Text style={styles.versionText}>True North v1.0.0</Text>

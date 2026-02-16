@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Key
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { useStore } from '../../store';
+import { authService, AuthProvider } from '../../services/auth';
 import { ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react-native';
 
 export const LoginScreen = () => {
@@ -13,13 +14,28 @@ export const LoginScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleMockLogin = (type: string) => {
+    const handleLogin = async (provider: AuthProvider) => {
         setLoading(true);
-        // Simulate network delay
-        setTimeout(() => {
+        try {
+            await authService.login(provider);
+
+            // Allow state to update
+            setTimeout(() => {
+                const { isSubscribed } = useStore.getState();
+                if (!isSubscribed) {
+                    // Navigate to subscription if not subscribed
+                    // We need to use root navigation to ensure we can go to the Subscription screen
+                    // forcing navigation to subscription
+                    // Note: RootNavigator switches stacks based on state, so we might need to handle this carefully.
+                    // If RootNavigator switches to Main, we can rely on initialRoute or navigate there.
+                }
+            }, 100);
+
+        } catch (error) {
+            Alert.alert("Login Failed", "Unable to access the sanctuary at this time.");
+        } finally {
             setLoading(false);
-            setLoggedIn(true);
-        }, 1500);
+        }
     };
 
     const handleRestartOnboarding = () => {
@@ -51,10 +67,10 @@ export const LoginScreen = () => {
                     </View>
                 ) : mode === 'options' ? (
                     <View style={styles.optionsContainer}>
-                        <TouchableOpacity style={styles.socialButton} onPress={() => handleMockLogin('Apple')}>
+                        <TouchableOpacity style={styles.socialButton} onPress={() => handleLogin('Apple')}>
                             <Text style={styles.socialButtonText}>Continue with Apple</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={[styles.socialButton, styles.googleButton]} onPress={() => handleMockLogin('Google')}>
+                        <TouchableOpacity style={[styles.socialButton, styles.googleButton]} onPress={() => handleLogin('Google')}>
                             <Text style={[styles.socialButtonText, styles.googleButtonText]}>Continue with Google</Text>
                         </TouchableOpacity>
 
@@ -100,7 +116,7 @@ export const LoginScreen = () => {
                             />
                         </View>
 
-                        <TouchableOpacity style={styles.loginButton} onPress={() => handleMockLogin('Email')}>
+                        <TouchableOpacity style={styles.loginButton} onPress={() => handleLogin('Email')}>
                             <Text style={styles.loginButtonText}>Enter Sanctuary</Text>
                             <ArrowRight size={20} color={palette.ivory} />
                         </TouchableOpacity>

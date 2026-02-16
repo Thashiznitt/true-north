@@ -10,6 +10,7 @@ Users can join existing "Ghost Circles" or create their own.
 A sacred space for users to record their daily reflections.
 - **Premium Feature**: Journaling requires a subscription.
 - **Search**: Users can search through their past entries.
+- **AI Spiritual Analysis**: Get personalized spiritual guidance, scripture, and action steps based on your journal entry and belief system.
 
 ## 3. Affirmations
 Daily inspiration based on the user's selected belief system and current theme.
@@ -21,3 +22,17 @@ For non-subscribers, the app serves contextual, faith-friendly ads.
 
 ## 5. Security & Fraud Protection
 The app uses automated checks to prevent sharing of sensitive information (like phone numbers or payment requests) in public circles, protecting the community from fraud.
+
+## 6. Event Management
+Community leaders can create events (online or in-person). Members can RSVP to these events.
+
+## 7. Superadmin Dashboard
+A hidden administrative portal for managing the platform.
+- **Content Moderation**: Review and dismiss/remove flagged content.
+- **User Management**: View user statuses and suspend/ban bad actors.
+- **AI Configuration**: Adjust safety strictness and switch between AI models.
+- **Sales Statistics**: Visualize revenue, subscription tiers, and recent transactions.
+
+## 8. User Experience & Visuals
+- **Global Animations**: Smooth, staggered entrance animations across Onboarding, Community, and Journal screens using `Moti`.
+- **Subscription Gating**: Transparent onboarding flow with clear "Free Trial" or "Limited Access" choices.
