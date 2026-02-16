@@ -11,8 +11,19 @@ import { useNavigation } from '@react-navigation/native';
 export const ProfileScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<any>();
-    const { username, beliefType, isSubscribed, themes, dailyGoals, profilePicture } = useStore();
+    const {
+        username,
+        beliefType,
+        isSubscribed,
+        themes,
+        journalEntries,
+        notificationsList,
+        profilePicture
+    } = useStore();
     const { setLoggedIn, setProfilePicture } = useStore();
+
+    const blessingCount = notificationsList.filter(n => n.type === 'blessing').length;
+    const reflectionCount = journalEntries.length;
 
     const handleLogout = () => {
         setLoggedIn(false);
@@ -91,13 +102,13 @@ export const ProfileScreen = () => {
             <View style={styles.statsRow}>
                 <View style={styles.statItem}>
                     <Heart size={20} color={palette.softGold} fill={palette.softGold} />
-                    <Text style={styles.statNumber}>124</Text>
+                    <Text style={styles.statNumber}>{blessingCount}</Text>
                     <Text style={styles.statLabel}>Blessings</Text>
                 </View>
                 <View style={styles.statDivider} />
                 <View style={styles.statItem}>
                     <BookOpen size={20} color={palette.softGold} />
-                    <Text style={styles.statNumber}>12</Text>
+                    <Text style={styles.statNumber}>{reflectionCount}</Text>
                     <Text style={styles.statLabel}>Reflections</Text>
                 </View>
             </View>
@@ -174,10 +185,16 @@ export const ProfileScreen = () => {
 
             <Section title="Account">
                 <MenuItem
+                    icon={Shield}
+                    label="Terms of Service"
+                    onPress={() => navigation.navigate('TermsOfService')}
+                />
+                <MenuItem
                     icon={LogOut}
                     label="Sign Out"
                     onPress={handleLogout}
                     color={palette.softGold}
+                    isLast={!__DEV__}
                 />
                 {__DEV__ && (
                     <MenuItem

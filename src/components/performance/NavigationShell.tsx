@@ -2,7 +2,6 @@ import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme';
-import { MotiView } from 'moti';
 
 interface NavigationShellProps {
     children: React.ReactNode;
@@ -36,14 +35,9 @@ export const NavigationShell = ({
                 {children}
             </View>
             {footer && (
-                <MotiView
-                    from={{ opacity: 0, translateY: 20 }}
-                    animate={{ opacity: 1, translateY: 0 }}
-                    transition={{ type: 'timing', duration: 300 }}
-                    style={[styles.footer, { paddingBottom: insets.bottom || 20 }]}
-                >
+                <View style={[styles.footer, { paddingBottom: insets.bottom || 20 }]}>
                     {footer}
-                </MotiView>
+                </View>
             )}
         </View>
     );

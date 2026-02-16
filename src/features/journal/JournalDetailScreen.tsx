@@ -8,22 +8,32 @@ import { useStore } from '../../store';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { contentAgentService } from '../../services/ContentAgentService';
 import { SanctuaryLock } from '../../components/SanctuaryLock';
+import { Check } from 'lucide-react-native';
+
+interface JournalRouteParams {
+    entryId?: string;
+    entryTitle?: string;
+    entryContent?: string;
+    initialContent?: string;
+}
 
 export const JournalDetailScreen = () => {
     const insets = useSafeAreaInsets();
-    const navigation = useNavigation();
+    const navigation = useNavigation<any>();
     const route = useRoute();
-    const { entryId, entryTitle, entryContent, initialContent } = (route.params as any) || {};
+    const { entryId, entryTitle, entryContent, initialContent } = (route.params as JournalRouteParams) || {};
 
     const [title, setTitle] = useState(entryTitle || '');
     const [content, setContent] = useState(entryContent || initialContent || '');
     const [tags, setTags] = useState<string[]>([]);
     const [currentTag, setCurrentTag] = useState('');
 
-    const beliefType = useStore((state: any) => state.beliefType);
-    const biometricsEnabled = useStore((state: any) => state.biometricsEnabled);
-    const securityPin = useStore((state: any) => state.securityPin);
-    const isSubscribed = useStore((state: any) => state.isSubscribed);
+    const beliefType = useStore((state) => state.beliefType);
+    const biometricsEnabled = useStore((state) => state.biometricsEnabled);
+    const securityPin = useStore((state) => state.securityPin);
+    const isSubscribed = useStore((state) => state.isSubscribed);
+    const addJournalEntry = useStore((state) => state.addJournalEntry);
+    const updateJournalEntry = useStore((state) => state.updateJournalEntry);
 
     const [isLocked, setIsLocked] = useState(isSubscribed && (biometricsEnabled || !!securityPin));
     const [bioError, setBioError] = useState(false);
@@ -128,14 +138,35 @@ export const JournalDetailScreen = () => {
         }
     };
 
-    const handleAIAssist = () => {
+    const handleSave = () => {
+        if (!title.trim() && !content.trim()) {
+            navigation.goBack();
+            return;
+        }
+
+        const entryData = {
+            title: title || 'Untitled Reflection',
+            content,
+            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            tags
+        };
+
+        if (entryId) {
+            updateJournalEntry(entryId, entryData);
+        } else {
+            addJournalEntry(entryData);
+        }
+        navigation.goBack();
+    };
+
+    const handleAIAssist = async () => {
         if (!content || content.length < 10) {
             Alert.alert("Reflect a bit more", "Write a little more about how you're feeling so I can offer meaningful spiritual guidance.");
             return;
         }
 
         const currentBelief = beliefType || 'Open';
-        const analysis = contentAgentService.getSpiritualAnalysis(content, currentBelief);
+        const analysis = await contentAgentService.getSpiritualAnalysis(content, currentBelief);
 
         Alert.alert(
             analysis.title,
@@ -154,6 +185,9 @@ export const JournalDetailScreen = () => {
                     <ChevronLeft size={28} color={theme.colors.text} />
                 </TouchableOpacity>
                 <View style={styles.headerActions}>
+                    <TouchableOpacity style={styles.actionButton} onPress={handleSave}>
+                        <Check size={24} color={palette.success} />
+                    </TouchableOpacity>
                     <TouchableOpacity style={styles.actionButton} onPress={handleAIAssist}>
                         <Sparkles size={22} color={palette.softGold} />
                     </TouchableOpacity>
@@ -163,6 +197,7 @@ export const JournalDetailScreen = () => {
                 </View>
             </View>
 
+            {/* eslint-disable-next-line truenorth-performance/no-scrollview */}
             <ScrollView
                 style={styles.content}
                 contentContainerStyle={styles.scrollContent}

@@ -23,6 +23,7 @@ import { GoalSettingsScreen } from '../features/profile/GoalSettingsScreen';
 import { SubscriptionScreen } from '../features/profile/SubscriptionScreen';
 import { CreateCircleScreen } from '../features/community/CreateCircleScreen';
 import { SuperAdminScreen } from '../features/admin/SuperAdminScreen';
+import { TermsOfServiceScreen } from '../features/profile/TermsOfServiceScreen';
 import { theme, palette } from '../theme';
 
 const Stack = createNativeStackNavigator();
@@ -134,6 +135,7 @@ export const RootNavigator = () => {
                     <Stack.Screen name="GoalSettings" component={GoalSettingsScreen} />
                     <Stack.Screen name="Subscription" component={SubscriptionScreen} />
                     <Stack.Screen name="CreateCircle" component={CreateCircleScreen} />
+                    <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
                 </Stack.Group>
             )}
             <Stack.Screen

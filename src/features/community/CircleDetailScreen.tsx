@@ -35,16 +35,19 @@ export const CircleDetailScreen = () => {
     const isBookmarked = bookmarkedCircleIds.includes(circleId);
 
     useEffect(() => {
-        if (circle.reflections && circle.reflections.length > 0) {
-            setReflections(contentAgentService.cleanupOldReflections(circle.reflections));
-        } else {
-            // Generate some initial reflections for empty user circles (simulated agent)
-            const initial = [
-                contentAgentService.generateReflection(circle.id, circle.belief as BeliefType, circle.theme),
-                contentAgentService.generateReflection(circle.id, circle.belief as BeliefType, circle.theme)
-            ];
-            setReflections(initial);
-        }
+        const loadReflections = async () => {
+            if (circle.reflections && circle.reflections.length > 0) {
+                setReflections(contentAgentService.cleanupOldReflections(circle.reflections));
+            } else {
+                // Generate some initial reflections for empty user circles (simulated agent)
+                const initial = await Promise.all([
+                    contentAgentService.generateReflection(circle.id, circle.belief as BeliefType, circle.theme),
+                    contentAgentService.generateReflection(circle.id, circle.belief as BeliefType, circle.theme)
+                ]);
+                setReflections(initial);
+            }
+        };
+        loadReflections();
     }, [circleId, isFocused]);
 
     const MOCK_POSTS = reflections.map(r => ({
@@ -221,35 +224,38 @@ export const CircleDetailScreen = () => {
         </View>
     );
 
-    const renderPost = ({ item }: any) => (
-        <View style={styles.postCard}>
-            <View style={styles.postHeader}>
-                <View style={styles.userInfo}>
-                    <View style={styles.avatar}><Text style={styles.avatarText}>{item.user[0]}</Text></View>
-                    <View>
-                        <Text style={styles.userName}>{item.user}</Text>
-                        <Text style={styles.postType}>{item.type} • {item.time}</Text>
+    const renderPost = ({ item }: any) => {
+        const userName = item.user || 'Anonymous';
+        return (
+            <View style={styles.postCard}>
+                <View style={styles.postHeader}>
+                    <View style={styles.userInfo}>
+                        <View style={styles.avatar}><Text style={styles.avatarText}>{userName[0]}</Text></View>
+                        <View>
+                            <Text style={styles.userName}>{userName}</Text>
+                            <Text style={styles.postType}>{item.type} • {item.time}</Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity onPress={() => handleReport(item.id)}>
+                        <MoreVertical size={18} color={theme.colors.secondaryText} />
+                    </TouchableOpacity>
+                </View>
+                <Text style={styles.postContent}>{item.content}</Text>
+                {item.image && (
+                    <Image source={{ uri: item.image }} style={styles.postImage} resizeMode="cover" />
+                )}
+                <View style={styles.postFooter}>
+                    <TouchableOpacity style={styles.blessButton}>
+                        <Heart size={18} color={palette.softGold} fill={palette.softGold} />
+                        <Text style={styles.blessCount}>{item.blessings} Blessings</Text>
+                    </TouchableOpacity>
+                    <View style={styles.footerActions}>
+                        <TouchableOpacity style={styles.actionIcon}><Share2 size={18} color={theme.colors.secondaryText} /></TouchableOpacity>
                     </View>
                 </View>
-                <TouchableOpacity onPress={() => handleReport(item.id)}>
-                    <MoreVertical size={18} color={theme.colors.secondaryText} />
-                </TouchableOpacity>
             </View>
-            <Text style={styles.postContent}>{item.content}</Text>
-            {item.image && (
-                <Image source={{ uri: item.image }} style={styles.postImage} resizeMode="cover" />
-            )}
-            <View style={styles.postFooter}>
-                <TouchableOpacity style={styles.blessButton}>
-                    <Heart size={18} color={palette.softGold} fill={palette.softGold} />
-                    <Text style={styles.blessCount}>{item.blessings} Blessings</Text>
-                </TouchableOpacity>
-                <View style={styles.footerActions}>
-                    <TouchableOpacity style={styles.actionIcon}><Share2 size={18} color={theme.colors.secondaryText} /></TouchableOpacity>
-                </View>
-            </View>
-        </View>
-    );
+        );
+    };
 
     return (
         <View style={styles.container}>
@@ -292,14 +298,17 @@ export const CircleDetailScreen = () => {
                                         </TouchableOpacity>
                                     )}
                                 </View>
-                                <FlatList
-                                    data={MOCK_EVENTS}
-                                    renderItem={renderEvent}
-                                    keyExtractor={item => item.id}
+                                <ScrollView
                                     horizontal
                                     showsHorizontalScrollIndicator={false}
                                     contentContainerStyle={styles.eventList}
-                                />
+                                >
+                                    {MOCK_EVENTS.map(event => (
+                                        <React.Fragment key={event.id}>
+                                            {renderEvent({ item: event })}
+                                        </React.Fragment>
+                                    ))}
+                                </ScrollView>
                                 <View style={styles.sectionDivider} />
                             </>
                         )}

@@ -13,6 +13,7 @@ import { useStore } from '../../store';
 import { FaithAd } from '../../components/FaithAd';
 import { Modal, ScrollView as RnScrollView } from 'react-native';
 import { contentAgentService } from '../../services/ContentAgentService';
+import { MotiView, MotiText } from 'moti';
 
 export const AffirmationScreen = () => {
     const insets = useSafeAreaInsets();
@@ -31,19 +32,38 @@ export const AffirmationScreen = () => {
 
     const { isSubscribed, beliefType, themes, username, lastAdviceTimestamp, setLastAdviceTimestamp } = useStore();
 
+    // Phase 9: Dynamic Daily Backgrounds
+    const BACKGROUND_URLS = [
+        "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80", // Mountains
+        "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1000&q=80", // Forest
+        "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1000&q=80", // Mist
+        "https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=1000&q=80", // Valley
+        "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1000&q=80", // Nature
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80", // Peaks
+        "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?auto=format&fit=crop&w=1000&q=80", // Morning sun
+    ];
+
+    const getDailyBackground = () => {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), 0, 0);
+        const diff = (now.getTime() - start.getTime()) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
+        const oneDay = 1000 * 60 * 60 * 24;
+        const dayOfYear = Math.floor(diff / oneDay);
+        return BACKGROUND_URLS[dayOfYear % BACKGROUND_URLS.length];
+    };
+
     const { data: affirmation } = useQuery({
-        queryKey: ['daily-affirmation'],
-        queryFn: affirmationService.getDaily,
-        enabled: false,
+        queryKey: ['daily-affirmation', beliefType, themes[0]],
+        queryFn: () => contentAgentService.getDailyAffirmation(beliefType || 'Open', themes),
     });
 
     const mockAffirmation = {
         text: "Today, I walk in the strength of my purpose, guided by wisdom and fueled by love.",
         verse: "Isaiah 40:31",
-        imageUrl: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80",
+        imageUrl: getDailyBackground(),
     };
 
-    const current = affirmation || mockAffirmation;
+    const current = affirmation ? { ...affirmation, imageUrl: getDailyBackground() } : mockAffirmation;
 
     const canGetAdvice = () => {
         if (!lastAdviceTimestamp) return true;
@@ -54,10 +74,22 @@ export const AffirmationScreen = () => {
         return isSubscribed ? diff >= ONE_DAY_MS : diff >= ONE_WEEK_MS;
     };
 
-    const handleAdvicePress = () => {
+    const [adviceContent, setAdviceContent] = React.useState('');
+    const [loadingAdvice, setLoadingAdvice] = React.useState(false);
+
+    const handleAdvicePress = async () => {
         if (canGetAdvice()) {
-            setShowAdvice(true);
-            setLastAdviceTimestamp(Date.now());
+            setLoadingAdvice(true);
+            try {
+                const advice = await contentAgentService.getDailyAdvice(username || 'friend', beliefType || 'Open', themes);
+                setAdviceContent(advice);
+                setShowAdvice(true);
+                setLastAdviceTimestamp(Date.now());
+            } catch (error) {
+                console.error('Failed to get advice', error);
+            } finally {
+                setLoadingAdvice(false);
+            }
         } else {
             setShowLimitModal(true);
         }
@@ -78,6 +110,8 @@ export const AffirmationScreen = () => {
             ])
         ]).start(() => setBlessed(false));
     };
+
+    // ... existing onShare and saveWallpaper ...
 
     const onShare = async () => {
         try {
@@ -162,11 +196,32 @@ export const AffirmationScreen = () => {
                             </View>
                         ) : <View style={{ height: 40 }} />}
 
-                        <View style={styles.affirmationContainer}>
+                        <MotiView
+                            from={{ opacity: 0, translateY: 20 }}
+                            animate={{ opacity: 1, translateY: 0 }}
+                            transition={{ type: 'timing', duration: 1000, delay: 300 }}
+                            style={styles.affirmationContainer}
+                        >
                             <Sparkles color={palette.softGold} size={32} style={{ marginBottom: theme.spacing.xl }} />
-                            <Text style={styles.text}>{current.text}</Text>
-                            {current.verse && <Text style={styles.reference}>{current.verse}</Text>}
-                        </View>
+                            <MotiText
+                                from={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ type: 'timing', duration: 1500, delay: 600 }}
+                                style={styles.text}
+                            >
+                                {current.text}
+                            </MotiText>
+                            {current.reference && (
+                                <MotiText
+                                    from={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ type: 'timing', duration: 1000, delay: 1200 }}
+                                    style={styles.reference}
+                                >
+                                    {current.reference}
+                                </MotiText>
+                            )}
+                        </MotiView>
 
                         {!isWallpaperMode ? (
                             <View style={styles.footer}>
@@ -186,8 +241,8 @@ export const AffirmationScreen = () => {
                                     <TouchableOpacity style={styles.actionIcon} onPress={() => setIsWallpaperMode(true)}>
                                         <ImageIcon color={palette.ivory} size={24} />
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={styles.actionIcon} onPress={handleAdvicePress}>
-                                        <HandHelping color={palette.ivory} size={24} />
+                                    <TouchableOpacity style={styles.actionIcon} onPress={handleAdvicePress} disabled={loadingAdvice}>
+                                        <HandHelping color={palette.ivory} size={24} style={{ opacity: loadingAdvice ? 0.5 : 1 }} />
                                         {canGetAdvice() && <View style={styles.availableIndicator} />}
                                     </TouchableOpacity>
                                 </View>
@@ -241,7 +296,7 @@ export const AffirmationScreen = () => {
 
                         <RnScrollView style={styles.adviceScroll}>
                             <Text style={styles.adviceText}>
-                                {contentAgentService.getDailyAdvice(username || 'friend', beliefType || 'Open', themes)}
+                                {adviceContent}
                             </Text>
 
                             {!isSubscribed && (
@@ -259,7 +314,7 @@ export const AffirmationScreen = () => {
                                         <Sparkles color={palette.ivory} size={20} />
                                         <View style={{ flex: 1 }}>
                                             <Text style={styles.nudgeTitle}>Unlock Daily Guidance</Text>
-                                            <Text style={styles.nudgeDesc}>Get personalized AI wisdom every single day with Premium.</Text>
+                                            <Text style={styles.nudgeDesc}>Get personalized spiritual wisdom every single day with Premium.</Text>
                                         </View>
                                         <ChevronRight color={palette.ivory} size={20} />
                                     </LinearGradient>
@@ -269,8 +324,8 @@ export const AffirmationScreen = () => {
 
                         <TouchableOpacity
                             style={styles.closeButton}
-                            onPress={() => {
-                                const data = contentAgentService.getDailyPrayerOrQuote(username || 'friend', beliefType || 'Open');
+                            onPress={async () => {
+                                const data = await contentAgentService.getDailyPrayerOrQuote(username || 'friend', beliefType || 'Open');
                                 setPrayerData(data);
                                 setShowAdvice(false);
                                 setShowPrayerModal(true);
@@ -389,9 +444,10 @@ const styles = StyleSheet.create({
     footer: { gap: theme.spacing.xl, marginBottom: 20 },
     actions: {
         flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: theme.spacing.xl,
-        backgroundColor: 'rgba(0,0,0,0.3)', padding: theme.spacing.md, borderRadius: theme.borderRadius.full
+        backgroundColor: 'rgba(0,0,0,0.3)', paddingHorizontal: theme.spacing.md, paddingVertical: 12, borderRadius: theme.borderRadius.full,
+        overflow: 'visible'
     },
-    blessButton: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, paddingHorizontal: theme.spacing.md },
+    blessButton: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, paddingHorizontal: theme.spacing.md, paddingVertical: 4 },
     blessText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 16 },
     divider: { width: 1, height: 24, backgroundColor: 'rgba(255,255,255,0.2)' },
     actionIcon: { padding: theme.spacing.xs },

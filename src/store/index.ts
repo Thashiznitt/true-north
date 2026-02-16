@@ -29,9 +29,24 @@ export interface NotificationItem {
 export interface CreatedCircle {
     id: string;
     name: string;
-    description: string;
     belief: BeliefType;
+    members: number;
+    type: 'Public' | 'Private';
+    city: string;
+    country: string;
+    description: string;
+    lastActivity: string;
+    reflections: any[];
     createdAt: number;
+    theme?: string;
+}
+
+export interface JournalEntry {
+    id: string;
+    date: string;
+    title: string;
+    content: string;
+    tags?: string[];
 }
 
 interface UserState {
@@ -57,6 +72,7 @@ interface UserState {
     bookmarkedCircleIds: string[];
     notificationsList: NotificationItem[];
     createdCircles: CreatedCircle[];
+    journalEntries: JournalEntry[];
     setOnboarded: (value: boolean) => Promise<void>;
     setSubscribed: (value: boolean) => Promise<void>;
     setUsername: (username: string) => void;
@@ -78,6 +94,9 @@ interface UserState {
     addNotification: (notification: NotificationItem) => void;
     cleanupOldNotifications: () => void;
     toggleDailyGoal: (key: keyof DailyGoals) => void;
+    addJournalEntry: (entry: Omit<JournalEntry, 'id'>) => void;
+    updateJournalEntry: (id: string, entry: Partial<JournalEntry>) => void;
+    deleteJournalEntry: (id: string) => void;
 }
 
 export const useStore = create<UserState>()(
@@ -89,16 +108,17 @@ export const useStore = create<UserState>()(
             email: null,
             profilePicture: null,
             role: 'member',
-            isLoggedIn: false,
+            isLoggedIn: true, // Default to true for demo flow
             biometricsEnabled: false,
             securityPin: null,
-            beliefType: null,
-            themes: [],
+            beliefType: 'Christian',
+            themes: ['Faith', 'Perseverance', 'Gratitude'],
+            selectedTheme: 'Strength',
             dailyGoals: {
-                dailyReflection: true,
-                morningDevotion: true,
+                dailyReflection: false,
+                morningDevotion: false,
                 eveningGratitude: false,
-                weeklyCommunity: true,
+                weeklyCommunity: false,
             },
             notifications: {
                 enabled: true,
@@ -112,6 +132,10 @@ export const useStore = create<UserState>()(
                 { id: '3', title: 'Upcoming Event', message: 'Business Alignment session starts in 30 minutes.', type: 'event', createdAt: Date.now() - 24 * 60 * 60 * 1000 },
             ],
             createdCircles: [],
+            journalEntries: [
+                { id: '1', date: 'Oct 24, 2023', title: 'A New Beginning', content: 'Today was the first day I felt truly aligned. The morning affirmation really spoke to me...' },
+                { id: '2', date: 'Oct 23, 2023', title: 'Strength in Silence', content: 'Finding peace in the quiet moments between meetings. Focusing on the "Strength" theme.' },
+            ],
             setOnboarded: async (isOnboarded: boolean) => {
                 if (isOnboarded) {
                     const hasPermission = await notificationService.requestPermissions();
@@ -201,6 +225,15 @@ export const useStore = create<UserState>()(
                     ...state.dailyGoals,
                     [key]: !state.dailyGoals[key as keyof typeof state.dailyGoals]
                 }
+            })),
+            addJournalEntry: (entry) => set((state) => ({
+                journalEntries: [{ ...entry, id: Math.random().toString(36).substr(2, 9) }, ...state.journalEntries]
+            })),
+            updateJournalEntry: (id, entry) => set((state) => ({
+                journalEntries: state.journalEntries.map(e => e.id === id ? { ...e, ...entry } : e)
+            })),
+            deleteJournalEntry: (id) => set((state) => ({
+                journalEntries: state.journalEntries.filter(e => e.id !== id)
             })),
         }),
         {

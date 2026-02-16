@@ -62,10 +62,6 @@ export const FaithAd = ({ type, onClose }: FaithAdProps) => {
                 <View style={styles.badge}>
                     <Text style={styles.badgeText}>COMMUNITY AD</Text>
                 </View>
-                <TouchableOpacity onPress={() => navigation.navigate('Subscription')} style={styles.upsellBtn}>
-                    <Sparkles size={12} color={palette.softGold} />
-                    <Text style={styles.upsellText}>Remove Ads</Text>
-                </TouchableOpacity>
             </View>
 
             <TouchableOpacity style={styles.content} onPress={handlePress} activeOpacity={0.9}>

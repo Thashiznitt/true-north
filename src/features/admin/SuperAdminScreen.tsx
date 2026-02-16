@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, TextInput, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { ChevronLeft, Shield, Users, Flag, Cpu, Search, MoreVertical, DollarSign, TrendingUp } from 'lucide-react-native';
+import { ChevronLeft, Shield, Users, Flag, Cpu, Search, MoreVertical, DollarSign, TrendingUp, Megaphone, Plus, ExternalLink } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { AIService, AIProvider } from '../../services/AIService';
 
-type Tab = 'content' | 'users' | 'ai' | 'sales';
+type Tab = 'content' | 'users' | 'spirit' | 'sales' | 'ads';
 
 const MOCK_FLAGS = [
     { id: '1', type: 'Reflection', content: 'Trying to sell crypto here...', user: 'CryptoKing', time: '2h ago', status: 'pending' },
@@ -36,12 +36,14 @@ export const SuperAdminScreen = () => {
     const navigation = useNavigation();
     const [activeTab, setActiveTab] = useState<Tab>('content');
 
-    // AI Settings State
+    // Spiritual Guidance Settings State
     const [aiModel, setAiModel] = useState('Compass v2 (Stable)');
     const [strictness, setStrictness] = useState(0.7);
     const [autoFlag, setAutoFlag] = useState(true);
     const [aiProvider, setAiProvider] = useState<AIProvider>('LocalMock');
     const [apiKey, setApiKey] = useState('');
+    const [openaiKey, setOpenaiKey] = useState('');
+    const [groqKey, setGroqKey] = useState('');
     const [customEndpoint, setCustomEndpoint] = useState('');
 
     useFocusEffect(
@@ -53,8 +55,14 @@ export const SuperAdminScreen = () => {
     const loadSettings = async () => {
         const provider = await AIService.getProvider();
         setAiProvider(provider as AIProvider);
-        const key = await AIService.getApiKey(provider);
-        setApiKey(key || '');
+
+        const ok = await AIService.getApiKey('OpenAI');
+        setOpenaiKey(ok || '');
+        const gk = await AIService.getApiKey('Groq');
+        setGroqKey(gk || '');
+        const ck = await AIService.getApiKey('Custom');
+        setApiKey(ck || '');
+
         const endpoint = await AIService.getCustomEndpoint();
         setCustomEndpoint(endpoint || '');
         const model = await AIService.getModel();
@@ -64,10 +72,13 @@ export const SuperAdminScreen = () => {
     const saveAISettings = async () => {
         try {
             await AIService.setProvider(aiProvider);
-            if (apiKey) await AIService.setApiKey(aiProvider, apiKey);
+            if (openaiKey) await AIService.setApiKey('OpenAI', openaiKey);
+            if (groqKey) await AIService.setApiKey('Groq', groqKey);
+            if (apiKey) await AIService.setApiKey('Custom', apiKey);
+
             if (customEndpoint) await AIService.setCustomEndpoint(customEndpoint);
             if (aiModel) await AIService.setModel(aiModel);
-            Alert.alert("Success", "AI Configuration saved successfully.");
+            Alert.alert("Success", "Guidance Configuration saved successfully.");
         } catch {
             Alert.alert("Error", "Failed to save settings.");
         }
@@ -101,7 +112,7 @@ export const SuperAdminScreen = () => {
                         <Text style={styles.flagTime}>{item.time}</Text>
                     </View>
                     <Text style={styles.flagContent}>{item.content}</Text>
-                    <Text style={styles.flagUser}>Reported by: System (AI)</Text>
+                    <Text style={styles.flagUser}>Reported by: System (Guided)</Text>
 
                     {item.status === 'pending' && (
                         <View style={styles.flagActions}>
@@ -160,14 +171,14 @@ export const SuperAdminScreen = () => {
             <View style={styles.aiCard}>
                 <View style={styles.aiHeader}>
                     <Cpu size={24} color={palette.softGold} />
-                    <Text style={styles.aiTitle}>Model Configuration</Text>
+                    <Text style={styles.aiTitle}>Guidance Core Configuration</Text>
                 </View>
 
                 {/* Provider Selection */}
                 <View style={styles.settingRow}>
-                    <Text style={styles.settingLabel}>AI Provider</Text>
+                    <Text style={styles.settingLabel}>Guidance Provider</Text>
                     <View style={styles.providerRow}>
-                        {['LocalMock', 'OpenAI', 'Groq', 'Custom'].map((p) => (
+                        {(['LocalMock', 'OpenAI', 'Groq', 'Custom'] as AIProvider[]).map((p) => (
                             <TouchableOpacity
                                 key={p}
                                 style={[styles.providerButton, aiProvider === p && styles.activeProvider]}
@@ -179,13 +190,53 @@ export const SuperAdminScreen = () => {
                     </View>
                 </View>
 
-                {/* API Key Input (Hidden for LocalMock) */}
-                {aiProvider !== 'LocalMock' && (
+                {/* OpenAI Key */}
+                <View style={styles.settingRow}>
+                    <View style={styles.labelRow}>
+                        <Text style={styles.settingLabel}>OpenAI API Key</Text>
+                        {openaiKey ? (
+                            <Text style={styles.statusConnected}>● Connected</Text>
+                        ) : (
+                            <Text style={styles.statusMissing}>● Missing Key</Text>
+                        )}
+                    </View>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="sk-..."
+                        placeholderTextColor={theme.colors.secondaryText}
+                        secureTextEntry
+                        value={openaiKey}
+                        onChangeText={setOpenaiKey}
+                    />
+                </View>
+
+                {/* Groq Key */}
+                <View style={styles.settingRow}>
+                    <View style={styles.labelRow}>
+                        <Text style={styles.settingLabel}>Groq API Key</Text>
+                        {groqKey ? (
+                            <Text style={styles.statusConnected}>● Connected</Text>
+                        ) : (
+                            <Text style={styles.statusMissing}>● Missing Key</Text>
+                        )}
+                    </View>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="gsk-..."
+                        placeholderTextColor={theme.colors.secondaryText}
+                        secureTextEntry
+                        value={groqKey}
+                        onChangeText={setGroqKey}
+                    />
+                </View>
+
+                {/* Custom Key */}
+                {aiProvider === 'Custom' && (
                     <View style={styles.settingRow}>
-                        <Text style={styles.settingLabel}>API Key</Text>
+                        <Text style={styles.settingLabel}>Custom Provider API Key</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder={`Enter ${aiProvider} API Key`}
+                            placeholder="Enter Custom API Key"
                             placeholderTextColor={theme.colors.secondaryText}
                             secureTextEntry
                             value={apiKey}
@@ -249,8 +300,8 @@ export const SuperAdminScreen = () => {
             <View style={styles.aiCard}>
                 <Text style={styles.aiTitle}>System Logs</Text>
                 <Text style={styles.logText}>[10:42 AM] Auto-flagged comment in Circle #42</Text>
-                <Text style={styles.logText}>[10:30 AM] Model updated to v2.1.4</Text>
-                <Text style={styles.logText}>[09:15 AM] Daily affirmation generation complete</Text>
+                <Text style={styles.logText}>[10:30 AM] Core updated to v2.1.4</Text>
+                <Text style={styles.logText}>[09:15 AM] Daily divine guidance generation complete</Text>
             </View>
         </ScrollView>
     );
@@ -312,6 +363,54 @@ export const SuperAdminScreen = () => {
         </ScrollView>
     );
 
+    const renderAdsTab = () => (
+        <ScrollView style={styles.tabContent}>
+            <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Internal Ad Management</Text>
+                <TouchableOpacity style={styles.addAdButton} onPress={() => Alert.alert("New Ad", "Open ad creator modal.")}>
+                    <Plus size={20} color={palette.ivory} />
+                </TouchableOpacity>
+            </View>
+
+            {[
+                { id: '1', title: 'Gather: Youth Revival 2026', type: 'Event', impressions: '12.4k', clicks: '840', status: 'Active' },
+                { id: '2', title: 'The Sacred Journal (Premium Edition)', type: 'Product', impressions: '8.2k', clicks: '312', status: 'Active' },
+                { id: '3', title: 'Open Hearts Community', type: 'Community', impressions: '5.1k', clicks: '1.2k', status: 'Active' },
+            ].map(ad => (
+                <View key={ad.id} style={styles.adCard}>
+                    <View style={styles.adInfo}>
+                        <View style={styles.adHeader}>
+                            <Text style={styles.adTitle}>{ad.title}</Text>
+                            <View style={[styles.statusBadge, { backgroundColor: ad.status === 'Active' ? '#E6F4EA' : '#FCE8E6' }]}>
+                                <Text style={[styles.statusText, { color: ad.status === 'Active' ? '#137333' : '#C5221F' }]}>{ad.status}</Text>
+                            </View>
+                        </View>
+                        <Text style={styles.adSubtitle}>{ad.type} Card • Persistent List Ad</Text>
+
+                        <View style={styles.adStats}>
+                            <View style={styles.adStatItem}>
+                                <TrendingUp size={14} color={theme.colors.secondaryText} />
+                                <Text style={styles.adStatValue}>{ad.impressions} <Text style={styles.adStatLabel}>Views</Text></Text>
+                            </View>
+                            <View style={styles.adStatItem}>
+                                <ExternalLink size={14} color={theme.colors.secondaryText} />
+                                <Text style={styles.adStatValue}>{ad.clicks} <Text style={styles.adStatLabel}>Clicks</Text></Text>
+                            </View>
+                        </View>
+                    </View>
+                    <View style={styles.adActions}>
+                        <TouchableOpacity style={styles.adActionButton} onPress={() => Alert.alert("Edit Ad", `Editing ${ad.title}`)}>
+                            <Text style={styles.adActionText}>Edit</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.adActionButton, styles.adPauseButton]} onPress={() => Alert.alert("Pause Ad", "Ad has been paused.")}>
+                            <Text style={styles.adPauseText}>Pause</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            ))}
+        </ScrollView>
+    );
+
     // ... (existing helper functions)
 
     return (
@@ -338,10 +437,10 @@ export const SuperAdminScreen = () => {
                     <Users size={20} color={activeTab === 'users' ? palette.softGold : theme.colors.secondaryText} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                    style={[styles.tab, activeTab === 'ai' && styles.activeTab]}
-                    onPress={() => setActiveTab('ai')}
+                    style={[styles.tab, activeTab === 'spirit' && styles.activeTab]}
+                    onPress={() => setActiveTab('spirit')}
                 >
-                    <Cpu size={20} color={activeTab === 'ai' ? palette.softGold : theme.colors.secondaryText} />
+                    <Cpu size={20} color={activeTab === 'spirit' ? palette.softGold : theme.colors.secondaryText} />
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.tab, activeTab === 'sales' && styles.activeTab]}
@@ -349,13 +448,20 @@ export const SuperAdminScreen = () => {
                 >
                     <DollarSign size={20} color={activeTab === 'sales' ? palette.softGold : theme.colors.secondaryText} />
                 </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.tab, activeTab === 'ads' && styles.activeTab]}
+                    onPress={() => setActiveTab('ads')}
+                >
+                    <Megaphone size={20} color={activeTab === 'ads' ? palette.softGold : theme.colors.secondaryText} />
+                </TouchableOpacity>
             </View>
 
             <View style={styles.content}>
                 {activeTab === 'content' && renderContentTab()}
                 {activeTab === 'users' && renderUsersTab()}
-                {activeTab === 'ai' && renderAITab()}
+                {activeTab === 'spirit' && renderAITab()}
                 {activeTab === 'sales' && renderSalesTab()}
+                {activeTab === 'ads' && renderAdsTab()}
             </View>
         </View>
     );
@@ -436,6 +542,9 @@ const styles = StyleSheet.create({
     aiTitle: { fontFamily: theme.typography.sansBold, fontSize: 18, color: theme.colors.text },
     settingRow: { marginBottom: theme.spacing.lg },
     settingLabel: { fontFamily: theme.typography.sansMedium, fontSize: 14, color: theme.colors.text, marginBottom: 8 },
+    labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    statusConnected: { fontFamily: theme.typography.sansBold, fontSize: 10, color: '#137333' },
+    statusMissing: { fontFamily: theme.typography.sansBold, fontSize: 10, color: '#EA4335' },
     providerRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
     providerButton: {
         paddingVertical: 8, paddingHorizontal: 12, borderRadius: theme.borderRadius.md,
@@ -471,5 +580,26 @@ const styles = StyleSheet.create({
     healthItem: { alignItems: 'center' },
     healthValue: { fontFamily: theme.typography.serifBold, fontSize: 24, color: theme.colors.text },
     healthLabel: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText, marginTop: 4 },
-    divider: { width: 1, height: 30, backgroundColor: theme.colors.border }
+    divider: { width: 1, height: 30, backgroundColor: theme.colors.border },
+
+    // Ads Tab Styles
+    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.lg },
+    addAdButton: { backgroundColor: palette.softGold, width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+    adCard: {
+        backgroundColor: theme.colors.surface, padding: theme.spacing.lg, borderRadius: theme.borderRadius.lg,
+        borderWidth: 1, borderColor: theme.colors.border, marginBottom: theme.spacing.md
+    },
+    adInfo: { marginBottom: theme.spacing.md },
+    adHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
+    adTitle: { fontFamily: theme.typography.serifBold, fontSize: 17, color: theme.colors.text, flex: 1, marginRight: 8 },
+    adSubtitle: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText, marginBottom: 12 },
+    adStats: { flexDirection: 'row', gap: theme.spacing.xl },
+    adStatItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    adStatValue: { fontFamily: theme.typography.sansBold, fontSize: 13, color: theme.colors.text },
+    adStatLabel: { fontFamily: theme.typography.sans, color: theme.colors.secondaryText },
+    adActions: { flexDirection: 'row', gap: theme.spacing.md },
+    adActionButton: { flex: 1, padding: 10, borderRadius: theme.borderRadius.md, alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border },
+    adActionText: { fontFamily: theme.typography.sansBold, fontSize: 13, color: theme.colors.text },
+    adPauseButton: { backgroundColor: 'transparent' },
+    adPauseText: { fontFamily: theme.typography.sansBold, fontSize: 13, color: '#EA4335' }
 });

@@ -51,9 +51,9 @@ export const SubscriptionScreen = () => {
                 </ImageBackground>
 
                 <View style={styles.benefits}>
-                    <BenefitItem icon={ShieldCheck} title="Complete Privacy" desc="Advanced security for your personal reflections." />
-                    <BenefitItem icon={Heart} title="Unlimited Circles" desc="Create and join as many sacred spaces as you wish." />
-                    <BenefitItem icon={Sparkles} title="Deep Reflections" desc="Personalized weekly assessments of your journey." />
+                    <BenefitItem icon={ShieldCheck} title="Complete Privacy" desc="Advanced end-to-end security for your personal reflections." />
+                    <BenefitItem icon={Sparkles} title="Establish Your Sanctuary" desc="Exclusive ability to create and lead your own digital circles." />
+                    <BenefitItem icon={Heart} title="Unlimited Access" desc="Join and engage with every community in the collective." />
                 </View>
 
                 <View style={styles.plans}>
@@ -65,12 +65,12 @@ export const SubscriptionScreen = () => {
                             </View>
                         </View>
                         <Text style={styles.planPrice}>$12.99 / month</Text>
-                        <Text style={styles.planNote}>Full access to daily personalized AI guidance</Text>
+                        <Text style={styles.planNote}>Full access to daily personalized divine guidance</Text>
                     </TouchableOpacity>
                 </View>
 
                 <TouchableOpacity style={styles.ctaButton} onPress={handleSubscribe}>
-                    <Text style={styles.ctaButtonText}>Start 7-Day Free Trial</Text>
+                    <Text style={styles.ctaButtonText}>Subscribe $12.99 / mo</Text>
                 </TouchableOpacity>
                 <Text style={styles.footerNote}>Secured and encrypted by App Store</Text>
             </ScrollView>

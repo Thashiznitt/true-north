@@ -1,6 +1,7 @@
 /* eslint-disable truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, ImageBackground } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { OptimizedImage } from '../../components/performance/OptimizedImage';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -9,7 +10,7 @@ import { useStore } from '../../store';
 import { theme, palette } from '../../theme';
 import { Check, ArrowRight, ChevronLeft, Plus, Shield, Heart, Sparkles, Compass, Lock, Fingerprint, Star } from 'lucide-react-native';
 import { subscriptionService } from '../../services/subscription';
-import { MotiView } from 'moti';
+import * as Location from 'expo-location';
 
 
 const THEME_ICONS: Record<string, any> = {
@@ -21,6 +22,8 @@ const THEME_ICONS: Record<string, any> = {
 
 const THEMES = ['Strength', 'Love', 'Wisdom', 'Faith'];
 const BELIEFS = ['Christian', 'Muslim', 'Secular'];
+
+const INTRO_BG = require('../../../assets/onboarding_intro_bg.png');
 
 export const OnboardingScreen = () => {
     const insets = useSafeAreaInsets();
@@ -54,31 +57,41 @@ export const OnboardingScreen = () => {
     });
 
     const nextStep = async () => {
-        if (step === 3) {
-            // Step 3 is the Auth choice (mock sign in)
+        if (step === 4) {
+            // Step 4 is now the Auth choice (previously 3)
             setLoading(true);
             // Mock delay
             setTimeout(() => {
                 setLoading(false);
-                setStep(4);
+                setStep(5);
             }, 1000);
-        } else if (step === 4) {
-            setStep(5);
         } else if (step === 5) {
             setStep(6);
         } else if (step === 6) {
-            // New Step: Subscription
             setStep(7);
-        } else {
-            // Final step: Finish onboarding
+        } else if (step === 7) {
+            setStep(8);
+        } else if (step === 8) {
+            // Step 8 is Location (previously 7)
+            setStep(9);
+        } else if (step === 9) {
+            // Step 9 is Subscription (previously 8)
             finishOnboarding();
+        } else {
+            setStep(step + 1);
         }
     };
 
     const finishOnboarding = () => {
         setStoreUsername(username);
         setProfilePicture(profileImage);
-        setPreferences(beliefType, selectedThemes, goals);
+        setPreferences(beliefType, selectedThemes, {
+            ...goals,
+            dailyReflection: true,
+            morningDevotion: true,
+            eveningGratitude: true,
+            weeklyCommunity: true
+        });
         setBiometricsEnabled(setupBiometrics);
         setSecurityPin(pin || null);
         setLoggedIn(true);
@@ -128,14 +141,41 @@ export const OnboardingScreen = () => {
     );
 
     const StepContainer = ({ children }: { children: React.ReactNode }) => (
-        <MotiView
-            from={{ opacity: 0, translateY: 20 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: 'timing', duration: 500 }}
-            style={styles.stepContainer}
-        >
+        <View style={[styles.stepContainer, { paddingHorizontal: theme.spacing.xl }]}>
             {children}
-        </MotiView>
+        </View>
+    );
+
+    const renderIntroStep = () => (
+        <View style={StyleSheet.absoluteFill}>
+            <ImageBackground source={INTRO_BG} style={StyleSheet.absoluteFill} resizeMode="cover" />
+            <LinearGradient
+                colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.9)']}
+                style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.introContent}>
+                <Sparkles size={48} color={palette.softGold} style={{ marginBottom: 24 }} />
+                <Text style={styles.introTitle}>Align Your Soul</Text>
+                <Text style={styles.introSubtitle}>
+                    Daily affirmations are the sacred whispers that reshape your mindset, unlocking divine peace and purpose in every moment.
+                </Text>
+
+                <View style={styles.introBenefits}>
+                    <View style={styles.introBenefitRow}>
+                        <Star size={20} color={palette.softGold} />
+                        <Text style={styles.introBenefitText}>Positive Life Transformation</Text>
+                    </View>
+                    <View style={styles.introBenefitRow}>
+                        <Star size={20} color={palette.softGold} />
+                        <Text style={styles.introBenefitText}>Spiritual Mindset Alignment</Text>
+                    </View>
+                </View>
+
+                <TouchableOpacity style={styles.introButton} onPress={nextStep}>
+                    <Text style={styles.introButtonText}>Begin</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
     );
 
     const renderStep0 = () => (
@@ -145,13 +185,7 @@ export const OnboardingScreen = () => {
                 {THEMES.map((t, index) => {
                     const Icon = THEME_ICONS[t];
                     return (
-                        <MotiView
-                            key={t}
-                            from={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ type: 'spring', delay: index * 100 }}
-                            style={{ width: '47.5%' }}
-                        >
+                        <View key={t} style={{ width: '47.5%' }}>
                             <TouchableOpacity
                                 style={[styles.themeCard, selectedThemes.includes(t) && styles.themeCardActive, { width: '100%' }]}
                                 onPress={() => toggleTheme(t)}
@@ -166,7 +200,7 @@ export const OnboardingScreen = () => {
                                 </View>
                                 <Text style={[styles.themeText, selectedThemes.includes(t) && styles.themeTextActive]}>{t}</Text>
                             </TouchableOpacity>
-                        </MotiView>
+                        </View>
                     );
                 })}
             </View>
@@ -193,13 +227,7 @@ export const OnboardingScreen = () => {
                 <StepContainer>
                     {renderHeader("Daily Goals", "Tell us about your current priorities (max 10 words)")}
                     {Object.keys(goals).map((key, index) => (
-                        <MotiView
-                            key={key}
-                            from={{ opacity: 0, translateX: -20 }}
-                            animate={{ opacity: 1, translateX: 0 }}
-                            transition={{ type: 'timing', delay: index * 50 }}
-                            style={styles.inputGroup}
-                        >
+                        <View key={key} style={styles.inputGroup}>
                             <Text style={styles.label}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
                             <TextInput
                                 style={styles.input}
@@ -209,7 +237,7 @@ export const OnboardingScreen = () => {
                                 onChangeText={(text) => handleGoalChange(key, text)}
                                 maxLength={100}
                             />
-                        </MotiView>
+                        </View>
                     ))}
                 </StepContainer>
             </ScrollView>
@@ -221,19 +249,14 @@ export const OnboardingScreen = () => {
             {renderHeader("Belief Type", "This helps us personalize your affirmations")}
             <View style={styles.beliefGrid}>
                 {BELIEFS.map((b, index) => (
-                    <MotiView
-                        key={b}
-                        from={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ type: 'spring', delay: index * 100 }}
-                    >
+                    <View key={b}>
                         <TouchableOpacity
                             style={[styles.beliefCard, beliefType === b && styles.beliefCardActive]}
                             onPress={() => setBeliefType(b)}
                         >
                             <Text style={[styles.beliefText, beliefType === b && styles.beliefTextActive]}>{b}</Text>
                         </TouchableOpacity>
-                    </MotiView>
+                    </View>
                 ))}
             </View>
         </StepContainer>
@@ -351,6 +374,39 @@ export const OnboardingScreen = () => {
     );
 
     const renderStep7 = () => (
+        <StepContainer>
+            {renderHeader("Local Sanctuaries", "Find fellow seekers in your area for deeper connection.")}
+
+            <View style={styles.locationCard}>
+                <View style={styles.locationIconContainer}>
+                    <Compass size={40} color={palette.softGold} />
+                </View>
+                <Text style={styles.locationTitle}>Find Your Community</Text>
+                <Text style={styles.locationDesc}>
+                    Granting location access helps us prioritize community sanctuaries near you. Your exact position is never shared.
+                </Text>
+
+                <TouchableOpacity
+                    style={styles.locationButton}
+                    onPress={async () => {
+                        const { status } = await Location.requestForegroundPermissionsAsync();
+                        if (status !== 'granted') {
+                            Alert.alert("Permission Needed", "Location access helps us find nearby sanctuaries. You can enable this later in settings.");
+                        }
+                        nextStep();
+                    }}
+                >
+                    <Text style={styles.locationButtonText}>Allow Sanctuary Scaling</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.skipButton} onPress={nextStep}>
+                    <Text style={styles.skipButtonText}>Maybe Later</Text>
+                </TouchableOpacity>
+            </View>
+        </StepContainer>
+    );
+
+    const renderStep8 = () => (
         // Premium Upsell Step
         <>
             {/* eslint-disable-next-line truenorth-performance/no-scrollview */}
@@ -370,15 +426,15 @@ export const OnboardingScreen = () => {
                         </View>
                         <View style={styles.benefitRow}>
                             <Check size={20} color={palette.softGold} />
-                            <Text style={styles.benefitText}>Personalized AI Spiritual Guidance</Text>
+                            <Text style={styles.benefitText}>Personalized Divine Guidance</Text>
+                        </View>
+                        <View style={styles.benefitRow}>
+                            <Check size={20} color={palette.softGold} />
+                            <Text style={styles.benefitText}>Prioritized Local Sanctuaries</Text>
                         </View>
                         <View style={styles.benefitRow}>
                             <Check size={20} color={palette.softGold} />
                             <Text style={styles.benefitText}>Secure Biometric Lock</Text>
-                        </View>
-                        <View style={styles.benefitRow}>
-                            <Check size={20} color={palette.softGold} />
-                            <Text style={styles.benefitText}>Deep Reflection Analysis</Text>
                         </View>
                     </View>
 
@@ -387,8 +443,7 @@ export const OnboardingScreen = () => {
                             <ActivityIndicator color={palette.ivory} />
                         ) : (
                             <>
-                                <Text style={styles.subscribeButtonText}>Start 7-Day Free Trial</Text>
-                                <Text style={styles.subscribeSubText}>Then $12.99/month</Text>
+                                <Text style={styles.subscribeButtonText}>Subscribe $12.99 / mo</Text>
                             </>
                         )}
                     </TouchableOpacity>
@@ -408,46 +463,58 @@ export const OnboardingScreen = () => {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+            style={[styles.container, step !== 0 && { paddingTop: insets.top, paddingBottom: insets.bottom }]}
         >
-            <View style={styles.nav}>
-                {step > 0 && !loading && (
-                    <TouchableOpacity onPress={prevStep}>
-                        <ChevronLeft size={24} color={theme.colors.text} />
-                    </TouchableOpacity>
-                )}
-            </View>
+            {step !== 0 && (
+                <View style={styles.nav}>
+                    {step > 0 && !loading && (
+                        <TouchableOpacity onPress={prevStep}>
+                            <ChevronLeft size={24} color={theme.colors.text} />
+                        </TouchableOpacity>
+                    )}
+                </View>
+            )}
 
             <View style={styles.content}>
-                {step === 0 && renderStep0()}
-                {step === 1 && renderStep1()}
-                {step === 2 && renderStep2()}
-                {step === 3 && renderStep3()}
-                {step === 4 && renderStep4()}
-                {step === 5 && renderStep5()}
-                {step === 6 && renderStep6()}
-                {step === 7 && renderStep7()}
+                {step === 0 && renderIntroStep()}
+                {step === 1 && renderStep0()}
+                {step === 2 && renderStep1()}
+                {step === 3 && renderStep2()}
+                {step === 4 && renderStep3()}
+                {step === 5 && renderStep4()}
+                {step === 6 && renderStep5()}
+                {step === 7 && renderStep6()}
+                {step === 8 && renderStep7()}
+                {step === 9 && renderStep8()}
             </View>
 
-            <View style={styles.footer}>
-                {step !== 3 && (
+            {step !== 0 && step !== 4 && (
+                <View style={styles.footer}>
                     <TouchableOpacity
-                        style={[styles.nextButton, step === 4 && !username && { opacity: 0.5 }]}
+                        style={[styles.nextButton, step === 5 && !username && { opacity: 0.5 }]}
                         onPress={nextStep}
-                        disabled={(step === 4 && !username) || step === 7} // Disable main button on Step 7 (custom buttons)
+                        disabled={(step === 5 && !username) || step === 8 || step === 9}
                     >
-                        <Text style={styles.nextButtonText}>{step === 7 ? "" : "Continue"}</Text>
-                        <ArrowRight size={20} color={theme.colors.inverseText} />
+                        <Text style={styles.nextButtonText}>{(step === 8 || step === 9) ? "" : "Continue"}</Text>
+                        {(step !== 8 && step !== 9) && <ArrowRight size={20} color={theme.colors.inverseText} />}
                     </TouchableOpacity>
-                )}
-            </View>
+                </View>
+            )}
         </KeyboardAvoidingView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.colors.background, paddingHorizontal: theme.spacing.xl },
-    nav: { height: 40, justifyContent: 'center', marginBottom: theme.spacing.md },
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    introContent: { flex: 1, justifyContent: 'flex-end', paddingBottom: 60, paddingHorizontal: theme.spacing.xl * 2 },
+    introTitle: { fontFamily: theme.typography.serifBold, fontSize: 42, color: palette.ivory, marginBottom: theme.spacing.md, letterSpacing: -1 },
+    introSubtitle: { fontFamily: theme.typography.sans, fontSize: 18, color: palette.ivory, opacity: 0.9, lineHeight: 28, marginBottom: 32 },
+    introBenefits: { marginBottom: 40, gap: 12 },
+    introBenefitRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    introBenefitText: { fontFamily: theme.typography.sansMedium, fontSize: 16, color: palette.softGold },
+    introButton: { backgroundColor: palette.softGold, paddingVertical: 20, borderRadius: theme.borderRadius.full, alignItems: 'center', shadowColor: palette.softGold, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12 },
+    introButtonText: { fontFamily: theme.typography.sansBold, fontSize: 18, color: palette.ivory },
+    nav: { height: 40, justifyContent: 'center', marginBottom: theme.spacing.md, paddingHorizontal: theme.spacing.xl },
     content: { flex: 1 },
     header: { marginBottom: theme.spacing.xxl, marginTop: theme.spacing.lg },
     title: { fontFamily: theme.typography.serifBold, fontSize: 34, color: theme.colors.text, marginBottom: theme.spacing.sm, letterSpacing: -0.5 },
@@ -495,7 +562,7 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: theme.colors.border
     },
     emailButtonText: { fontFamily: theme.typography.sansBold, fontSize: 16, color: theme.colors.text },
-    footer: { paddingVertical: theme.spacing.xl },
+    footer: { paddingVertical: theme.spacing.xl, paddingHorizontal: theme.spacing.xl },
     nextButton: {
         backgroundColor: theme.colors.text, borderRadius: theme.borderRadius.full,
         height: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: theme.spacing.sm
@@ -566,5 +633,30 @@ const styles = StyleSheet.create({
     subscribeSubText: { fontFamily: theme.typography.sans, fontSize: 12, color: palette.ivory, opacity: 0.8, marginTop: 2 },
     skipButton: { paddingVertical: 12 },
     skipButtonText: { fontFamily: theme.typography.sansMedium, fontSize: 15, color: theme.colors.secondaryText },
+    saveButtonText: { color: theme.colors.text, fontFamily: theme.typography.sansBold, fontSize: 14 },
+    locationCard: {
+        backgroundColor: theme.colors.surface,
+        borderRadius: 24,
+        padding: theme.spacing.xl,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        marginTop: theme.spacing.md,
+        alignItems: 'center',
+    },
+    locationIconContainer: {
+        width: 80, height: 80, borderRadius: 40, backgroundColor: palette.softGold + '15',
+        alignItems: 'center', justifyContent: 'center', marginBottom: theme.spacing.xl
+    },
+    locationTitle: { fontFamily: theme.typography.serifBold, fontSize: 24, color: theme.colors.text, marginBottom: theme.spacing.md },
+    locationDesc: { fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.secondaryText, textAlign: 'center', lineHeight: 24, marginBottom: theme.spacing.xxl },
+    locationButton: {
+        backgroundColor: theme.colors.text,
+        width: '100%',
+        paddingVertical: 18,
+        borderRadius: theme.borderRadius.full,
+        alignItems: 'center',
+        marginBottom: theme.spacing.md
+    },
+    locationButtonText: { fontFamily: theme.typography.sansBold, fontSize: 17, color: palette.ivory },
     disclaimerText: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText, marginTop: theme.spacing.lg, textAlign: 'center', opacity: 0.7 }
 });

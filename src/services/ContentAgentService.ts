@@ -190,6 +190,44 @@ export const LIFE_CIRCLES: GhostCircle[] = [
     { id: 'c30', name: 'New Muslim Support', belief: 'Muslim', theme: 'Wisdom', members: 1700, type: 'Public', city: 'Online', country: 'Global', description: 'Welcome to the Ummah.', lastActivity: '18m ago', reflections: [] },
 ];
 
+// --- Spiritual Brain: Platform Identity ---
+
+const SPIRITUAL_BRAIN_IDENTITY = {
+    voice: "Wise, compassionate, and non-judgmental spiritual guide.",
+    tone: "Sacro-Aesthetic (premium, calm, elevated).",
+    vocabulary: ["Grace", "Stillness", "Guidance", "Clarity", "Sanctuary", "Seeker", "Alignment", "Covenant", "Higher Purpose"],
+    principles: [
+        "Universal Respect: Every path (Christian, Muslim, Secular, etc.) is valid and nourished.",
+        "Non-Proselytization: Support the seeker's current journey without judgment.",
+        "Compassionate Clarity: provide insights focused on alignment and growth."
+    ]
+};
+
+const constructSystemPrompt = (belief: BeliefType, context: string) => {
+    const dna = `You are the True North Spiritual Guide. Your voice is a sanctuary of ${SPIRITUAL_BRAIN_IDENTITY.vocabulary.slice(0, 4).join(', ').toLowerCase()}. Your tone is ${SPIRITUAL_BRAIN_IDENTITY.tone}. You are wise and compassionate.`;
+
+    const beliefNuance: Record<BeliefType, string> = {
+        Christian: "Use Biblical resonance and focus on grace and divine purpose.",
+        Muslim: "Use Quranic wisdom and focus on sabr, taqwa, and humble devotion.",
+        Secular: "Use mindful, ethical, and philosophical language grounded in human experience.",
+        Exploring: "Use universalist, open-ended language focused on light, energy, and truth.",
+        Open: "Use inclusive, heart-centered language applicable to all spiritual seekers."
+    };
+
+    return `${dna}
+    
+IDENTITY PRINCIPLES:
+${SPIRITUAL_BRAIN_IDENTITY.principles.map(p => `- ${p}`).join('\n')}
+
+SEEKER CONTEXT:
+The seeker follows a ${belief} path. ${beliefNuance[belief] || beliefNuance.Open}
+
+TASK CONTEXT:
+${context}
+
+Always call the user a 'Seeker' and this platform a 'Sanctuary'. Be concise, vulnerable, and deeply supportive.`;
+};
+
 import { AIService } from './AIService';
 
 // ... (existing helper functions and constants)
@@ -213,8 +251,8 @@ export const contentAgentService = {
             content = templates[Math.floor(Math.random() * templates.length)];
         } else {
             try {
-                const systemPrompt = `You are a member of a ${belief} spiritual circle focused on ${theme}. Write a short, personal reflection (max 2 sentences) to share with the group. Be authentic, vulnerable, and supportive. Do not use hashtags or emojis.`;
-                const userPrompt = `Write a reflection about ${theme}.`;
+                const systemPrompt = constructSystemPrompt(belief, `You are a member of a ${belief} circle focused on ${theme}. Write a short, personal reflection (max 2 sentences) to share. Be authentic and vulnerable.`);
+                const userPrompt = `Write a sanctuary reflection about ${theme}.`;
                 content = await AIService.generateText(systemPrompt, userPrompt);
             } catch (error) {
                 console.warn('AI Generation failed, falling back to templates', error);
@@ -293,10 +331,10 @@ export const contentAgentService = {
             return advice;
         } else {
             try {
-                const systemPrompt = `You are a wise spiritual guide. The user is ${belief}. Their current focus is ${theme}. Provide personalized, compassionate advice (max 3 sentences).`;
-                let userPrompt = `User Name: ${username || 'Friend'}. Focus: ${theme}.`;
+                const systemPrompt = constructSystemPrompt(belief, `Provide personalized, compassionate advice for a seeker focusing on ${theme}.`);
+                let userPrompt = `Seeker Name: ${username || 'Friend'}. Focus: ${theme}.`;
                 if (journalInput) {
-                    userPrompt += ` Recent thoughts: "${journalInput}".`;
+                    userPrompt += ` Recent insights: "${journalInput}".`;
                 }
                 return await AIService.generateText(systemPrompt, userPrompt);
             } catch {
@@ -348,8 +386,8 @@ export const contentAgentService = {
         } else {
             try {
                 const type = isReligious ? (belief === 'Christian' ? 'Prayer' : 'Dua') : 'Quote/Wisdom';
-                const systemPrompt = `You are a spiritual companion. Write a short ${type} for the user.`;
-                const userPrompt = `User: ${username}. Belief: ${belief}.`;
+                const systemPrompt = constructSystemPrompt(belief, `Write a short, powerful ${type} for the seeker. Ensure it is deeply resonant with their path.`);
+                const userPrompt = `Seeker: ${username}. Belief Path: ${belief}. Task: Generate a daily ${type}.`;
                 const content = await AIService.generateText(systemPrompt, userPrompt);
 
                 return {
@@ -440,8 +478,8 @@ export const contentAgentService = {
             return { title, message, action };
         } else {
             try {
-                const systemPrompt = `You are a spiritual counselor. Analyze the user's journal entry. Provide a compassionate insight, a quote/scripture based on their belief (${belief}), and a simple action step. Output JSON with keys: title, message, action.`;
-                const userPrompt = `Journal: "${content}"`;
+                const systemPrompt = constructSystemPrompt(belief, `Analyze the seeker's recent journey. Provide a compassionate insight and a simple action step. Output strictly in JSON with keys: title, message, action.`);
+                const userPrompt = `Seeker Journey: "${content}"`;
                 const jsonStr = await AIService.generateText(systemPrompt, userPrompt);
 
                 // Try to parse JSON, if fails, fallback
@@ -458,6 +496,60 @@ export const contentAgentService = {
 
             } catch {
                 return { title: "Insight", message: "Your thoughts are heard.", action: "Breathe" };
+            }
+        }
+    },
+
+    getDailyAffirmation: async (belief: BeliefType, themes: string[]): Promise<{ text: string, verse?: string }> => {
+        const theme = themes[0] || 'Wisdom';
+        const provider = await AIService.getProvider();
+
+        if (provider === 'LocalMock') {
+            const affirmations: Record<BeliefType, Array<{ text: string, verse?: string }>> = {
+                Christian: [
+                    { text: "Today, I walk in the strength of my purpose, guided by wisdom and fueled by love.", verse: "Isaiah 40:31" },
+                    { text: "I am fearfully and wonderfully made, and my path is ordered by a higher purpose.", verse: "Psalm 139:14" },
+                    { text: "In the stillness, I hear the whisper of grace guiding my steps toward peace.", verse: "1 Kings 19:12" }
+                ],
+                Muslim: [
+                    { text: "Truly, with every hardship comes ease. I am grounded in patience and trust.", verse: "Quran 94:6" },
+                    { text: "My heart finds rest in the remembrance of my Creator and the pursuit of goodness.", verse: "Quran 13:28" },
+                    { text: "I walk with humility and integrity, seeking alignment in every action.", verse: "Quran 25:63" }
+                ],
+                Secular: [
+                    { text: "I am the architect of my own peace, building a life of intention and clarity.", verse: "Stoic Wisdom" },
+                    { text: "Growth is a quiet journey. I honor my progress and embrace the lessons of today.", verse: "Modern Philosophy" },
+                    { text: "Direction is more important than speed. I am aligned with my true values.", verse: "Mindfulness" }
+                ],
+                Exploring: [
+                    { text: "The universe reflects my inner light. I am open to the truth appearing in my day.", verse: "Universal Truth" },
+                    { text: "I am a seeker of wisdom, finding alignment in the flow of existence.", verse: "Ancient Light" },
+                    { text: "Every moment is a new sanctuary of possibility. I step forward with grace.", verse: "Exploring Light" }
+                ],
+                Open: [
+                    { text: "I am centered, I am grounded, I am exactly where I need to be.", verse: "True North" },
+                    { text: "Compassion is my compass, and wisdom is my guide along this sacred path.", verse: "Peaceful Seeker" },
+                    { text: "I choose to radiate peace and receive the abundance of this moment.", verse: "Sanctuary Breath" }
+                ]
+            };
+
+            const list = affirmations[belief] || affirmations.Open;
+            const now = new Date();
+            const dayIndex = now.getDate() % list.length;
+            return list[dayIndex];
+        } else {
+            try {
+                const systemPrompt = constructSystemPrompt(belief, `Generate a short, powerful, and poetic daily affirmation for a seeker. Ensure it is resonant with their path (${belief}) and focuses on ${theme}. Return JSON with "text" and "verse" (optional).`);
+                const userPrompt = `Generate a daily sanctuary affirmation for a ${belief} seeker focusing on ${theme}.`;
+                const jsonStr = await AIService.generateText(systemPrompt, userPrompt);
+                try {
+                    const parsed = JSON.parse(jsonStr);
+                    return { text: parsed.text, verse: parsed.verse };
+                } catch {
+                    return { text: jsonStr };
+                }
+            } catch {
+                return { text: "Today, I walk in the strength of my purpose.", verse: "True North" };
             }
         }
     }
