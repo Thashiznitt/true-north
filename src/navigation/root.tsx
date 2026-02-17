@@ -24,7 +24,12 @@ import { GoalSettingsScreen } from '../features/profile/GoalSettingsScreen';
 import { SubscriptionScreen } from '../features/profile/SubscriptionScreen';
 import { CreateCircleScreen } from '../features/community/CreateCircleScreen';
 import { SuperAdminScreen } from '../features/admin/SuperAdminScreen';
+import { notificationService } from '../services/notifications';
 import { TermsOfServiceScreen } from '../features/profile/TermsOfServiceScreen';
+import { NotificationSettingsScreen } from '../features/profile/NotificationSettingsScreen';
+import { PrivacySettingsScreen } from '../features/profile/PrivacySettingsScreen';
+import { HelpCenterScreen } from '../features/profile/HelpCenterScreen';
+import { DailyWisdomModal } from '../components/DailyWisdomModal';
 import { theme, palette } from '../theme';
 
 const Stack = createNativeStackNavigator();
@@ -115,38 +120,50 @@ export const RootNavigator = () => {
         return () => subscription.remove();
     }, [isOnboarded, isLoggedIn]);
 
+    React.useEffect(() => {
+        if (isOnboarded) {
+            notificationService.scheduleEveningGratitude();
+        }
+    }, [isOnboarded]);
+
     return (
-        <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
-            {!isOnboarded ? (
-                <Stack.Group>
-                    <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+        <>
+            <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
+                {!isOnboarded ? (
+                    <Stack.Group>
+                        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+                        <Stack.Screen name="Login" component={LoginScreen} />
+                    </Stack.Group>
+                ) : !isLoggedIn ? (
                     <Stack.Screen name="Login" component={LoginScreen} />
-                </Stack.Group>
-            ) : !isLoggedIn ? (
-                <Stack.Screen name="Login" component={LoginScreen} />
-            ) : (
-                <Stack.Group>
-                    <Stack.Screen name="Main" component={MainTabs} />
-                    <Stack.Screen
-                        name="Notifications"
-                        component={NotificationsScreen}
-                        options={{ presentation: 'modal' }}
-                    />
-                    <Stack.Screen name="CircleDetail" component={CircleDetailScreen} />
-                    <Stack.Screen name="JournalDetail" component={JournalDetailScreen} />
-                    <Stack.Screen name="BeliefSettings" component={BeliefSettingsScreen} />
-                    <Stack.Screen name="ThemeSettings" component={ThemeSettingsScreen} />
-                    <Stack.Screen name="GoalSettings" component={GoalSettingsScreen} />
-                    <Stack.Screen name="Subscription" component={SubscriptionScreen} />
-                    <Stack.Screen name="CreateCircle" component={CreateCircleScreen} />
-                    <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
-                </Stack.Group>
-            )}
-            <Stack.Screen
-                name="SuperAdmin"
-                component={SuperAdminScreen}
-                options={{ headerShown: false }}
-            />
-        </Stack.Navigator>
+                ) : (
+                    <Stack.Group>
+                        <Stack.Screen name="Main" component={MainTabs} />
+                        <Stack.Screen
+                            name="Notifications"
+                            component={NotificationsScreen}
+                            options={{ presentation: 'modal' }}
+                        />
+                        <Stack.Screen name="CircleDetail" component={CircleDetailScreen} />
+                        <Stack.Screen name="JournalDetail" component={JournalDetailScreen} />
+                        <Stack.Screen name="BeliefSettings" component={BeliefSettingsScreen} />
+                        <Stack.Screen name="ThemeSettings" component={ThemeSettingsScreen} />
+                        <Stack.Screen name="GoalSettings" component={GoalSettingsScreen} />
+                        <Stack.Screen name="Subscription" component={SubscriptionScreen} />
+                        <Stack.Screen name="CreateCircle" component={CreateCircleScreen} />
+                        <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
+                        <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+                        <Stack.Screen name="PrivacySettings" component={PrivacySettingsScreen} />
+                        <Stack.Screen name="HelpCenter" component={HelpCenterScreen} />
+                    </Stack.Group>
+                )}
+                <Stack.Screen
+                    name="SuperAdmin"
+                    component={SuperAdminScreen}
+                    options={{ headerShown: false }}
+                />
+            </Stack.Navigator>
+            {isOnboarded && isLoggedIn && <DailyWisdomModal />}
+        </>
     );
 };

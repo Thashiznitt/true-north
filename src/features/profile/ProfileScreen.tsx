@@ -1,13 +1,14 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { OptimizedImage } from '../../components/performance/OptimizedImage';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { useStore } from '../../store';
-import { BookOpen, ChevronRight, LogOut, Bell, CreditCard, Shield, Sparkles, Camera, Heart, ShieldCheck, LucideIcon } from 'lucide-react-native';
+import { useStore, UserGoals } from '../../store';
+import { BookOpen, ChevronRight, LogOut, Bell, CreditCard, Shield, Sparkles, Camera, Heart, ShieldCheck, LucideIcon, Lock, X, Save, Target } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
+import { supabase } from '../../services/supabase';
 
 export const ProfileScreen = () => {
     const insets = useSafeAreaInsets();
@@ -21,7 +22,9 @@ export const ProfileScreen = () => {
         notificationsList,
         setProfilePicture,
         profilePicture,
-        logout
+        logout,
+        userGoals,
+        setUserGoals
     } = useStore();
 
     const isSubscribed = subscriptionTier !== 'free';
@@ -92,6 +95,97 @@ export const ProfileScreen = () => {
 
     const renderItem = () => null;
 
+    const [showGoalsModal, setShowGoalsModal] = useState(false);
+    const [editingGoals, setEditingGoals] = useState<UserGoals>(userGoals);
+
+    useEffect(() => {
+        setEditingGoals(userGoals);
+    }, [userGoals]);
+
+    const handleSaveGoals = async () => {
+        setUserGoals(editingGoals);
+        setShowGoalsModal(false);
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { error } = await supabase
+                    .from('user_goals')
+                    .update({
+                        spirituality: editingGoals.spirituality,
+                        spouse: editingGoals.spouse,
+                        career: editingGoals.career,
+                        business: editingGoals.business,
+                        health: editingGoals.health,
+                        family: editingGoals.family,
+                        children: editingGoals.children,
+                        friends: editingGoals.friends,
+                        finances: editingGoals.finances,
+                    })
+                    .eq('user_id', user.id);
+
+                if (error) {
+                    console.error('Error updating goals:', error);
+                    Alert.alert('Sync Error', 'Changes saved locally but failed to sync.');
+                }
+            }
+        } catch (error) {
+            console.error('Error saving goals:', error);
+        }
+    };
+
+    const renderGoalsModal = () => (
+        <Modal
+            visible={showGoalsModal}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={() => setShowGoalsModal(false)}
+        >
+            <View style={[styles.modalContainer, { paddingTop: Platform.OS === 'android' ? insets.top : 0 }]}>
+                <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>My Goals</Text>
+                    <TouchableOpacity onPress={() => setShowGoalsModal(false)} style={styles.closeButton}>
+                        <X size={24} color={theme.colors.text} />
+                    </TouchableOpacity>
+                </View>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={{ flex: 1 }}
+                >
+                    <TrueNorthFlashList
+                        data={Object.keys(editingGoals)}
+                        keyExtractor={(item) => item}
+                        renderItem={({ item: key }) => (
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder={`Your ${key} goal...`}
+                                    placeholderTextColor={theme.colors.secondaryText}
+                                    value={(editingGoals as unknown as Record<string, string>)[key]}
+                                    onChangeText={(text) => setEditingGoals(prev => ({ ...prev, [key]: text }))}
+                                    multiline
+                                />
+                            </View>
+                        )}
+                        contentContainerStyle={styles.modalContent}
+                        ListHeaderComponent={<Text style={styles.modalSubtitle}>Update your aspirations to keep your journey aligned.</Text>}
+                        ListFooterComponent={<View style={{ height: 100 }} />}
+                        // @ts-ignore - Property conflict on TrueNorthFlashList wrapper
+                        estimatedItemSize={100}
+                    />
+                </KeyboardAvoidingView>
+
+                <View style={[styles.modalFooter, { paddingBottom: insets.bottom + 20 }]}>
+                    <TouchableOpacity style={styles.saveButton} onPress={handleSaveGoals}>
+                        <Save size={20} color={palette.ivory} />
+                        <Text style={styles.saveButtonText}>Save Changes</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </Modal>
+    );
+
     return (
         <View style={styles.container}>
             <TrueNorthFlashList
@@ -104,6 +198,7 @@ export const ProfileScreen = () => {
                 ListHeaderComponent={
                     <>
                         <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
+                            {/* ... Avatar code ... */}
                             <TouchableOpacity style={styles.avatarWrapper} onPress={pickImage}>
                                 <View style={styles.avatarContainer}>
                                     {profilePicture ? (
@@ -149,6 +244,21 @@ export const ProfileScreen = () => {
                             </View>
                         </View>
 
+                        <Section title="Growth Plan">
+                            <MenuItem
+                                icon={Target}
+                                label="My Goals"
+                                value="Edit"
+                                onPress={() => setShowGoalsModal(true)}
+                            />
+                            <MenuItem
+                                icon={Sparkles}
+                                label="Sacred Themes"
+                                value={`${themes.length} Active`}
+                                onPress={() => navigation.navigate('ThemeSettings')}
+                            />
+                        </Section>
+
                         <Section title="Sanctuary Settings">
                             <MenuItem
                                 icon={CreditCard}
@@ -171,21 +281,6 @@ export const ProfileScreen = () => {
                                 icon={Lock as any} // eslint-disable-line @typescript-eslint/no-explicit-any
                                 label="Privacy & Security"
                                 onPress={() => navigation.navigate('PrivacySettings')}
-                                isLast
-                            />
-                        </Section>
-
-                        <Section title="Experience">
-                            <MenuItem
-                                icon={Sparkles}
-                                label="Sacred Themes"
-                                value={`${themes.length} Active`}
-                                onPress={() => navigation.navigate('ThemeSettings')}
-                            />
-                            <MenuItem
-                                icon={Heart}
-                                label="Daily Goals"
-                                onPress={() => navigation.navigate('GoalSettings')}
                                 isLast
                             />
                         </Section>
@@ -218,6 +313,7 @@ export const ProfileScreen = () => {
                     </>
                 }
             />
+            {renderGoalsModal()}
         </View>
     );
 };
@@ -283,5 +379,34 @@ const styles = StyleSheet.create({
     versionText: {
         textAlign: 'center', fontFamily: theme.typography.sans, fontSize: 12,
         color: theme.colors.secondaryText, marginTop: theme.spacing.xl, opacity: 0.5
-    }
+    },
+    modalContainer: { flex: 1, backgroundColor: theme.colors.background },
+    modalHeader: {
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+        paddingHorizontal: theme.spacing.xl, paddingVertical: theme.spacing.lg,
+        borderBottomWidth: 1, borderBottomColor: theme.colors.border
+    },
+    modalTitle: { fontFamily: theme.typography.serifBold, fontSize: 18, color: theme.colors.text },
+    closeButton: { position: 'absolute', right: theme.spacing.xl, padding: 8 },
+    modalContent: { padding: theme.spacing.xl },
+    modalSubtitle: {
+        fontFamily: theme.typography.sans, fontSize: 15, color: theme.colors.secondaryText,
+        marginBottom: theme.spacing.xl, textAlign: 'center', lineHeight: 22
+    },
+    inputGroup: { marginBottom: theme.spacing.lg },
+    label: { fontFamily: theme.typography.sansBold, fontSize: 14, color: theme.colors.text, marginBottom: 8 },
+    input: {
+        backgroundColor: theme.colors.surface, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border,
+        padding: 16, fontSize: 16, color: theme.colors.text, fontFamily: theme.typography.sans,
+        minHeight: 100, textAlignVertical: 'top'
+    },
+    modalFooter: {
+        padding: theme.spacing.xl, borderTopWidth: 1, borderTopColor: theme.colors.border,
+        backgroundColor: theme.colors.surface
+    },
+    saveButton: {
+        backgroundColor: theme.colors.text, borderRadius: 100, height: 56,
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12
+    },
+    saveButtonText: { fontFamily: theme.typography.sansBold, fontSize: 16, color: palette.ivory }
 });

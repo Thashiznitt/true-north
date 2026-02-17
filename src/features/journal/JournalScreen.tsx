@@ -161,9 +161,7 @@ export const JournalScreen = () => {
 
     return (
         <View style={styles.container}>
-            <View
-                style={[styles.header, { paddingTop: insets.top + 20 }]}
-            >
+            <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
                 {!isSearching ? (
                     <>
                         <Text style={styles.headerTitle}>Journal</Text>
@@ -192,6 +190,33 @@ export const JournalScreen = () => {
                 )}
             </View>
 
+            {new Date().getHours() >= 18 && dailyGoals.eveningGratitude && (
+                <TouchableOpacity
+                    style={styles.gratitudeCard}
+                    onPress={() => navigation.navigate('JournalDetail', { type: 'gratitude' })}
+                >
+                    <LinearGradient
+                        colors={[palette.softGold, '#D4AF37']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.gratitudeGradient}
+                    >
+                        <View style={styles.gratitudeContent}>
+                            <View style={styles.gratitudeIcon}>
+                                <Heart size={24} color={palette.ivory} fill={palette.ivory} />
+                            </View>
+                            <View>
+                                <Text style={styles.gratitudeTitle}>Evening Gratitude</Text>
+                                <Text style={styles.gratitudeSubtitle}>Take a moment to give thanks.</Text>
+                            </View>
+                        </View>
+                        <View style={styles.gratitudeButton}>
+                            <Text style={styles.gratitudeButtonText}>Begin</Text>
+                        </View>
+                    </LinearGradient>
+                </TouchableOpacity>
+            )}
+
             <TrueNorthFlashList
                 data={filteredEntries}
                 renderItem={renderEntry}
@@ -199,23 +224,6 @@ export const JournalScreen = () => {
                 estimatedItemSize={140}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
-                ListHeaderComponent={
-                    dailyGoals.eveningGratitude ? (
-                        <TouchableOpacity
-                            style={styles.gratitudePrompt}
-                            onPress={() => navigation.navigate('JournalDetail', { isNew: true, initialContent: '1. \n2. \n3. ' })}
-                        >
-                            <View style={styles.gratitudeHeader}>
-                                <Sparkles size={20} color={palette.softGold} />
-                                <Text style={styles.gratitudeTitle}>Evening Gratitude</Text>
-                            </View>
-                            <Text style={styles.gratitudeText}>List 3 things you are grateful for today.</Text>
-                            <View style={styles.gratitudeAction}>
-                                <Text style={styles.gratitudeActionText}>Reflect Now</Text>
-                            </View>
-                        </TouchableOpacity>
-                    ) : null
-                }
                 ListEmptyComponent={
                     <View style={styles.emptyState}>
                         <Text style={styles.emptyStateText}>
@@ -243,8 +251,8 @@ export const JournalScreen = () => {
                             );
                             return;
                         }
+                        navigation.navigate('JournalDetail', { isNew: true });
                     }
-                    navigation.navigate('JournalDetail', { isNew: true });
                 }}
             >
                 <Plus size={28} color={palette.ivory} />
@@ -286,26 +294,34 @@ const styles = StyleSheet.create({
     entryPreview: {
         fontFamily: theme.typography.sans, fontSize: 15, color: theme.colors.secondaryText, lineHeight: 22
     },
+    gratitudeCard: {
+        marginHorizontal: theme.spacing.xl, marginBottom: theme.spacing.xl,
+        borderRadius: theme.borderRadius.lg, overflow: 'hidden',
+        elevation: 4, shadowColor: palette.softGold, shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2, shadowRadius: 8
+    },
+    gratitudeGradient: {
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        padding: theme.spacing.lg
+    },
+    gratitudeContent: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md, flex: 1 },
+    gratitudeIcon: {
+        width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)',
+        alignItems: 'center', justifyContent: 'center'
+    },
+    gratitudeTitle: { fontFamily: theme.typography.serifBold, fontSize: 18, color: palette.ivory },
+    gratitudeSubtitle: { fontFamily: theme.typography.sans, fontSize: 13, color: palette.ivory, opacity: 0.9 },
+    gratitudeButton: {
+        backgroundColor: palette.ivory, paddingHorizontal: 16, paddingVertical: 8,
+        borderRadius: 20
+    },
+    gratitudeButtonText: { fontFamily: theme.typography.sansBold, fontSize: 13, color: palette.softGold },
     fab: {
-        position: 'absolute', right: theme.spacing.xl,
-        width: 60, height: 60, borderRadius: 30, backgroundColor: theme.colors.text,
+        position: 'absolute', right: theme.spacing.xl, bottom: 30,
+        width: 64, height: 64, borderRadius: 32, backgroundColor: theme.colors.text,
         alignItems: 'center', justifyContent: 'center', shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 5
+        shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 5
     },
     emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: 120 },
     emptyStateText: { fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.secondaryText },
-    gratitudePrompt: {
-        backgroundColor: palette.softGold + '15',
-        marginHorizontal: 0,
-        marginBottom: theme.spacing.xl,
-        padding: theme.spacing.xl,
-        borderRadius: theme.borderRadius.lg,
-        borderWidth: 1,
-        borderColor: palette.softGold + '30',
-    },
-    gratitudeHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-    gratitudeTitle: { fontFamily: theme.typography.serifBold, fontSize: 18, color: palette.softGold },
-    gratitudeText: { fontFamily: theme.typography.sans, fontSize: 15, color: theme.colors.text, opacity: 0.8, marginBottom: 12 },
-    gratitudeAction: { alignSelf: 'flex-start', backgroundColor: palette.softGold, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-    gratitudeActionText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 13 },
 });

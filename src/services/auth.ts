@@ -1,20 +1,155 @@
 import { env } from './env';
 import { useStore } from '../store';
+import { supabase } from './supabase';
+
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 export type AuthProvider = 'Apple' | 'Google' | 'Email';
 
 class AuthService {
+    constructor() {
+        // Initialize Google Sign-In
+        GoogleSignin.configure({
+            webClientId: '862052704275-hoap4ue6hbvhuo7c4co9bjbimdmp2adv.apps.googleusercontent.com',
+            iosClientId: '862052704275-64h0rdf93c0futbap8h4r70klf0ql233.apps.googleusercontent.com',
+        });
+    }
+
     /**
      * Attempts to log the user in via the specified provider.
-     * @param provider The auth provider to use
-     * @returns Promise<boolean> True if login was successful
      */
-    async login(provider: AuthProvider): Promise<boolean> {
+    async login(provider: AuthProvider, email?: string, password?: string): Promise<boolean> {
         if (env.useMockServices) {
             return this.mockLogin(provider);
         }
 
-        return this.realLogin(provider);
+        try {
+            if (provider === 'Apple') return await this.signInWithApple();
+            if (provider === 'Google') return await this.signInWithGoogle();
+            if (provider === 'Email') return await this.signInWithEmail(email, password);
+
+            throw new Error(`Auth provider ${provider} not supported`);
+        } catch (error) {
+            console.error(`${provider} login error:`, error);
+            return false;
+        }
+    }
+
+    private async signInWithEmail(email?: string, password?: string): Promise<boolean> {
+        if (!email || !password) throw new Error("Email and password required");
+
+        const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password
+        });
+
+        if (error) throw error;
+
+        const { setLoggedIn, setEmail } = useStore.getState();
+        setLoggedIn(true);
+        setEmail(email);
+        return true;
+    }
+
+    private async signInWithApple(): Promise<boolean> {
+        try {
+            const credential = await AppleAuthentication.signInAsync({
+                requestedScopes: [
+                    AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                    AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                ],
+            });
+
+            if (credential.identityToken) {
+                const { data, error } = await supabase.auth.signInWithIdToken({
+                    provider: 'apple',
+                    token: credential.identityToken,
+                });
+
+                if (error) throw error;
+
+                if (data.session) {
+                    const { setLoggedIn, setEmail, setUsername } = useStore.getState();
+                    setLoggedIn(true);
+                    if (data.user.email) setEmail(data.user.email);
+                    if (credential.fullName?.givenName) {
+                        setUsername(credential.fullName.givenName);
+                    }
+
+                    // Ensure DB profile exists
+                    await this.ensureUserProfile(data.user.id, data.user.email, credential.fullName?.givenName || undefined);
+
+                    return true;
+                }
+            }
+            return false;
+        } catch (e: unknown) {
+            if (e && typeof e === 'object' && 'code' in e && e.code === 'ERR_CANCELED') return false;
+            throw e;
+        }
+    }
+
+    private async signInWithGoogle(): Promise<boolean> {
+        try {
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
+
+            if (userInfo.data?.idToken) {
+                const { data, error } = await supabase.auth.signInWithIdToken({
+                    provider: 'google',
+                    token: userInfo.data.idToken,
+                });
+
+                if (error) throw error;
+
+                if (data.session) {
+                    const { setLoggedIn, setEmail, setUsername } = useStore.getState();
+                    setLoggedIn(true);
+                    if (data.user.email) setEmail(data.user.email);
+                    if (userInfo.data.user.name) setUsername(userInfo.data.user.name);
+
+                    // Ensure DB profile exists
+                    await this.ensureUserProfile(data.user.id, data.user.email, userInfo.data.user.name || undefined);
+
+                    return true;
+                }
+            }
+            return false;
+        } catch (error: unknown) {
+            console.error('Google Sign-In Error:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Signs up a new user with email and password
+     */
+    async signUp(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+        if (env.useMockServices) {
+            return { success: true };
+        }
+
+        try {
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+            });
+
+            if (error) throw error;
+
+            if (data.user) {
+                const { setLoggedIn, setEmail } = useStore.getState();
+                setLoggedIn(true);
+                setEmail(email);
+                return { success: true };
+            }
+            return { success: false, error: 'User creation failed' };
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Signup failed';
+            console.error('Signup error:', error);
+            return { success: false, error: message };
+        }
     }
 
     /**
@@ -25,42 +160,92 @@ class AuthService {
 
         return new Promise((resolve) => {
             setTimeout(() => {
-                // Update store state directly for mock
                 const { setOnboarded, setLoggedIn, setUsername } = useStore.getState();
 
                 setOnboarded(true);
                 setLoggedIn(true);
-                // Optionally set a mock username if none exists
                 if (!useStore.getState().username) {
                     setUsername(`User_${Math.floor(Math.random() * 1000)}`);
                 }
 
                 console.log(`[MockAuth] Login successful.`);
                 resolve(true);
-            }, 1500); // Simulate network delay
+            }, 1500);
         });
     }
 
-    /**
-     * Real login logic for Production environment
-     */
-    private async realLogin(provider: AuthProvider): Promise<boolean> {
-        console.log(`[Auth] Logging in with ${provider} (Real Implementation)...`);
-        // TODO: Implement actual Supabase/Auth handling here
+    private async ensureUserProfile(userId: string, email?: string, username?: string): Promise<void> {
+        try {
+            // Check if user already exists in the 'users' table
+            const { data: existingUser } = await supabase
+                .from('users')
+                .select('id')
+                .eq('id', userId)
+                .single();
 
-        // For now, fail if not implemented to avoid false positives in prod
-        throw new Error("Real authentication not yet implemented.");
+            if (!existingUser) {
+                console.log(`[Auth] Creating new profile for user ${userId}...`);
+
+                // 1. Create User Record
+                const { error: userError } = await supabase
+                    .from('users')
+                    .insert({
+                        id: userId,
+                        email: email,
+                        username: username || 'Sacred Voyager',
+                        role: 'member',
+                        subscription_tier: 'free',
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                    });
+
+                if (userError) throw userError;
+
+                // 2. Create Default Goals
+                const { error: goalsError } = await supabase
+                    .from('user_goals')
+                    .insert({
+                        user_id: userId,
+                        spirituality: '',
+                        spouse: '',
+                        career: '',
+                        business: '',
+                        health: '',
+                        family: '',
+                        children: '',
+                        friends: '',
+                        finances: '',
+                    });
+
+                if (goalsError) throw goalsError;
+
+                // 3. Create Default Preferences
+                const { error: prefError } = await supabase
+                    .from('user_preferences')
+                    .insert({
+                        user_id: userId,
+                        belief_type: 'Exploring',
+                        themes: [],
+                        is_onboarded: true, // Social users are considered onboarded at this point or directed to onboarding
+                        biometrics_enabled: false,
+                        notifications_enabled: true
+                    });
+
+                if (prefError) throw prefError;
+            }
+        } catch (error) {
+            console.error('[Auth] Error ensuring user profile:', error);
+        }
     }
 
     async logout(): Promise<void> {
-        if (env.useMockServices) {
-            const { setLoggedIn } = useStore.getState();
-            setLoggedIn(false);
-            return;
+        const { reset } = useStore.getState();
+
+        if (!env.useMockServices) {
+            await supabase.auth.signOut();
         }
 
-        // TODO: Implement real logout
-        throw new Error("Real logout not yet implemented.");
+        reset();
     }
 }
 

@@ -58,4 +58,23 @@ export const notificationService = {
             });
         }
     },
+
+    scheduleEveningGratitude: async () => {
+        // Schedule for 8:00 PM
+        const hour = 20;
+        const minute = 0;
+
+        await Notifications.scheduleNotificationAsync({
+            content: {
+                title: "Evening Reflection",
+                body: "What are you grateful for today?",
+            },
+            trigger: {
+                type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+                hour,
+                minute,
+                repeats: true,
+            } as Notifications.CalendarTriggerInput,
+        });
+    },
 };

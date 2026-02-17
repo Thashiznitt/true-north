@@ -63,7 +63,7 @@ export const SubscriptionScreen = () => {
                                 price="$12.99"
                                 period="/ month"
                                 subtext="Monthly Alignment"
-                                benefits={["Unlimited Community Reflections", "AI Spiritual Guidance (Private)", "Join Unlimited Circles", "Create up to 2 Circles"]}
+                                benefits={["Unlimited Community Reflections", "Personalized Spiritual Guidance", "Join Unlimited Circles", "Create up to 2 Circles"]}
                                 icon={Star}
                                 isSelected={selectedTier === 'true_north'}
                                 onSelect={() => setSelectedTier('true_north')}
@@ -75,7 +75,7 @@ export const SubscriptionScreen = () => {
                                 price="$19.99"
                                 period="/ month"
                                 subtext="Peak Spiritual IQ"
-                                benefits={["Elite AI Spiritual Mentoring", "Deep Community Analysis", "Unlimited Circle Creation", "Location Intelligence"]}
+                                benefits={["Elite Spiritual Mentoring", "Deep Community Analysis", "Unlimited Circle Creation", "Location Intelligence"]}
                                 icon={Zap}
                                 isSelected={selectedTier === 'zenith'}
                                 onSelect={() => setSelectedTier('zenith')}

@@ -184,7 +184,7 @@ export const AffirmationScreen = () => {
                                     )}
                                 </View>
 
-                                {!isWallpaperMode ? (
+                                {!isWallpaperMode && (
                                     <View style={styles.bottomActions}>
                                         <TouchableOpacity
                                             style={styles.wallpaperButton}
@@ -203,15 +203,6 @@ export const AffirmationScreen = () => {
                                             <Text style={styles.journalButtonText}>Reflect in Journal</Text>
                                         </TouchableOpacity>
                                     </View>
-                                ) : (
-                                    <View style={styles.wallpaperActions}>
-                                        <TouchableOpacity style={styles.wallpaperButton} onPress={() => setIsWallpaperMode(false)}>
-                                            <Text style={styles.wallpaperButtonText}>Cancel</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity style={[styles.wallpaperButton, styles.saveButton]} onPress={saveWallpaper} disabled={saving}>
-                                            <Text style={styles.saveButtonText}>{saving ? 'Saving...' : 'Save Wallpaper'}</Text>
-                                        </TouchableOpacity>
-                                    </View>
                                 )}
 
                                 {!isSubscribed && !isWallpaperMode && (
@@ -224,6 +215,21 @@ export const AffirmationScreen = () => {
                     />
                 </ImageBackground>
             </ViewShot>
+
+            {
+                isWallpaperMode && (
+                    <View style={styles.wallpaperOverlay}>
+                        <View style={styles.wallpaperActions}>
+                            <TouchableOpacity style={styles.wallpaperButton} onPress={() => setIsWallpaperMode(false)}>
+                                <Text style={styles.wallpaperButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.wallpaperButton, styles.saveButton]} onPress={saveWallpaper} disabled={saving}>
+                                <Text style={styles.saveButtonText}>{saving ? 'Saving...' : 'Save Wallpaper'}</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )
+            }
 
             <Modal
                 visible={showAdvice}
@@ -265,7 +271,7 @@ export const AffirmationScreen = () => {
                     </View>
                 </View>
             </Modal>
-        </View>
+        </View >
     );
 };
 
@@ -309,5 +315,8 @@ const styles = StyleSheet.create({
     adviceScroll: { paddingBottom: theme.spacing.xl },
     adviceText: { fontFamily: theme.typography.serif, fontSize: 18, color: theme.colors.text, lineHeight: 28, textAlign: 'center' },
     closeBtn: { paddingVertical: 14, borderRadius: 12, backgroundColor: theme.colors.text, alignItems: 'center' },
-    closeBtnText: { fontFamily: theme.typography.sansBold, fontSize: 14, color: theme.colors.background, textTransform: 'uppercase', letterSpacing: 1 }
+    closeBtnText: { fontFamily: theme.typography.sansBold, fontSize: 14, color: theme.colors.background, textTransform: 'uppercase', letterSpacing: 1 },
+    wallpaperOverlay: {
+        position: 'absolute', bottom: 50, left: 0, right: 0, alignItems: 'center', zIndex: 100
+    }
 });

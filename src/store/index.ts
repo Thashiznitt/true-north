@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { notificationService } from '../services/notifications';
 
 export type UserRole = 'member' | 'moderator' | 'admin' | 'platform_admin';
 import { BeliefType } from '../types';
@@ -51,6 +50,18 @@ export interface JournalEntry {
     tags?: string[];
 }
 
+export interface UserGoals {
+    spirituality: string;
+    spouse: string;
+    career: string;
+    business: string;
+    health: string;
+    family: string;
+    children: string;
+    friends: string;
+    finances: string;
+}
+
 interface UserState {
     isOnboarded: boolean;
     subscriptionTier: 'free' | 'compass' | 'true_north' | 'zenith';
@@ -63,6 +74,7 @@ interface UserState {
     securityPin: string | null;
     beliefType: BeliefType | null;
     themes: string[];
+    userGoals: UserGoals;
     dailyGoals: {
         dailyReflection: boolean;
         morningDevotion: boolean;
@@ -86,6 +98,7 @@ interface UserState {
     setSecurityPin: (pin: string | null) => void;
     setBeliefType: (belief: BeliefType | null) => void;
     setThemes: (themes: string[]) => void;
+    setUserGoals: (goals: UserGoals) => void;
     setPreferences: (belief: BeliefType, themes: string[], goals: DailyGoals) => void;
     updateNotificationSettings: (enabled: boolean, time: string) => void;
     addCreatedCircle: (circle: CreatedCircle) => void;
@@ -99,6 +112,7 @@ interface UserState {
     addJournalEntry: (entry: Omit<JournalEntry, 'id'>) => void;
     updateJournalEntry: (id: string, entry: Partial<JournalEntry>) => void;
     deleteJournalEntry: (id: string) => void;
+    reset: () => void;
     logout: () => void;
 }
 
@@ -116,6 +130,17 @@ export const useStore = create<UserState>()(
             securityPin: null,
             beliefType: 'Christian',
             themes: ['Faith', 'Perseverance', 'Gratitude'],
+            userGoals: {
+                spirituality: '',
+                spouse: '',
+                career: '',
+                business: '',
+                health: '',
+                family: '',
+                children: '',
+                friends: '',
+                finances: ''
+            },
             selectedTheme: 'Strength',
             dailyGoals: {
                 dailyReflection: false,
@@ -140,38 +165,43 @@ export const useStore = create<UserState>()(
                 { id: '2', date: 'Oct 23, 2023', title: 'Strength in Silence', content: 'Finding peace in the quiet moments between meetings. Focusing on the "Strength" theme.' },
             ],
             setOnboarded: async (isOnboarded: boolean) => {
-                if (isOnboarded) {
-                    const hasPermission = await notificationService.requestPermissions();
-                    if (hasPermission) {
-                        await notificationService.scheduleDailyAffirmation(get().subscriptionTier);
-                    }
-                } else {
-                    // Reset ALL user state when resetting onboarding
-                    set({
-                        isLoggedIn: false,
-                        subscriptionTier: 'free',
-                        username: '',
-                        profilePicture: null,
-                        biometricsEnabled: false,
-                        securityPin: null,
-                        beliefType: 'Spiritual',
-                        themes: [],
-                        dailyGoals: {
-                            dailyReflection: true,
-                            morningDevotion: true,
-                            eveningGratitude: false,
-                            weeklyCommunity: true,
-                        }
-                    });
-                }
                 set({ isOnboarded });
+            },
+            reset: () => {
+                set({
+                    isOnboarded: false,
+                    isLoggedIn: false,
+                    subscriptionTier: 'free',
+                    username: '',
+                    profilePicture: null,
+                    biometricsEnabled: false,
+                    securityPin: null,
+                    beliefType: 'Christian',
+                    themes: ['Faith', 'Perseverance', 'Gratitude'],
+                    userGoals: {
+                        spirituality: '',
+                        spouse: '',
+                        career: '',
+                        business: '',
+                        health: '',
+                        family: '',
+                        children: '',
+                        friends: '',
+                        finances: ''
+                    },
+                    dailyGoals: {
+                        dailyReflection: true,
+                        morningDevotion: true,
+                        eveningGratitude: true,
+                        weeklyCommunity: true,
+                    }
+                });
             },
             setLoggedIn: (isLoggedIn) => set({ isLoggedIn }),
             setBiometricsEnabled: (biometricsEnabled) => set({ biometricsEnabled }),
             setSecurityPin: (securityPin) => set({ securityPin }),
             setSubscriptionTier: async (tier: 'free' | 'compass' | 'true_north' | 'zenith') => {
                 set({ subscriptionTier: tier });
-                await notificationService.scheduleDailyAffirmation(tier);
             },
             setUsername: (username) => set({ username }),
             setEmail: (email) => set({ email }),
@@ -179,6 +209,7 @@ export const useStore = create<UserState>()(
             setRole: (role) => set({ role }),
             setBeliefType: (beliefType) => set({ beliefType }),
             setThemes: (themes) => set({ themes }),
+            setUserGoals: (goals) => set({ userGoals: goals }),
             setPreferences: (belief, themes, dailyGoals) => set({ beliefType: belief, themes, dailyGoals }),
             updateNotificationSettings: (enabled, time) => set({ notifications: { enabled, time } }),
             addCreatedCircle: (circle) => set((state) => ({ createdCircles: [circle, ...state.createdCircles] })),

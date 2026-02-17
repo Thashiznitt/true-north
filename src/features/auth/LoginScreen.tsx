@@ -8,7 +8,7 @@ import { ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react-native';
 
 export const LoginScreen = () => {
     const insets = useSafeAreaInsets();
-    const { setLoggedIn, setOnboarded } = useStore();
+    const { setLoggedIn, setOnboarded, reset } = useStore();
     const [loading, setLoading] = useState(false);
     const [mode, setMode] = useState<'options' | 'email'>('options');
     const [email, setEmail] = useState('');
@@ -44,7 +44,7 @@ export const LoginScreen = () => {
             "This will clear your current progress and let you begin the onboarding journey again.",
             [
                 { text: "Cancel", style: "cancel" },
-                { text: "Restart", style: "destructive", onPress: () => setOnboarded(false) }
+                { text: "Restart", style: "destructive", onPress: () => reset() }
             ]
         );
     };

@@ -1,5 +1,6 @@
 import { useStore } from '../store';
 import { env } from './env';
+import { notificationService } from './notifications';
 
 // This handles both Mock (Local) and Real (RevenueCat) logic based on environment
 export const subscriptionService = {
@@ -22,6 +23,8 @@ export const subscriptionService = {
             return new Promise((resolve) => {
                 setTimeout(async () => {
                     await setSubscriptionTier(tier);
+                    // Schedule notifications for the new tier
+                    await notificationService.scheduleDailyAffirmation(tier);
                     resolve(true);
                 }, 1000);
             });
