@@ -234,9 +234,9 @@ export const JournalScreen = () => {
                             <View style={styles.gratitudeIcon}>
                                 <Heart size={24} color={palette.ivory} fill={palette.ivory} />
                             </View>
-                            <View>
-                                <Text style={styles.gratitudeTitle}>Evening Gratitude</Text>
-                                <Text style={styles.gratitudeSubtitle}>Take a moment to give thanks.</Text>
+                            <View style={styles.gratitudeTextContainer}>
+                                <Text style={styles.gratitudeTitle} numberOfLines={1}>Evening Gratitude</Text>
+                                <Text style={styles.gratitudeSubtitle} numberOfLines={1}>Take a moment to give thanks.</Text>
                             </View>
                         </View>
                         <View style={styles.gratitudeButton}>
@@ -318,11 +318,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         padding: theme.spacing.lg
     },
-    gratitudeContent: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md, flex: 1 },
+    gratitudeContent: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md, flex: 1, marginRight: 12 },
     gratitudeIcon: {
         width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)',
         alignItems: 'center', justifyContent: 'center'
     },
+    gratitudeTextContainer: { flex: 1 },
     gratitudeTitle: { fontFamily: theme.typography.serifBold, fontSize: 18, color: palette.ivory },
     gratitudeSubtitle: { fontFamily: theme.typography.sans, fontSize: 13, color: palette.ivory, opacity: 0.9 },
     gratitudeButton: {

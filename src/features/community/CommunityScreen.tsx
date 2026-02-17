@@ -30,7 +30,7 @@ export const CommunityScreen = () => {
     const [circles, setCircles] = useState<any[]>([]);
     const circlesRef = useRef<any[]>([]);
     const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
-    const { createdCircles, bookmarkedCircleIds, subscriptionTier, dailyGoals } = useStore();
+    const { createdCircles, bookmarkedCircleIds, subscriptionTier, dailyGoals, beliefType } = useStore();
     const isSubscribed = subscriptionTier !== 'free';
 
     useEffect(() => {
@@ -84,11 +84,17 @@ export const CommunityScreen = () => {
     }, [createdCircles]);
 
     const filteredCircles = circles
-        .filter(c =>
-            c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            c.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (c.belief && c.belief.toLowerCase().includes(searchQuery.toLowerCase()))
-        )
+        .filter(c => {
+            const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                c.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (c.belief && c.belief.toLowerCase().includes(searchQuery.toLowerCase()));
+
+            // If searching, show all matching results regardless of belief
+            if (searchQuery) return matchesSearch;
+
+            // default to belief + Open
+            return c.belief === beliefType || c.belief === 'Open' || !c.belief;
+        })
         .sort((a, b) => {
             // 1. Premium Location Prioritization (Pseudo-match for demo)
             if (isSubscribed && userLocation) {

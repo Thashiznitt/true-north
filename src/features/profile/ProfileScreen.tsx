@@ -178,6 +178,12 @@ export const ProfileScreen = () => {
                     <TouchableOpacity style={styles.beliefChip}>
                         <Text style={styles.beliefText}>{beliefType || 'Exploring'}</Text>
                     </TouchableOpacity>
+
+                    <View style={[styles.tierChip, { backgroundColor: subscriptionTier === 'free' ? theme.colors.surface : palette.softGold }]}>
+                        <Text style={[styles.tierText, { color: subscriptionTier === 'free' ? theme.colors.secondaryText : palette.ivory }]}>
+                            {subscriptionTier === 'free' ? 'Free Plan' : subscriptionTier.replace('_', ' ').toUpperCase()}
+                        </Text>
+                    </View>
                 </View>
             </FadeIn>
 
@@ -364,6 +370,13 @@ const styles = StyleSheet.create({
         borderRadius: 20, borderWidth: 1, borderColor: theme.colors.border
     },
     beliefText: { fontFamily: theme.typography.sansBold, fontSize: 13, color: palette.softGold, textTransform: 'uppercase', letterSpacing: 1 },
+    tierChip: {
+        marginTop: 12,
+        paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12,
+        borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)',
+        alignItems: 'center', justifyContent: 'center'
+    },
+    tierText: { fontFamily: theme.typography.sansBold, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
     statsRow: {
         flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
         marginHorizontal: theme.spacing.xl, marginBottom: theme.spacing.xxl,

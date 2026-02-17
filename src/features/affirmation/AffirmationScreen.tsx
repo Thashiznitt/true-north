@@ -205,7 +205,7 @@ export const AffirmationScreen = () => {
                                     </View>
                                 )}
 
-                                {!isSubscribed && !isWallpaperMode && (
+                                {!isWallpaperMode && (
                                     <View style={{ marginTop: theme.spacing.md }}>
                                         <FaithAd type="community" />
                                     </View>
