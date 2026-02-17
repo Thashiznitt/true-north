@@ -121,9 +121,12 @@ export const OnboardingScreen = () => {
             const emptyFieldIndex = GOAL_KEYS.findIndex(key => !goals[key as keyof typeof goals]?.trim());
 
             if (emptyFieldIndex !== -1) {
+                Alert.alert(
+                    "Share Your Goals",
+                    "Please fill in all fields so we can personalize your daily affirmations and guidance."
+                );
                 // Focus the empty input
                 inputRefs.current[emptyFieldIndex]?.focus();
-                // Optional: Show toast or alert if needed, but focus behavior is usually enough context
                 return;
             }
 
