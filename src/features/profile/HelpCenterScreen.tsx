@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { ChevronLeft, ChevronDown, MessageSquare, Mail, Book } from 'lucide-react-native';
+import { ChevronLeft, ChevronDown, Mail, Book } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -38,6 +39,56 @@ export const HelpCenterScreen = () => {
         }
     ];
 
+    const renderContent = React.useCallback(() => (
+        <>
+            <View style={styles.hero}>
+                <Text style={styles.heroTitle}>How can we guide you?</Text>
+                <Text style={styles.heroSubtitle}>Find answers to support your journey.</Text>
+            </View>
+
+            <View style={styles.section}>
+                {FAQS.map((faq, index) => {
+                    const isOpen = openIndex === index;
+                    return (
+                        <TouchableOpacity
+                            key={index}
+                            style={[styles.accordionItem, isOpen && styles.accordionItemOpen]}
+                            onPress={() => toggleAccordion(index)}
+                            activeOpacity={0.8}
+                        >
+                            <View style={styles.accordionHeader}>
+                                <Text style={[styles.question, isOpen && styles.questionOpen]}>{faq.q}</Text>
+                                <ChevronDown
+                                    size={20}
+                                    color={isOpen ? palette.softGold : theme.colors.secondaryText}
+                                    style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }}
+                                />
+                            </View>
+                            {isOpen && (
+                                <View style={styles.accordionContent}>
+                                    <Text style={styles.answer}>{faq.a}</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    );
+                })}
+            </View>
+
+            <View style={styles.supportOptions}>
+                <TouchableOpacity style={styles.supportCard}>
+                    <Mail size={24} color={palette.softGold} />
+                    <Text style={styles.supportText}>Email Support</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.supportCard}>
+                    <Book size={24} color={palette.softGold} />
+                    <Text style={styles.supportText}>User Guide</Text>
+                </TouchableOpacity>
+            </View>
+
+            <Text style={styles.version}>True North v1.0.0 (Build 42)</Text>
+        </>
+    ), [openIndex, palette.softGold, theme.colors.secondaryText, theme.colors.text]);
+
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
             <View style={styles.header}>
@@ -48,53 +99,13 @@ export const HelpCenterScreen = () => {
                 <View style={styles.headerSpacer} />
             </View>
 
-            <ScrollView contentContainerStyle={styles.content}>
-                <View style={styles.hero}>
-                    <Text style={styles.heroTitle}>How can we guide you?</Text>
-                    <Text style={styles.heroSubtitle}>Find answers to support your journey.</Text>
-                </View>
-
-                <View style={styles.section}>
-                    {FAQS.map((faq, index) => {
-                        const isOpen = openIndex === index;
-                        return (
-                            <TouchableOpacity
-                                key={index}
-                                style={[styles.accordionItem, isOpen && styles.accordionItemOpen]}
-                                onPress={() => toggleAccordion(index)}
-                                activeOpacity={0.8}
-                            >
-                                <View style={styles.accordionHeader}>
-                                    <Text style={[styles.question, isOpen && styles.questionOpen]}>{faq.q}</Text>
-                                    <ChevronDown
-                                        size={20}
-                                        color={isOpen ? palette.softGold : theme.colors.secondaryText}
-                                        style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }}
-                                    />
-                                </View>
-                                {isOpen && (
-                                    <View style={styles.accordionContent}>
-                                        <Text style={styles.answer}>{faq.a}</Text>
-                                    </View>
-                                )}
-                            </TouchableOpacity>
-                        );
-                    })}
-                </View>
-
-                <View style={styles.supportOptions}>
-                    <TouchableOpacity style={styles.supportCard}>
-                        <Mail size={24} color={palette.softGold} />
-                        <Text style={styles.supportText}>Email Support</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.supportCard}>
-                        <Book size={24} color={palette.softGold} />
-                        <Text style={styles.supportText}>User Guide</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <Text style={styles.version}>True North v1.0.0 (Build 42)</Text>
-            </ScrollView>
+            <TrueNorthFlashList
+                data={['content']}
+                renderItem={renderContent}
+                keyExtractor={(item: string) => item}
+                estimatedItemSize={600}
+                contentContainerStyle={styles.content}
+            />
         </View>
     );
 };

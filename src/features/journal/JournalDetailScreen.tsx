@@ -91,7 +91,7 @@ export const JournalDetailScreen = () => {
                 { text: "Cancel", style: "cancel" },
                 {
                     text: "Unlock",
-                    onPress: (enteredPin) => {
+                    onPress: (enteredPin: string | undefined) => {
                         if (enteredPin === securityPin) {
                             setIsLocked(false);
                             setBioError(false);

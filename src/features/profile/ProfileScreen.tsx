@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { OptimizedImage } from '../../components/performance/OptimizedImage';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { useStore, UserGoals } from '../../store';
-import { BookOpen, ChevronRight, LogOut, Bell, CreditCard, Shield, Sparkles, Camera, Heart, ShieldCheck, LucideIcon, Lock, X, Save, Target } from 'lucide-react-native';
+import { BookOpen, ChevronRight, LogOut, Bell, CreditCard, Shield, Sparkles, Camera, Heart, ShieldCheck, LucideIcon, Lock, X, Save, Target, Compass, Circle, Edit2 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { supabase } from '../../services/supabase';
@@ -134,6 +134,178 @@ export const ProfileScreen = () => {
         }
     };
 
+    const renderGoalItem = React.useCallback(({ item: key }: { item: string }) => (
+        <View style={styles.inputGroup}>
+            <Text style={styles.label}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
+            <TextInput
+                style={styles.input}
+                placeholder={`Your ${key} goal...`}
+                placeholderTextColor={theme.colors.secondaryText}
+                value={editingGoals[key as keyof UserGoals] || ''}
+                onChangeText={(text) => setEditingGoals(prev => ({ ...prev, [key]: text }))}
+                multiline
+            />
+        </View>
+    ), [editingGoals, theme]);
+
+    const renderProfileContent = React.useCallback(() => (
+        <View style={styles.contentWrapper}>
+            <View style={styles.mainContent}>
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <View style={styles.sectionTitleRow}>
+                            <Compass size={20} color={palette.softGold} />
+                            <Text style={styles.sectionTitle}>My Aspirations</Text>
+                        </View>
+                        <TouchableOpacity style={styles.editButton} onPress={() => setShowGoalsModal(true)}>
+                            <Edit2 size={16} color={theme.colors.primary} />
+                            <Text style={styles.editText}>Refine</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <View style={styles.goalsGrid}>
+                        {Object.entries(userGoals).filter(([key]) => key !== 'id' && typeof userGoals[key as keyof UserGoals] === 'string').map(([key, value]) => (
+                            <View key={key} style={styles.goalCard}>
+                                <Text style={styles.goalLabel}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
+                                <Text style={styles.goalValue} numberOfLines={2}>{value || 'Define your path...'}</Text>
+                            </View>
+                        ))}
+                    </View>
+                </View>
+
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Settings</Text>
+                    <View style={styles.settingsGroup}>
+                        <TouchableOpacity style={styles.settingsItem}>
+                            <View style={styles.settingsIcon}>
+                                <Circle size={20} color={theme.colors.text} />
+                            </View>
+                            <Text style={styles.settingsText}>Account Preferences</Text>
+                            <ChevronRight size={18} color={theme.colors.secondaryText} />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        </View>
+    ), [userGoals, palette.softGold, theme.colors.primary, theme.colors.text, theme.colors.secondaryText]);
+
+    const renderProfileHeader = React.useMemo(() => (
+        <>
+            <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
+                {/* Avatar */}
+                <TouchableOpacity style={styles.avatarWrapper} onPress={pickImage}>
+                    <View style={styles.avatarContainer}>
+                        {profilePicture ? (
+                            <OptimizedImage source={{ uri: profilePicture }} style={styles.avatarImage} />
+                        ) : (
+                            <Text style={styles.avatarText}>{username ? username[0].toUpperCase() : 'U'}</Text>
+                        )}
+                        {subscriptionTier !== 'free' && (
+                            <View style={styles.premiumBadge}>
+                                <Sparkles size={12} color={palette.ivory} />
+                            </View>
+                        )}
+                    </View>
+                    <View style={styles.cameraIconContainer}>
+                        <Camera size={14} color={palette.ivory} />
+                    </View>
+                </TouchableOpacity>
+
+                <Text style={styles.username}>{username || 'Sacred Voyager'}</Text>
+
+                <TouchableOpacity style={styles.beliefChip}>
+                    <Text style={styles.beliefText}>{beliefType || 'Exploring'}</Text>
+                </TouchableOpacity>
+            </View>
+
+            <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                    <Heart size={20} color={palette.softGold} />
+                    <Text style={styles.statNumber}>{themes.length}</Text>
+                    <Text style={styles.statLabel}>Themes</Text>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.statItem}>
+                    <BookOpen size={20} color={palette.softGold} />
+                    <Text style={styles.statNumber}>{journalEntries.length}</Text>
+                    <Text style={styles.statLabel}>Reflections</Text>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.statItem}>
+                    <Bell size={20} color={palette.softGold} />
+                    <Text style={styles.statNumber}>{notificationsList.length}</Text>
+                    <Text style={styles.statLabel}>Alerts</Text>
+                </View>
+            </View>
+
+            <Section title="Growth Plan">
+                <MenuItem
+                    icon={Target}
+                    label="My Goals"
+                    value="Edit"
+                    onPress={() => setShowGoalsModal(true)}
+                />
+                <MenuItem
+                    icon={Sparkles}
+                    label="Sacred Themes"
+                    value={`${themes.length} Active`}
+                    onPress={() => navigation.navigate('ThemeSettings')}
+                />
+            </Section>
+
+            <Section title="Sanctuary Settings">
+                <MenuItem
+                    icon={CreditCard}
+                    label="Subscription"
+                    value={subscriptionTier.charAt(0).toUpperCase() + subscriptionTier.slice(1).replace('_', ' ')}
+                    onPress={() => navigation.navigate('Subscription')}
+                />
+                <MenuItem
+                    icon={ShieldCheck}
+                    label="Belief System"
+                    value={beliefType || undefined}
+                    onPress={() => navigation.navigate('BeliefSettings')}
+                />
+                <MenuItem
+                    icon={Bell}
+                    label="Notifications"
+                    onPress={() => navigation.navigate('NotificationSettings')}
+                />
+                <MenuItem
+                    icon={Lock as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+                    label="Privacy & Security"
+                    onPress={() => navigation.navigate('PrivacySettings')}
+                    isLast
+                />
+            </Section>
+
+            <Section title="Support">
+                <MenuItem
+                    icon={BookOpen}
+                    label="Guide & FAQ"
+                    onPress={() => navigation.navigate('HelpCenter')}
+                />
+                <MenuItem
+                    icon={Shield}
+                    label="Terms of Service"
+                    onPress={() => navigation.navigate('TermsOfService')}
+                    isLast
+                />
+            </Section>
+
+            <Section title="Account">
+                <MenuItem
+                    icon={LogOut}
+                    label="Sign Out"
+                    onPress={handleLogout}
+                    color={palette.softGold}
+                    isLast
+                />
+            </Section>
+
+            <Text style={styles.versionText}>True North v1.0.0</Text>
+        </>
+    ), [insets.top, profilePicture, username, subscriptionTier, beliefType, themes.length, journalEntries.length, notificationsList.length, palette.ivory, palette.softGold, navigation]);
+
     const renderGoalsModal = () => (
         <Modal
             visible={showGoalsModal}
@@ -141,7 +313,7 @@ export const ProfileScreen = () => {
             presentationStyle="pageSheet"
             onRequestClose={() => setShowGoalsModal(false)}
         >
-            <View style={[styles.modalContainer, { paddingTop: Platform.OS === 'android' ? insets.top : 0 }]}>
+            <View style={styles.modalContainer}>
                 <View style={styles.modalHeader}>
                     <Text style={styles.modalTitle}>My Goals</Text>
                     <TouchableOpacity onPress={() => setShowGoalsModal(false)} style={styles.closeButton}>
@@ -155,23 +327,10 @@ export const ProfileScreen = () => {
                     <TrueNorthFlashList
                         data={Object.keys(editingGoals)}
                         keyExtractor={(item) => item}
-                        renderItem={({ item: key }) => (
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.label}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder={`Your ${key} goal...`}
-                                    placeholderTextColor={theme.colors.secondaryText}
-                                    value={(editingGoals as unknown as Record<string, string>)[key]}
-                                    onChangeText={(text) => setEditingGoals(prev => ({ ...prev, [key]: text }))}
-                                    multiline
-                                />
-                            </View>
-                        )}
+                        renderItem={renderGoalItem}
                         contentContainerStyle={styles.modalContent}
                         ListHeaderComponent={<Text style={styles.modalSubtitle}>Update your aspirations to keep your journey aligned.</Text>}
-                        ListFooterComponent={<View style={{ height: 100 }} />}
-                        // @ts-ignore - Property conflict on TrueNorthFlashList wrapper
+                        ListFooterComponent={<View style={styles.footerSpacer} />}
                         estimatedItemSize={100}
                     />
                 </KeyboardAvoidingView>
@@ -189,129 +348,13 @@ export const ProfileScreen = () => {
     return (
         <View style={styles.container}>
             <TrueNorthFlashList
-                data={[]}
-                renderItem={renderItem}
-                keyExtractor={() => 'profile'}
+                data={['content']}
+                renderItem={renderProfileContent}
+                keyExtractor={(item) => item}
                 estimatedItemSize={800}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
-                ListHeaderComponent={
-                    <>
-                        <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-                            {/* ... Avatar code ... */}
-                            <TouchableOpacity style={styles.avatarWrapper} onPress={pickImage}>
-                                <View style={styles.avatarContainer}>
-                                    {profilePicture ? (
-                                        <OptimizedImage source={{ uri: profilePicture }} style={styles.avatarImage} />
-                                    ) : (
-                                        <Text style={styles.avatarText}>{username ? username[0].toUpperCase() : 'U'}</Text>
-                                    )}
-                                    {isSubscribed && (
-                                        <View style={styles.premiumBadge}>
-                                            <Sparkles size={12} color={palette.ivory} />
-                                        </View>
-                                    )}
-                                </View>
-                                <View style={styles.cameraIconContainer}>
-                                    <Camera size={14} color={palette.ivory} />
-                                </View>
-                            </TouchableOpacity>
-
-                            <Text style={styles.username}>{username || 'Sacred Voyager'}</Text>
-
-                            <TouchableOpacity style={styles.beliefChip}>
-                                <Text style={styles.beliefText}>{beliefType || 'Exploring'}</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={styles.statsRow}>
-                            <View style={styles.statItem}>
-                                <Heart size={20} color={palette.softGold} />
-                                <Text style={styles.statNumber}>{themes.length}</Text>
-                                <Text style={styles.statLabel}>Themes</Text>
-                            </View>
-                            <View style={styles.statDivider} />
-                            <View style={styles.statItem}>
-                                <BookOpen size={20} color={palette.softGold} />
-                                <Text style={styles.statNumber}>{journalEntries.length}</Text>
-                                <Text style={styles.statLabel}>Reflections</Text>
-                            </View>
-                            <View style={styles.statDivider} />
-                            <View style={styles.statItem}>
-                                <Bell size={20} color={palette.softGold} />
-                                <Text style={styles.statNumber}>{notificationsList.length}</Text>
-                                <Text style={styles.statLabel}>Alerts</Text>
-                            </View>
-                        </View>
-
-                        <Section title="Growth Plan">
-                            <MenuItem
-                                icon={Target}
-                                label="My Goals"
-                                value="Edit"
-                                onPress={() => setShowGoalsModal(true)}
-                            />
-                            <MenuItem
-                                icon={Sparkles}
-                                label="Sacred Themes"
-                                value={`${themes.length} Active`}
-                                onPress={() => navigation.navigate('ThemeSettings')}
-                            />
-                        </Section>
-
-                        <Section title="Sanctuary Settings">
-                            <MenuItem
-                                icon={CreditCard}
-                                label="Subscription"
-                                value={subscriptionTier.charAt(0).toUpperCase() + subscriptionTier.slice(1).replace('_', ' ')}
-                                onPress={() => navigation.navigate('Subscription')}
-                            />
-                            <MenuItem
-                                icon={ShieldCheck}
-                                label="Belief System"
-                                value={beliefType || undefined}
-                                onPress={() => navigation.navigate('BeliefSettings')}
-                            />
-                            <MenuItem
-                                icon={Bell}
-                                label="Notifications"
-                                onPress={() => navigation.navigate('NotificationSettings')}
-                            />
-                            <MenuItem
-                                icon={Lock as any} // eslint-disable-line @typescript-eslint/no-explicit-any
-                                label="Privacy & Security"
-                                onPress={() => navigation.navigate('PrivacySettings')}
-                                isLast
-                            />
-                        </Section>
-
-                        <Section title="Support">
-                            <MenuItem
-                                icon={BookOpen}
-                                label="Guide & FAQ"
-                                onPress={() => navigation.navigate('HelpCenter')}
-                            />
-                            <MenuItem
-                                icon={Shield}
-                                label="Terms of Service"
-                                onPress={() => navigation.navigate('TermsOfService')}
-                                isLast
-                            />
-                        </Section>
-
-                        <Section title="Account">
-                            <MenuItem
-                                icon={LogOut}
-                                label="Sign Out"
-                                onPress={handleLogout}
-                                color={palette.softGold}
-                                isLast
-                            />
-                        </Section>
-
-                        <Text style={styles.versionText}>True North v1.0.0</Text>
-                    </>
-                }
+                ListHeaderComponent={renderProfileHeader}
             />
             {renderGoalsModal()}
         </View>
@@ -408,5 +451,20 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.text, borderRadius: 100, height: 56,
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12
     },
-    saveButtonText: { fontFamily: theme.typography.sansBold, fontSize: 16, color: palette.ivory }
+    saveButtonText: { fontFamily: theme.typography.sansBold, fontSize: 16, color: palette.ivory },
+    contentWrapper: { flex: 1 },
+    mainContent: { flex: 1 },
+    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.md },
+    sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
+    editButton: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: theme.colors.surface, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border },
+    editText: { fontFamily: theme.typography.sansBold, fontSize: 12, color: theme.colors.primary },
+    goalsGrid: { gap: theme.spacing.md },
+    goalCard: { backgroundColor: theme.colors.surface, borderRadius: 16, padding: theme.spacing.lg, borderWidth: 1, borderColor: theme.colors.border },
+    goalLabel: { fontFamily: theme.typography.sansBold, fontSize: 13, color: theme.colors.secondaryText, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
+    goalValue: { fontFamily: theme.typography.sansMedium, fontSize: 15, color: theme.colors.text },
+    settingsGroup: { backgroundColor: theme.colors.surface, borderRadius: 16, borderWidth: 1, borderColor: theme.colors.border, overflow: 'hidden' },
+    settingsItem: { flexDirection: 'row', alignItems: 'center', padding: theme.spacing.lg, gap: theme.spacing.md },
+    settingsIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: theme.colors.background, alignItems: 'center', justifyContent: 'center' },
+    settingsText: { fontFamily: theme.typography.sansMedium, fontSize: 16, color: theme.colors.text, flex: 1 },
+    footerSpacer: { height: 100 }
 });

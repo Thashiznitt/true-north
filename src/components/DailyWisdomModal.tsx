@@ -59,7 +59,7 @@ export const DailyWisdomModal = () => {
                         <Text style={styles.title}>Daily Wisdom</Text>
 
                         <View style={styles.card}>
-                            <Text style={styles.affirmationText}>"{affirmation.text}"</Text>
+                            <Text style={styles.affirmationText}>&quot;{affirmation.text}&quot;</Text>
                             <Text style={styles.author}>- {affirmation.author}</Text>
                         </View>
 

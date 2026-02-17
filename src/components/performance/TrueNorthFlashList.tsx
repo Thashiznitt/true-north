@@ -6,17 +6,13 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 /**
  * A wrapper around FlashList that enforces performance best practices.
- * 
- * Rules:
- * 1. Must implement estimatedItemSize (strict enforcement).
- * 2. Uses a large drawing distance to pre-warm images.
- * 3. Removes clipped subviews for memory efficiency.
  */
-export function TrueNorthFlashList<T>({ estimatedItemSize = 250, ...props }: FlashListProps<T>) {
+export function TrueNorthFlashList<T>(props: FlashListProps<T> & { estimatedItemSize: number }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const FlashListComp = FlashList as any;
     return (
-        <FlashList
+        <FlashListComp
             {...props}
-            estimatedItemSize={estimatedItemSize}
             drawDistance={2 * SCREEN_HEIGHT}
             removeClippedSubviews={true}
             keyboardDismissMode="on-drag"

@@ -9,7 +9,8 @@
     "ios:16e": "expo run:ios --device \"iPhone 16e\"",
     "web": "expo start --web",
     "lint": "eslint .",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "check-versions": "node -v && npm -v && npx react-native --version"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -63,7 +64,8 @@
   },
   "devDependencies": {
     "@prisma/client": "^5.22.0",
-    "@types/react": "~18.3.12",
+    "@react-native-community/cli": "^20.1.1",
+    "@types/react": "^19.0.0",
     "@typescript-eslint/eslint-plugin": "^8.55.0",
     "@typescript-eslint/parser": "^8.55.0",
     "eslint": "^8.57.0",

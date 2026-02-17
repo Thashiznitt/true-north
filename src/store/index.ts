@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type UserRole = 'member' | 'moderator' | 'admin' | 'platform_admin';
 import { BeliefType } from '../types';
-export { BeliefType };
+export type { BeliefType };
 
 export interface DailyGoals {
     dailyReflection: boolean;
@@ -51,6 +51,7 @@ export interface JournalEntry {
 }
 
 export interface UserGoals {
+    [key: string]: string | undefined;
     spirituality: string;
     spouse: string;
     career: string;

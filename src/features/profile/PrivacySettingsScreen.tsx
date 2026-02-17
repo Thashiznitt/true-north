@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { ChevronLeft, Shield, Eye, Lock, UserX, Trash2 } from 'lucide-react-native';
+import { ChevronLeft, Shield, Eye, Lock, UserX, Trash2, LucideIcon } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../../store';
 
@@ -38,7 +38,15 @@ export const PrivacySettingsScreen = () => {
         );
     };
 
-    const SettingRow = ({ icon: Icon, label, description, value, onToggle }: any) => (
+    interface SettingRowProps {
+        icon: LucideIcon;
+        label: string;
+        description?: string;
+        value: boolean;
+        onToggle: () => void;
+    }
+
+    const SettingRow = ({ icon: Icon, label, description, value, onToggle }: SettingRowProps) => (
         <View style={styles.row}>
             <View style={styles.rowLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: palette.softGold + '10' }]}>

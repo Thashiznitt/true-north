@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { ChevronLeft, Bell, MessageCircle, Heart, Sparkles, Clock } from 'lucide-react-native';
+import { ChevronLeft, Bell, MessageCircle, Heart, Sparkles, Clock, LucideIcon } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 
 export const NotificationSettingsScreen = () => {
@@ -21,7 +21,15 @@ export const NotificationSettingsScreen = () => {
         setSettings(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
-    const SettingRow = ({ icon: Icon, label, description, value, onToggle }: any) => (
+    interface SettingRowProps {
+        icon: LucideIcon;
+        label: string;
+        description?: string;
+        value: boolean;
+        onToggle: () => void;
+    }
+
+    const SettingRow = ({ icon: Icon, label, description, value, onToggle }: SettingRowProps) => (
         <View style={styles.row}>
             <View style={styles.rowLeft}>
                 <View style={styles.iconContainer}>

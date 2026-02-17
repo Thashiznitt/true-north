@@ -14,6 +14,7 @@ import { Check, ArrowRight, ChevronLeft, Plus, Shield, Heart, Sparkles, Compass,
 import { subscriptionService } from '../../services/subscription';
 import { authService } from '../../services/auth';
 import { supabase } from '../../services/supabase';
+import PAYWALL_BG from '../../../assets/journal_paywall_bg.png';
 import * as Location from 'expo-location';
 
 
@@ -388,7 +389,7 @@ export const OnboardingScreen = () => {
                         <View key={key} style={styles.inputGroup}>
                             <Text style={styles.label}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
                             <TextInput
-                                ref={(el) => (inputRefs.current[index] = el)}
+                                ref={(el) => { inputRefs.current[index] = el; }}
                                 style={styles.input}
                                 placeholder={`Your ${key} goal...`}
                                 placeholderTextColor={theme.colors.secondaryText}
@@ -672,7 +673,7 @@ export const OnboardingScreen = () => {
         return (
             <View style={StyleSheet.absoluteFill}>
                 <ImageBackground
-                    source={require('../../../assets/journal_paywall_bg.png')}
+                    source={PAYWALL_BG}
                     style={[StyleSheet.absoluteFill, { transform: [{ scale: 1.2 }] }]}
                     resizeMode="cover"
                 />
@@ -703,12 +704,12 @@ export const OnboardingScreen = () => {
                                 return (
                                     <TouchableOpacity
                                         key={t.id}
-                                        style={[{
+                                        style={{
                                             flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
                                             padding: 16, borderRadius: 16,
                                             backgroundColor: active ? palette.ivory : 'rgba(255,255,255,0.1)',
                                             borderWidth: 1, borderColor: active ? palette.ivory : 'rgba(255,255,255,0.2)'
-                                        }]}
+                                        }}
                                         onPress={() => setTier(t.id as any)}
                                     >
                                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
