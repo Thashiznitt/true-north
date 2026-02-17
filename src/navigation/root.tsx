@@ -128,7 +128,15 @@ export const RootNavigator = () => {
 
     return (
         <>
-            <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
+            <Stack.Navigator
+                screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: theme.colors.background },
+                    gestureEnabled: true,
+                    fullScreenGestureEnabled: true,
+                    animation: 'slide_from_right'
+                }}
+            >
                 {!isOnboarded ? (
                     <Stack.Group>
                         <Stack.Screen name="Onboarding" component={OnboardingScreen} />

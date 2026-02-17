@@ -51,12 +51,19 @@ RevenueCat needs to talk to Apple to verify receipts and handle renewals.
 
 ## 4. Environment Variables
 
-Ensure your `.env` file (or Expo environment) has the correct RevenueCat API keys:
+Ensure your `.env` file (or Expo environment) has the correct RevenueCat API keys. The app automatically switches between Test and Production keys based on the environment (`__DEV__`).
 
 ```bash
-EXPO_PUBLIC_REVENUECAT_IOS_KEY=your_apple_api_key_here
-EXPO_PUBLIC_REVENUECAT_ANDROID_KEY=your_google_api_key_here
+# Development (Test) Key
+EXPO_PUBLIC_REVENUECAT_IOS_KEY=your_test_api_key_here
+EXPO_PUBLIC_REVENUECAT_ANDROID_KEY=your_test_api_key_here
+
+# Production Key (Used in TestFlight, App Store, and Release Builds)
+EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD=your_production_api_key_here
 ```
+
+- **Local Development**: Uses `EXPO_PUBLIC_REVENUECAT_IOS_KEY` (Test Mode). You will see a "Using a Test Store API key" warning.
+- **Production/TestFlight**: Uses `EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD`. No warning will be shown.
 
 ## 4. Review Information (Apple Requirement)
 

@@ -31,12 +31,17 @@ export default function App() {
       Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
     }
 
-    const iosApiKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE';
-    const androidApiKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE';
+    const iosApiKey = __DEV__ 
+      ? (process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE')
+      : (process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD || '');
 
-    if (Platform.OS === 'ios') {
+    const androidApiKey = __DEV__
+      ? (process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE')
+      : (process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || ''); // Add android prod key if available
+
+    if (Platform.OS === 'ios' && iosApiKey) {
       Purchases.configure({ apiKey: iosApiKey });
-    } else if (Platform.OS === 'android') {
+    } else if (Platform.OS === 'android' && androidApiKey) {
       Purchases.configure({ apiKey: androidApiKey });
     }
   }, []);
