@@ -77,6 +77,7 @@ interface UserState {
     themes: string[];
     userGoals: UserGoals;
     dateOfBirth: string | null;
+    astrologyEnabled: boolean;
     dailyGoals: {
         dailyReflection: boolean;
         morningDevotion: boolean;
@@ -104,6 +105,7 @@ interface UserState {
     setThemes: (themes: string[]) => void;
     setUserGoals: (goals: UserGoals) => void;
     setDateOfBirth: (dob: string | null) => void;
+    setAstrologyEnabled: (enabled: boolean) => void;
     setPreferences: (belief: BeliefType, themes: string[], goals: DailyGoals) => void;
     updateNotificationSettings: (enabled: boolean, time: string) => void;
     addCreatedCircle: (circle: CreatedCircle) => void;
@@ -140,6 +142,7 @@ export const useStore = create<UserState>()(
             beliefType: 'Christian',
             themes: ['Faith', 'Perseverance', 'Gratitude'],
             dateOfBirth: null,
+            astrologyEnabled: false,
             userGoals: {
                 spirituality: '',
                 spouse: '',
@@ -202,6 +205,7 @@ export const useStore = create<UserState>()(
                         finances: ''
                     },
                     dateOfBirth: null,
+                    astrologyEnabled: false,
                     dailyGoals: {
                         dailyReflection: true,
                         morningDevotion: true,
@@ -226,6 +230,7 @@ export const useStore = create<UserState>()(
             setThemes: (themes) => set({ themes }),
             setUserGoals: (goals) => set({ userGoals: goals }),
             setDateOfBirth: (dateOfBirth) => set({ dateOfBirth }),
+            setAstrologyEnabled: (astrologyEnabled) => set({ astrologyEnabled }),
             setPreferences: (belief, themes, dailyGoals) => set({ beliefType: belief, themes, dailyGoals }),
             updateNotificationSettings: (enabled, time) => set({ notifications: { enabled, time } }),
             addCreatedCircle: (circle) => set((state) => ({ createdCircles: [circle, ...state.createdCircles] })),
@@ -297,7 +302,7 @@ export const useStore = create<UserState>()(
             unblockCircle: (circleId) => set((state) => ({
                 blockedCircleIds: state.blockedCircleIds.filter(id => id !== circleId)
             })),
-            logout: () => set({ isLoggedIn: false, subscriptionTier: 'free', username: '', profilePicture: null, dateOfBirth: null }),
+            logout: () => set({ isLoggedIn: false, subscriptionTier: 'free', username: '', profilePicture: null, dateOfBirth: null, astrologyEnabled: false }),
         }),
         {
             name: 'true-north-storage',

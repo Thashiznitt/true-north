@@ -7,6 +7,7 @@ import { ChevronLeft, Check, ShieldCheck } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useStore, BeliefType } from '../../store';
 import { FadeIn } from '../../components/FadeIn';
+import { Moon } from 'lucide-react-native';
 
 const BELIEF_TYPES: { type: BeliefType; description: string }[] = [
     { type: 'Christian', description: 'Grounded in biblical wisdom and Christ-centered living.' },
@@ -18,11 +19,13 @@ const BELIEF_TYPES: { type: BeliefType; description: string }[] = [
 export const BeliefSettingsScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
-    const { beliefType, setBeliefType } = useStore();
+    const { beliefType, setBeliefType, astrologyEnabled, setAstrologyEnabled } = useStore();
     const [selected, setSelected] = useState<BeliefType | null>(beliefType);
+    const [cosmicEnabled, setCosmicEnabled] = useState(astrologyEnabled);
 
     const handleSave = () => {
         setBeliefType(selected);
+        setAstrologyEnabled(cosmicEnabled);
         navigation.goBack();
     };
 
@@ -67,6 +70,30 @@ export const BeliefSettingsScreen = () => {
                         </TouchableOpacity>
                     </FadeIn>
                 ))}
+
+                <FadeIn delay={600} from="bottom">
+                    <View style={styles.divider} />
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Extended Alignment</Text>
+                    </View>
+
+                    <TouchableOpacity
+                        style={[styles.typeCard, cosmicEnabled && styles.typeCardActive]}
+                        onPress={() => setCosmicEnabled(!cosmicEnabled)}
+                        activeOpacity={0.7}
+                    >
+                        <View style={styles.iconCircle}>
+                            <Moon size={20} color={cosmicEnabled ? palette.ivory : palette.softGold} />
+                        </View>
+                        <View style={styles.typeInfo}>
+                            <Text style={[styles.typeTitle, cosmicEnabled && styles.typeTitleActive]}>Astronomy Theory</Text>
+                            <Text style={styles.typeDesc}>Receive cosmic-aware guidance and zodiac-based blessings alongside your primary belief path.</Text>
+                        </View>
+                        <View style={[styles.toggleContainer, cosmicEnabled && styles.toggleContainerActive]}>
+                            <View style={[styles.toggleCircle, cosmicEnabled && styles.toggleCircleActive]} />
+                        </View>
+                    </TouchableOpacity>
+                </FadeIn>
             </ScrollView>
         </View>
     );
@@ -103,5 +130,13 @@ const styles = StyleSheet.create({
     checkCircle: {
         width: 28, height: 28, borderRadius: 14, backgroundColor: palette.softGold,
         alignItems: 'center', justifyContent: 'center'
-    }
+    },
+    divider: { height: 1, backgroundColor: theme.colors.border, marginVertical: theme.spacing.xl },
+    sectionHeader: { marginBottom: theme.spacing.md, marginLeft: 4 },
+    sectionTitle: { fontFamily: theme.typography.sansBold, fontSize: 13, color: theme.colors.secondaryText, textTransform: 'uppercase', letterSpacing: 1.5 },
+    iconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: palette.softGold + '15', alignItems: 'center', justifyContent: 'center', marginRight: theme.spacing.md },
+    toggleContainer: { width: 44, height: 24, borderRadius: 12, backgroundColor: theme.colors.border, padding: 2, justifyContent: 'center' },
+    toggleContainerActive: { backgroundColor: palette.softGold },
+    toggleCircle: { width: 20, height: 20, borderRadius: 10, backgroundColor: palette.ivory },
+    toggleCircleActive: { alignSelf: 'flex-end' }
 });
