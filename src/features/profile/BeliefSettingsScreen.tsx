@@ -32,12 +32,12 @@ export const BeliefSettingsScreen = () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 await supabase
-                    .from('users')
+                    .from('user_preferences')
                     .update({
                         belief_type: selected,
                         astrology_enabled: cosmicEnabled
                     })
-                    .eq('id', user.id);
+                    .eq('user_id', user.id);
             }
         } catch (error) {
             console.error('Error syncing belief settings:', error);
