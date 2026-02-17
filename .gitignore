@@ -31,7 +31,12 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+
+# debug screenshots
+screenshot_*.png
+subscription_final.png
 
 # typescript
 *.tsbuildinfo

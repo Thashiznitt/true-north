@@ -7,8 +7,30 @@ import { ChevronLeft, Check, Compass as CompassIcon, Star, Zap } from 'lucide-re
 import { useNavigation } from '@react-navigation/native';
 import { subscriptionService } from '../../services/subscription';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
+import { PurchasesPackage, PurchasesOffering } from 'react-native-purchases';
+import { env } from '../../services/env';
+import { ActivityIndicator } from 'react-native';
 
 type Tier = 'compass' | 'true_north' | 'zenith';
+
+const TIER_ICONS: Record<string, any> = {
+    compass: CompassIcon,
+    true_north: Star,
+    zenith: Zap,
+};
+
+const TIER_METADATA: Record<string, any> = {
+    compass: {
+        benefits: ["Unlimited Private Reflections (Journal)", "Join up to 5 Circles", "Standard Daily Guidance"],
+    },
+    true_north: {
+        benefits: ["Unlimited Community Reflections", "Personalized Spiritual Guidance", "Join Unlimited Circles", "Create up to 2 Circles"],
+        isPopular: true
+    },
+    zenith: {
+        benefits: ["Elite Spiritual Mentoring", "Deep Community Analysis", "Unlimited Circle Creation", "Location Intelligence"],
+    },
+};
 
 const renderItem = () => null;
 const keyExtractor = () => 'dummy';
@@ -17,15 +39,44 @@ export const SubscriptionScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<any>();
     const [selectedTier, setSelectedTier] = useState<Tier>('true_north');
+    const [offering, setOffering] = useState<PurchasesOffering | null>(null);
+    const [loading, setLoading] = useState(!env.useMockServices);
+    const [purchasing, setPurchasing] = useState(false);
+
+    React.useEffect(() => {
+        if (!env.useMockServices) {
+            const fetchOfferings = async () => {
+                const offerings = await subscriptionService.getOfferings();
+                if (offerings && offerings.current) {
+                    setOffering(offerings.current);
+                }
+                setLoading(false);
+            };
+            fetchOfferings();
+        }
+    }, []);
 
     const handleSubscribe = async () => {
+        setPurchasing(true);
         try {
-            await subscriptionService.subscribe(selectedTier);
-            navigation.goBack();
+            if (env.useMockServices) {
+                await subscriptionService.subscribe(selectedTier);
+                navigation.goBack();
+            } else if (offering) {
+                // Find the package that matches the selected tier
+                const pkg = offering.availablePackages.find(p => p.packageType.toLowerCase().includes(selectedTier)) || offering.availablePackages[0];
+                const success = await subscriptionService.purchasePackage(pkg);
+                if (success) {
+                    navigation.goBack();
+                }
+            }
         } catch (error) {
             console.error("Subscription failed:", error);
+        } finally {
+            setPurchasing(false);
         }
     };
+
 
     return (
         <View style={styles.container}>
@@ -47,53 +98,103 @@ export const SubscriptionScreen = () => {
                 ListHeaderComponent={
                     <>
                         <View style={styles.tierContainer}>
-                            <TierCard
-                                name="Compass"
-                                price="$5.99"
-                                period="/ month"
-                                subtext="Billed Annually ($71.88/yr)"
-                                benefits={["Unlimited Private Reflections (Journal)", "Join up to 5 Circles", "Standard Daily Guidance"]}
-                                icon={CompassIcon}
-                                isSelected={selectedTier === 'compass'}
-                                onSelect={() => setSelectedTier('compass')}
-                            />
+                            {loading ? (
+                                <ActivityIndicator color={palette.softGold} size="large" style={{ marginTop: 40 }} />
+                            ) : offering ? (
+                                offering.availablePackages.map((pkg: any) => {
+                                    const product = pkg.product || pkg.storeProduct;
+                                    const productId = product.identifier.toLowerCase();
 
-                            <TierCard
-                                name="True North"
-                                price="$12.99"
-                                period="/ month"
-                                subtext="Monthly Alignment"
-                                benefits={["Unlimited Community Reflections", "Personalized Spiritual Guidance", "Join Unlimited Circles", "Create up to 2 Circles"]}
-                                icon={Star}
-                                isSelected={selectedTier === 'true_north'}
-                                onSelect={() => setSelectedTier('true_north')}
-                                isPopular
-                            />
+                                    let tierId: Tier = 'true_north';
+                                    if (productId.includes('compass')) tierId = 'compass';
+                                    else if (productId.includes('zenith')) tierId = 'zenith';
+                                    else if (pkg.packageType.toLowerCase().includes('annual')) tierId = 'compass';
+                                    else if (pkg.packageType.toLowerCase().includes('monthly')) tierId = 'true_north';
 
-                            <TierCard
-                                name="Zenith"
-                                price="$19.99"
-                                period="/ month"
-                                subtext="Peak Spiritual IQ"
-                                benefits={["Elite Spiritual Mentoring", "Deep Community Analysis", "Unlimited Circle Creation", "Location Intelligence"]}
-                                icon={Zap}
-                                isSelected={selectedTier === 'zenith'}
-                                onSelect={() => setSelectedTier('zenith')}
-                            />
+                                    const meta = TIER_METADATA[tierId] || TIER_METADATA.true_north;
+
+                                    return (
+                                        <TierCard
+                                            key={pkg.identifier}
+                                            name={product.title}
+                                            price={product.priceString}
+                                            period={pkg.packageType.toLowerCase().includes('annual') ? '/ year' : '/ month'}
+                                            subtext={product.description}
+                                            benefits={meta.benefits}
+                                            icon={TIER_ICONS[tierId] || Star}
+                                            isSelected={selectedTier === tierId}
+                                            onSelect={() => setSelectedTier(tierId as Tier)}
+                                            isPopular={meta.isPopular}
+                                        />
+                                    );
+                                })
+                            ) : (
+                                <>
+                                    <TierCard
+                                        name="Compass"
+                                        price="$5.99"
+                                        period="/ month"
+                                        subtext="Billed Annually ($69.99/yr)"
+                                        benefits={TIER_METADATA.compass.benefits}
+                                        icon={CompassIcon}
+                                        isSelected={selectedTier === 'compass'}
+                                        onSelect={() => setSelectedTier('compass')}
+                                    />
+
+                                    <TierCard
+                                        name="True North"
+                                        price="$12.99"
+                                        period="/ month"
+                                        subtext="Monthly Alignment"
+                                        benefits={TIER_METADATA.true_north.benefits}
+                                        icon={Star}
+                                        isSelected={selectedTier === 'true_north'}
+                                        onSelect={() => setSelectedTier('true_north')}
+                                        isPopular
+                                    />
+
+                                    <TierCard
+                                        name="Zenith"
+                                        price="$19.99"
+                                        period="/ month"
+                                        subtext="Peak Spiritual IQ"
+                                        benefits={TIER_METADATA.zenith.benefits}
+                                        icon={Zap}
+                                        isSelected={selectedTier === 'zenith'}
+                                        onSelect={() => setSelectedTier('zenith')}
+                                    />
+                                </>
+                            )}
                         </View>
 
-                        <TouchableOpacity style={styles.ctaButton} onPress={handleSubscribe}>
-                            <Text style={styles.ctaButtonText}>
-                                {selectedTier === 'compass' ? 'Start Annual Journey' : 'Begin Monthly Alignment'}
-                            </Text>
-                            <Text style={styles.ctaButtonSub}>
-                                {selectedTier === 'compass' ? '$71.88 / year' : `${selectedTier === 'true_north' ? '$12.99' : '$19.99'} / month`}
-                            </Text>
+                        <TouchableOpacity
+                            style={[styles.ctaButton, (loading || purchasing) && { opacity: 0.7 }]}
+                            onPress={handleSubscribe}
+                            disabled={loading || purchasing}
+                        >
+                            {purchasing ? (
+                                <ActivityIndicator color={palette.ivory} />
+                            ) : (
+                                <>
+                                    <Text style={styles.ctaButtonText}>
+                                        {offering
+                                            ? `Start Journey`
+                                            : (selectedTier === 'compass' ? 'Start Annual Journey' : 'Begin Monthly Alignment')
+                                        }
+                                    </Text>
+                                    {!offering && (
+                                        <Text style={styles.ctaButtonSub}>
+                                            {selectedTier === 'compass' ? '$69.99 / year' : `${selectedTier === 'true_north' ? '$12.99' : '$19.99'} / month`}
+                                        </Text>
+                                    )}
+                                </>
+                            )}
                         </TouchableOpacity>
 
                         <Text style={styles.footerNote}>Secured and encrypted. Cancel anytime.</Text>
                     </>
                 }
+
             />
         </View>
     );

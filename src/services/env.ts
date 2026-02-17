@@ -9,4 +9,7 @@ export const env = {
     apiBaseUrl: __DEV__
         ? 'http://localhost:3000' // Local backend (if you have one)
         : 'https://api.truenorth.app', // Production backend
+    // RevenueCat
+    revenueCatIosKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY,
+    revenueCatAndroidKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY,
 };

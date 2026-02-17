@@ -155,8 +155,9 @@ export const CommunityScreen = () => {
                             <Text style={styles.paywallTitle}>Unlock {filteredCircles.length - 3} More Circles</Text>
                             <Text style={styles.paywallSubtitle}>Join the full True North collective.</Text>
                             <View style={styles.paywallBadge}>
-                                <Text style={styles.paywallBadgeText}>Subscribe $12.99 / mo</Text>
+                                <Text style={styles.paywallBadgeText}>Subscribe to Unlock</Text>
                             </View>
+
                         </View>
                     </ImageBackground>
                 </TouchableOpacity>

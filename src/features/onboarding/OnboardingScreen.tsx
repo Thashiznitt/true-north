@@ -16,6 +16,8 @@ import { authService } from '../../services/auth';
 import { supabase } from '../../services/supabase';
 import PAYWALL_BG from '../../../assets/journal_paywall_bg.png';
 import * as Location from 'expo-location';
+import { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
+import { env } from '../../services/env';
 
 
 const THEME_ICONS: Record<string, any> = { // eslint-disable-line
@@ -79,6 +81,23 @@ export const OnboardingScreen = () => {
         friends: '',
         finances: '',
     });
+    const [offering, setOffering] = useState<PurchasesOffering | null>(null);
+    const [offeringLoading, setOfferingLoading] = useState(!env.useMockServices);
+    const [isPurchasing, setIsPurchasing] = useState(false);
+
+    React.useEffect(() => {
+        if (!env.useMockServices) {
+            const fetchOfferings = async () => {
+                const offerings = await subscriptionService.getOfferings();
+                if (offerings && offerings.current) {
+                    setOffering(offerings.current);
+                }
+                setOfferingLoading(false);
+            };
+            fetchOfferings();
+        }
+    }, []);
+
 
     const inputRefs = React.useRef<Array<TextInput | null>>([]);
 
@@ -245,26 +264,60 @@ export const OnboardingScreen = () => {
     };
 
     const handleSubscribe = async () => {
-        setLoading(true);
+        setIsPurchasing(true);
         try {
-            // Emulate subscription process
-            setTimeout(async () => {
-                setSubscriptionTier(tier as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-                setLoggedIn(true);
-                setOnboarded(true);
+            if (env.useMockServices) {
+                // Emulate subscription process
+                setTimeout(async () => {
+                    setSubscriptionTier(tier as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+                    setLoggedIn(true);
+                    setOnboarded(true);
 
-                // Request permissions and schedule
-                const hasPermission = await notificationService.requestPermissions();
-                if (hasPermission) {
-                    await notificationService.scheduleDailyAffirmation(tier as any);
+                    // Request permissions and schedule
+                    const hasPermission = await notificationService.requestPermissions();
+                    if (hasPermission) {
+                        await notificationService.scheduleDailyAffirmation(tier as any);
+                    }
+
+                    setIsPurchasing(false);
+                }, 1500);
+            } else if (offering) {
+                // For Email users, ensure they are signed up before purchasing
+                if (authMode === 'email' && !useStore.getState().isLoggedIn) {
+                    if (!email || !password) {
+                        Alert.alert("Account Required", "Please ensure you've entered an email and password in previous steps.");
+                        setIsPurchasing(false);
+                        return;
+                    }
+                    const { success, error } = await authService.signUp(email, password);
+                    if (!success) {
+                        Alert.alert("Registration Failed", error || "Could not create account for subscription.");
+                        setIsPurchasing(false);
+                        return;
+                    }
+                    // Profile creation will happen either here or in finishOnboarding
+                    // But authService.signUp now calls subscriptionService.logIn
                 }
 
-                setLoading(false);
-            }, 1500);
+                const pkg = offering.availablePackages.find(p => p.packageType.toLowerCase().includes(tier)) || offering.availablePackages[0];
+                const success = await subscriptionService.purchasePackage(pkg);
+                if (success) {
+                    setLoggedIn(true);
+                    setOnboarded(true);
+                    const hasPermission = await notificationService.requestPermissions();
+                    if (hasPermission) {
+                        await notificationService.scheduleDailyAffirmation('true_north');
+                    }
+                }
+                setIsPurchasing(false);
+            } else {
+                setIsPurchasing(false);
+            }
         } catch (error) {
-            setLoading(false);
+            setIsPurchasing(false);
         }
     };
+
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -664,7 +717,7 @@ export const OnboardingScreen = () => {
     );
 
     const renderStep10 = () => {
-        const TIERS = [
+        const DEFAULT_TIERS = [
             { id: 'compass', label: 'Compass', price: '$5.99', sub: '/ mo', save: 'Billed Yearly' },
             { id: 'true_north', label: 'True North', price: '$12.99', sub: '/ mo', save: 'Most Popular' },
             { id: 'zenith', label: 'Zenith', price: '$19.99', sub: '/ mo', save: 'Best Value' },
@@ -699,51 +752,99 @@ export const OnboardingScreen = () => {
                         </View>
 
                         <View style={{ gap: 12, marginBottom: 32 }}>
-                            {TIERS.map((t) => {
-                                const active = tier === t.id;
-                                return (
-                                    <TouchableOpacity
-                                        key={t.id}
-                                        style={{
-                                            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                                            padding: 16, borderRadius: 16,
-                                            backgroundColor: active ? palette.ivory : 'rgba(255,255,255,0.1)',
-                                            borderWidth: 1, borderColor: active ? palette.ivory : 'rgba(255,255,255,0.2)'
-                                        }}
-                                        onPress={() => setTier(t.id as any)}
-                                    >
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                            <View style={{
-                                                width: 20, height: 20, borderRadius: 10,
-                                                borderWidth: 2, borderColor: active ? theme.colors.text : 'rgba(255,255,255,0.5)',
-                                                alignItems: 'center', justifyContent: 'center'
-                                            }}>
-                                                {active && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.text }} />}
+                            {offeringLoading ? (
+                                <ActivityIndicator color={palette.softGold} size="large" />
+                            ) : offering ? (
+                                offering.availablePackages.map((pkg: any) => {
+                                    const tierId = pkg.packageType.toLowerCase().includes('annual') ? 'compass' :
+                                        pkg.packageType.toLowerCase().includes('monthly') ? 'true_north' : 'zenith';
+                                    const active = tier === tierId;
+                                    const product = pkg.product || pkg.storeProduct;
+
+                                    return (
+                                        <TouchableOpacity
+                                            key={pkg.identifier}
+                                            style={{
+                                                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                                                padding: 16, borderRadius: 16,
+                                                backgroundColor: active ? palette.ivory : 'rgba(255,255,255,0.1)',
+                                                borderWidth: 1, borderColor: active ? palette.ivory : 'rgba(255,255,255,0.2)'
+                                            }}
+                                            onPress={() => setTier(tierId)}
+                                        >
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                                <View style={{
+                                                    width: 20, height: 20, borderRadius: 10,
+                                                    borderWidth: 2, borderColor: active ? theme.colors.text : 'rgba(255,255,255,0.5)',
+                                                    alignItems: 'center', justifyContent: 'center'
+                                                }}>
+                                                    {active && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.text }} />}
+                                                </View>
+                                                <View>
+                                                    <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 16, color: active ? theme.colors.text : palette.ivory }}>{product.title}</Text>
+                                                    <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 10, color: active ? palette.softGold : palette.softGold }}>{product.description}</Text>
+                                                </View>
                                             </View>
-                                            <View>
-                                                <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 16, color: active ? theme.colors.text : palette.ivory }}>{t.label}</Text>
-                                                {t.save && <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 12, color: active ? palette.softGold : palette.softGold }}>{t.save}</Text>}
+                                            <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 18, color: active ? theme.colors.text : palette.ivory }}>
+                                                {product.priceString}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })
+                            ) : (
+                                DEFAULT_TIERS.map((t) => {
+                                    const active = tier === t.id;
+                                    return (
+                                        <TouchableOpacity
+                                            key={t.id}
+                                            style={{
+                                                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                                                padding: 16, borderRadius: 16,
+                                                backgroundColor: active ? palette.ivory : 'rgba(255,255,255,0.1)',
+                                                borderWidth: 1, borderColor: active ? palette.ivory : 'rgba(255,255,255,0.2)'
+                                            }}
+                                            onPress={() => setTier(t.id as any)}
+                                        >
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                                <View style={{
+                                                    width: 20, height: 20, borderRadius: 10,
+                                                    borderWidth: 2, borderColor: active ? theme.colors.text : 'rgba(255,255,255,0.5)',
+                                                    alignItems: 'center', justifyContent: 'center'
+                                                }}>
+                                                    {active && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.text }} />}
+                                                </View>
+                                                <View>
+                                                    <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 16, color: active ? theme.colors.text : palette.ivory }}>{t.label}</Text>
+                                                    {t.save && <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 12, color: active ? palette.softGold : palette.softGold }}>{t.save}</Text>}
+                                                </View>
                                             </View>
-                                        </View>
-                                        <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 18, color: active ? theme.colors.text : palette.ivory }}>
-                                            {t.price} <Text style={{ fontSize: 14, fontFamily: theme.typography.sans, opacity: 0.7 }}>{t.sub}</Text>
-                                        </Text>
-                                    </TouchableOpacity>
-                                );
-                            })}
+                                            <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 18, color: active ? theme.colors.text : palette.ivory }}>
+                                                {t.price} <Text style={{ fontSize: 14, fontFamily: theme.typography.sans, opacity: 0.7 }}>{t.sub}</Text>
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })
+                            )}
                         </View>
 
-                        <TouchableOpacity style={[styles.subscribeButton, { backgroundColor: palette.softGold, height: 60, marginBottom: 20 }]} onPress={handleSubscribe}>
-                            {loading ? (
+                        <TouchableOpacity
+                            style={[styles.subscribeButton, { backgroundColor: palette.softGold, height: 60, marginBottom: 20 }, (offeringLoading || isPurchasing) && { opacity: 0.7 }]}
+                            onPress={handleSubscribe}
+                            disabled={offeringLoading || isPurchasing}
+                        >
+                            {isPurchasing ? (
                                 <ActivityIndicator color={palette.ivory} />
                             ) : (
                                 <Text style={[styles.subscribeButtonText, { fontSize: 18 }]}>
-                                    Subscribe {TIERS.find(t => t.id === tier)?.price}
+                                    {offering
+                                        ? `Subscribe Now`
+                                        : `Subscribe ${DEFAULT_TIERS.find(t => t.id === tier)?.price}`
+                                    }
                                 </Text>
                             )}
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={{ padding: 12, alignItems: 'center' }} onPress={finishOnboarding}>
+                        <TouchableOpacity style={{ padding: 12, alignItems: 'center' }} onPress={finishOnboarding} disabled={isPurchasing}>
                             <Text style={{ fontFamily: theme.typography.sansMedium, fontSize: 16, color: palette.ivory, textDecorationLine: 'underline' }}>Maybe Later (Continue Free)</Text>
                         </TouchableOpacity>
 
@@ -755,6 +856,7 @@ export const OnboardingScreen = () => {
             </View>
         );
     };
+
 
     return (
         <KeyboardAvoidingView

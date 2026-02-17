@@ -3,10 +3,14 @@ import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
 import { PlayfairDisplay_400Regular, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
+import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootNavigator, navigationRef } from './src/navigation/root';
+import { Platform } from 'react-native';
+import Purchases, { LOG_LEVEL } from 'react-native-purchases';
+
 
 const queryClient = new QueryClient();
 
@@ -22,6 +26,21 @@ export default function App() {
     PlayfairDisplay_700Bold,
   });
 
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
+    }
+
+    const iosApiKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE';
+    const androidApiKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE';
+
+    if (Platform.OS === 'ios') {
+      Purchases.configure({ apiKey: iosApiKey });
+    } else if (Platform.OS === 'android') {
+      Purchases.configure({ apiKey: androidApiKey });
+    }
+  }, []);
+
   const onLayoutRootView = React.useCallback(async () => {
     if (fontsLoaded) {
       await SplashScreen.hideAsync();
@@ -35,6 +54,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider onLayout={onLayoutRootView}>
+        <StatusBar style="auto" />
         <QueryClientProvider client={queryClient}>
           <NavigationContainer ref={navigationRef}>
             <RootNavigator />

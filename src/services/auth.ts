@@ -1,6 +1,7 @@
 import { env } from './env';
 import { useStore } from '../store';
 import { supabase } from './supabase';
+import { subscriptionService } from './subscription';
 
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
@@ -80,6 +81,9 @@ class AuthService {
                     // Ensure DB profile exists
                     await this.ensureUserProfile(data.user.id, data.user.email, credential.fullName?.givenName || undefined);
 
+                    // Sync with RevenueCat
+                    await subscriptionService.logIn(data.user.id);
+
                     return true;
                 }
             }
@@ -112,6 +116,9 @@ class AuthService {
                     // Ensure DB profile exists
                     await this.ensureUserProfile(data.user.id, data.user.email, userInfo.data.user.name || undefined);
 
+                    // Sync with RevenueCat
+                    await subscriptionService.logIn(data.user.id);
+
                     return true;
                 }
             }
@@ -142,6 +149,10 @@ class AuthService {
                 const { setLoggedIn, setEmail } = useStore.getState();
                 setLoggedIn(true);
                 setEmail(email);
+
+                // Sync with RevenueCat
+                await subscriptionService.logIn(data.user.id);
+
                 return { success: true };
             }
             return { success: false, error: 'User creation failed' };
@@ -242,6 +253,7 @@ class AuthService {
         const { reset } = useStore.getState();
 
         if (!env.useMockServices) {
+            await subscriptionService.logOut();
             await supabase.auth.signOut();
         }
 
