@@ -88,6 +88,8 @@ interface UserState {
     notificationsList: NotificationItem[];
     createdCircles: CreatedCircle[];
     journalEntries: JournalEntry[];
+    blockedUserIds: string[];
+    blockedCircleIds: string[];
     setOnboarded: (value: boolean) => Promise<void>;
     setSubscriptionTier: (tier: 'free' | 'compass' | 'true_north' | 'zenith') => Promise<void>;
     setUsername: (username: string) => void;
@@ -113,13 +115,17 @@ interface UserState {
     addJournalEntry: (entry: Omit<JournalEntry, 'id'>) => void;
     updateJournalEntry: (id: string, entry: Partial<JournalEntry>) => void;
     deleteJournalEntry: (id: string) => void;
+    blockUser: (userId: string) => void;
+    unblockUser: (userId: string) => void;
+    blockCircle: (circleId: string) => void;
+    unblockCircle: (circleId: string) => void;
     reset: () => void;
     logout: () => void;
 }
 
 export const useStore = create<UserState>()(
     persist(
-        (set, get) => ({
+        (set) => ({
             isOnboarded: false,
             subscriptionTier: 'free',
             username: '',
@@ -165,6 +171,8 @@ export const useStore = create<UserState>()(
                 { id: '1', date: 'Oct 24, 2023', title: 'A New Beginning', content: 'Today was the first day I felt truly aligned. The morning affirmation really spoke to me...' },
                 { id: '2', date: 'Oct 23, 2023', title: 'Strength in Silence', content: 'Finding peace in the quiet moments between meetings. Focusing on the "Strength" theme.' },
             ],
+            blockedUserIds: [],
+            blockedCircleIds: [],
             setOnboarded: async (isOnboarded: boolean) => {
                 set({ isOnboarded });
             },
@@ -195,7 +203,9 @@ export const useStore = create<UserState>()(
                         morningDevotion: true,
                         eveningGratitude: true,
                         weeklyCommunity: true,
-                    }
+                    },
+                    blockedUserIds: [],
+                    blockedCircleIds: [],
                 });
             },
             setLoggedIn: (isLoggedIn) => set({ isLoggedIn }),
@@ -269,6 +279,18 @@ export const useStore = create<UserState>()(
             })),
             deleteJournalEntry: (id) => set((state) => ({
                 journalEntries: state.journalEntries.filter(e => e.id !== id)
+            })),
+            blockUser: (userId) => set((state) => ({
+                blockedUserIds: [...state.blockedUserIds, userId]
+            })),
+            unblockUser: (userId) => set((state) => ({
+                blockedUserIds: state.blockedUserIds.filter(id => id !== userId)
+            })),
+            blockCircle: (circleId) => set((state) => ({
+                blockedCircleIds: [...state.blockedCircleIds, circleId]
+            })),
+            unblockCircle: (circleId) => set((state) => ({
+                blockedCircleIds: state.blockedCircleIds.filter(id => id !== circleId)
             })),
             logout: () => set({ isLoggedIn: false, subscriptionTier: 'free', username: '', profilePicture: null }),
         }),

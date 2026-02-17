@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ImageBackground, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { Users, Lock, ChevronRight, Heart, Search, Plus, Bell, BookOpen, Moon, Leaf, Sun, Compass } from 'lucide-react-native';
@@ -11,6 +11,9 @@ import { useStore } from '../../store';
 import { FaithAd } from '../../components/FaithAd';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import * as Location from 'expo-location';
+import * as LocalAuthentication from 'expo-local-authentication';
+import { SanctuaryLock } from '../../components/SanctuaryLock';
+import { FadeIn } from '../../components/FadeIn';
 
 const getBeliefIcon = (belief: string) => {
     switch (belief) {
@@ -26,12 +29,80 @@ const getBeliefIcon = (belief: string) => {
 export const CommunityScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<any>();
+    const isFocused = useIsFocused();
     const [searchQuery, setSearchQuery] = useState('');
     const [circles, setCircles] = useState<any[]>([]);
     const circlesRef = useRef<any[]>([]);
     const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
-    const { createdCircles, bookmarkedCircleIds, subscriptionTier, dailyGoals, beliefType } = useStore();
+    const { createdCircles, bookmarkedCircleIds, subscriptionTier, dailyGoals, beliefType, biometricsEnabled, securityPin, blockedCircleIds } = useStore();
     const isSubscribed = subscriptionTier !== 'free';
+
+    const [isLocked, setIsLocked] = useState(biometricsEnabled || !!securityPin);
+    const [bioError, setBioError] = useState(false);
+
+    useEffect(() => {
+        if (isFocused && (biometricsEnabled || securityPin)) {
+            authenticate();
+        } else {
+            setIsLocked(false);
+        }
+    }, [isFocused]);
+
+    const authenticate = async () => {
+        if (!biometricsEnabled) {
+            if (securityPin) {
+                // If only PIN, we show the lock screen still
+                setIsLocked(true);
+            } else {
+                setIsLocked(false);
+            }
+            return;
+        }
+
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+
+        if (hasHardware && isEnrolled) {
+            const result = await LocalAuthentication.authenticateAsync({
+                promptMessage: 'Unlock your sanctuaries',
+                fallbackLabel: 'Use PIN',
+            });
+
+            if (result.success) {
+                setIsLocked(false);
+                setBioError(false);
+            } else {
+                setBioError(true);
+                if (securityPin) promptPin();
+            }
+        } else if (securityPin) {
+            promptPin();
+        } else {
+            setIsLocked(false);
+        }
+    };
+
+    const promptPin = () => {
+        Alert.prompt(
+            "Enter PIN",
+            "Your communal sanctuaries are protected. Enter your 4-digit PIN to continue.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Unlock",
+                    onPress: (enteredPin?: string) => {
+                        if (enteredPin === securityPin) {
+                            setIsLocked(false);
+                            setBioError(false);
+                        } else {
+                            Alert.alert("Incorrect PIN", "Please try again.");
+                        }
+                    }
+                }
+            ],
+            "secure-text"
+        );
+    };
 
     useEffect(() => {
         const getLocation = async () => {
@@ -88,6 +159,9 @@ export const CommunityScreen = () => {
             const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 c.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (c.belief && c.belief.toLowerCase().includes(searchQuery.toLowerCase()));
+
+            // Hide blocked circles
+            if (blockedCircleIds.includes(c.id)) return false;
 
             // If searching, show all matching results regardless of belief
             if (searchQuery) return matchesSearch;
@@ -169,8 +243,24 @@ export const CommunityScreen = () => {
                 </TouchableOpacity>
             );
         }
-        return <CircleItem item={item} index={index} bookmarkedCircleIds={bookmarkedCircleIds} navigation={navigation} />;
+        return (
+            <FadeIn delay={Math.min(index * 100, 1000)} from="bottom">
+                <CircleItem item={item} index={index} bookmarkedCircleIds={bookmarkedCircleIds} navigation={navigation} />
+            </FadeIn>
+        );
     }, [bookmarkedCircleIds, navigation, isSubscribed, filteredCircles]);
+
+    if (isLocked) {
+        return (
+            <SanctuaryLock
+                onUnlock={authenticate}
+                onBack={() => navigation.goBack()}
+                error={bioError}
+                title="Sacred Circles"
+                subtitle="Your communal sanctuaries are protected by biometric security."
+            />
+        );
+    }
 
     return (
         <View style={styles.container}>

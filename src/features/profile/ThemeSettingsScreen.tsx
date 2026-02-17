@@ -6,6 +6,7 @@ import { theme, palette } from '../../theme';
 import { ChevronLeft, Check, Sparkles } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../../store';
+import { FadeIn } from '../../components/FadeIn';
 
 const ALL_THEMES = [
     { title: 'Strength', description: 'Finding inner power and resilience.' },
@@ -60,30 +61,33 @@ export const ThemeSettingsScreen = () => {
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
-                <View style={styles.introBox}>
-                    <Sparkles size={24} color={palette.softGold} />
-                    <Text style={styles.introText}>
-                        Select the themes that resonate most with your current journey. We&apos;ll tailor your daily affirmations and reflections based on these focus areas.
-                    </Text>
-                </View>
+                <FadeIn delay={100} from="bottom">
+                    <View style={styles.introBox}>
+                        <Sparkles size={24} color={palette.softGold} />
+                        <Text style={styles.introText}>
+                            Select the themes that resonate most with your current journey. We&apos;ll tailor your daily affirmations and reflections based on these focus areas.
+                        </Text>
+                    </View>
+                </FadeIn>
 
-                {ALL_THEMES.map((item) => (
-                    <TouchableOpacity
-                        key={item.title}
-                        style={[styles.themeCard, selectedThemes.includes(item.title) && styles.themeCardActive]}
-                        onPress={() => toggleTheme(item.title)}
-                        activeOpacity={0.7}
-                    >
-                        <View style={styles.themeInfo}>
-                            <Text style={[styles.themeTitle, selectedThemes.includes(item.title) && styles.themeTitleActive]}>{item.title}</Text>
-                            <Text style={styles.themeDesc}>{item.description}</Text>
-                        </View>
-                        {selectedThemes.includes(item.title) && (
-                            <View style={styles.checkContainer}>
-                                <Check size={20} color={palette.ivory} />
+                {ALL_THEMES.map((item, index) => (
+                    <FadeIn key={item.title} delay={200 + index * 100} from="bottom">
+                        <TouchableOpacity
+                            style={[styles.themeCard, selectedThemes.includes(item.title) && styles.themeCardActive]}
+                            onPress={() => toggleTheme(item.title)}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.themeInfo}>
+                                <Text style={[styles.themeTitle, selectedThemes.includes(item.title) && styles.themeTitleActive]}>{item.title}</Text>
+                                <Text style={styles.themeDesc}>{item.description}</Text>
                             </View>
-                        )}
-                    </TouchableOpacity>
+                            {selectedThemes.includes(item.title) && (
+                                <View style={styles.checkContainer}>
+                                    <Check size={20} color={palette.ivory} />
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    </FadeIn>
                 ))}
             </ScrollView>
         </View>

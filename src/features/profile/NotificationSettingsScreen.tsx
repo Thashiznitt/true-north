@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { ChevronLeft, Bell, MessageCircle, Heart, Sparkles, Clock, LucideIcon } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { FadeIn } from '../../components/FadeIn';
 
 export const NotificationSettingsScreen = () => {
     const insets = useSafeAreaInsets();
@@ -62,43 +63,57 @@ export const NotificationSettingsScreen = () => {
 
             <View style={styles.content}>
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Spiritual Alignment</Text>
-                    <SettingRow
-                        icon={Sparkles}
-                        label="Daily Guidance"
-                        description="Morning wisdom and scripture."
-                        value={settings.dailyGuidance}
-                        onToggle={() => toggleSwitch('dailyGuidance')}
-                    />
-                    <SettingRow
-                        icon={Heart}
-                        label="Received Blessings"
-                        description="When someone blesses your reflection."
-                        value={settings.blessings}
-                        onToggle={() => toggleSwitch('blessings')}
-                    />
+                    <FadeIn delay={100} from="bottom">
+                        <Text style={styles.sectionTitle}>Spiritual Alignment</Text>
+                    </FadeIn>
+                    <FadeIn delay={200} from="bottom">
+                        <SettingRow
+                            icon={Sparkles}
+                            label="Daily Guidance"
+                            description="Morning wisdom and scripture."
+                            value={settings.dailyGuidance}
+                            onToggle={() => toggleSwitch('dailyGuidance')}
+                        />
+                    </FadeIn>
+                    <FadeIn delay={300} from="bottom">
+                        <SettingRow
+                            icon={Heart}
+                            label="Received Blessings"
+                            description="When someone blesses your reflection."
+                            value={settings.blessings}
+                            onToggle={() => toggleSwitch('blessings')}
+                        />
+                    </FadeIn>
                 </View>
 
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Community</Text>
-                    <SettingRow
-                        icon={MessageCircle}
-                        label="Circle Activity"
-                        description="New reflections in your circles."
-                        value={settings.communityActivity}
-                        onToggle={() => toggleSwitch('communityActivity')}
-                    />
+                    <FadeIn delay={400} from="bottom">
+                        <Text style={styles.sectionTitle}>Community</Text>
+                    </FadeIn>
+                    <FadeIn delay={500} from="bottom">
+                        <SettingRow
+                            icon={MessageCircle}
+                            label="Circle Activity"
+                            description="New reflections in your circles."
+                            value={settings.communityActivity}
+                            onToggle={() => toggleSwitch('communityActivity')}
+                        />
+                    </FadeIn>
                 </View>
 
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Reminders</Text>
-                    <SettingRow
-                        icon={Clock}
-                        label="Reflection Reminder"
-                        description="Nudge to journal at 8:00 PM."
-                        value={settings.reminders}
-                        onToggle={() => toggleSwitch('reminders')}
-                    />
+                    <FadeIn delay={600} from="bottom">
+                        <Text style={styles.sectionTitle}>Reminders</Text>
+                    </FadeIn>
+                    <FadeIn delay={700} from="bottom">
+                        <SettingRow
+                            icon={Clock}
+                            label="Reflection Reminder"
+                            description="Nudge to journal at 8:00 PM."
+                            value={settings.reminders}
+                            onToggle={() => toggleSwitch('reminders')}
+                        />
+                    </FadeIn>
                 </View>
             </View>
         </View>

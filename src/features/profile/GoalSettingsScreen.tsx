@@ -7,6 +7,7 @@ import { ChevronLeft, Target } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../../store';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
+import { FadeIn } from '../../components/FadeIn';
 
 const renderItem = () => null;
 
@@ -33,39 +34,49 @@ export const GoalSettingsScreen = () => {
                 contentContainerStyle={styles.content}
                 ListHeaderComponent={
                     <>
-                        <View style={styles.introBox}>
-                            <Target size={24} color={palette.softGold} />
-                            <Text style={styles.introText}>
-                                Consistent tiny steps lead to massive transformation. Set your spiritual intentions and we&apos;ll help you stay on track.
-                            </Text>
-                        </View>
+                        <FadeIn delay={100} from="bottom">
+                            <View style={styles.introBox}>
+                                <Target size={24} color={palette.softGold} />
+                                <Text style={styles.introText}>
+                                    Consistent tiny steps lead to massive transformation. Set your spiritual intentions and we&apos;ll help you stay on track.
+                                </Text>
+                            </View>
+                        </FadeIn>
 
                         <View style={styles.goalSection}>
-                            <GoalItem
-                                title="Daily Reflection"
-                                desc="Read one affirmation every day"
-                                isEnabled={dailyGoals.dailyReflection}
-                                onToggle={() => toggleDailyGoal('dailyReflection')}
-                            />
-                            <GoalItem
-                                title="Morning Devotion"
-                                desc="5 minutes of stillness each morning"
-                                isEnabled={dailyGoals.morningDevotion}
-                                onToggle={() => toggleDailyGoal('morningDevotion')}
-                            />
-                            <GoalItem
-                                title="Evening Gratitude"
-                                desc="List 3 things you are grateful for"
-                                isEnabled={dailyGoals.eveningGratitude}
-                                onToggle={() => toggleDailyGoal('eveningGratitude')}
-                            />
-                            <GoalItem
-                                title="Community Connect"
-                                desc="Engage with your circles at least once a week"
-                                isEnabled={dailyGoals.weeklyCommunity}
-                                onToggle={() => toggleDailyGoal('weeklyCommunity')}
-                                isLast
-                            />
+                            <FadeIn delay={200} from="bottom">
+                                <GoalItem
+                                    title="Daily Reflection"
+                                    desc="Read one affirmation every day"
+                                    isEnabled={dailyGoals.dailyReflection}
+                                    onToggle={() => toggleDailyGoal('dailyReflection')}
+                                />
+                            </FadeIn>
+                            <FadeIn delay={300} from="bottom">
+                                <GoalItem
+                                    title="Morning Devotion"
+                                    desc="5 minutes of stillness each morning"
+                                    isEnabled={dailyGoals.morningDevotion}
+                                    onToggle={() => toggleDailyGoal('morningDevotion')}
+                                />
+                            </FadeIn>
+                            <FadeIn delay={400} from="bottom">
+                                <GoalItem
+                                    title="Evening Gratitude"
+                                    desc="List 3 things you are grateful for"
+                                    isEnabled={dailyGoals.eveningGratitude}
+                                    onToggle={() => toggleDailyGoal('eveningGratitude')}
+                                />
+                            </FadeIn>
+                            <FadeIn delay={500} from="bottom">
+                                <GoalItem
+                                    title="Community Connect"
+                                    desc="Engage with your circles at least once a week"
+                                    isEnabled={dailyGoals.weeklyCommunity}
+                                    onToggle={() => toggleDailyGoal('weeklyCommunity')}
+                                    isLast
+                                />
+                            </FadeIn>
                         </View>
                     </>
                 }

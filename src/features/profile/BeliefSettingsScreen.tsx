@@ -6,6 +6,7 @@ import { theme, palette } from '../../theme';
 import { ChevronLeft, Check, ShieldCheck } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useStore, BeliefType } from '../../store';
+import { FadeIn } from '../../components/FadeIn';
 
 const BELIEF_TYPES: { type: BeliefType; description: string }[] = [
     { type: 'Christian', description: 'Grounded in biblical wisdom and Christ-centered living.' },
@@ -38,30 +39,33 @@ export const BeliefSettingsScreen = () => {
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
-                <View style={styles.introBox}>
-                    <ShieldCheck size={24} color={palette.softGold} />
-                    <Text style={styles.introText}>
-                        Your belief system helps us provide content that aligns with your values. You can change this at any time as your journey evolves.
-                    </Text>
-                </View>
+                <FadeIn delay={100} from="bottom">
+                    <View style={styles.introBox}>
+                        <ShieldCheck size={24} color={palette.softGold} />
+                        <Text style={styles.introText}>
+                            Your belief system helps us provide content that aligns with your values. You can change this at any time as your journey evolves.
+                        </Text>
+                    </View>
+                </FadeIn>
 
-                {BELIEF_TYPES.map((item) => (
-                    <TouchableOpacity
-                        key={item.type}
-                        style={[styles.typeCard, selected === item.type && styles.typeCardActive]}
-                        onPress={() => setSelected(item.type)}
-                        activeOpacity={0.7}
-                    >
-                        <View style={styles.typeInfo}>
-                            <Text style={[styles.typeTitle, selected === item.type && styles.typeTitleActive]}>{item.type}</Text>
-                            <Text style={styles.typeDesc}>{item.description}</Text>
-                        </View>
-                        {selected === item.type && (
-                            <View style={styles.checkCircle}>
-                                <Check size={18} color={palette.ivory} />
+                {BELIEF_TYPES.map((item, index) => (
+                    <FadeIn key={item.type} delay={200 + index * 100} from="bottom">
+                        <TouchableOpacity
+                            style={[styles.typeCard, selected === item.type && styles.typeCardActive]}
+                            onPress={() => setSelected(item.type)}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.typeInfo}>
+                                <Text style={[styles.typeTitle, selected === item.type && styles.typeTitleActive]}>{item.type}</Text>
+                                <Text style={styles.typeDesc}>{item.description}</Text>
                             </View>
-                        )}
-                    </TouchableOpacity>
+                            {selected === item.type && (
+                                <View style={styles.checkCircle}>
+                                    <Check size={18} color={palette.ivory} />
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    </FadeIn>
                 ))}
             </ScrollView>
         </View>

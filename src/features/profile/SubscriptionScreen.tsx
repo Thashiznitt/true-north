@@ -1,25 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { ChevronLeft, Check, Compass as CompassIcon, Star, Zap } from 'lucide-react-native';
+import { ChevronLeft, Check, Compass as CompassIcon, Star, Zap, Heart } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { subscriptionService } from '../../services/subscription';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { PurchasesOffering } from 'react-native-purchases';
 import { env } from '../../services/env';
-import { ActivityIndicator } from 'react-native';
+import { notificationService } from '../../services/notifications';
+import { FadeIn } from '../../components/FadeIn';
 
-type Tier = 'compass' | 'true_north' | 'zenith';
+type Tier = 'free' | 'compass' | 'true_north' | 'zenith';
 
 const TIER_ICONS: Record<string, any> = {
+    free: Heart,
     compass: CompassIcon,
     true_north: Star,
     zenith: Zap,
 };
 
 const TIER_METADATA: Record<string, any> = {
+    free: {
+        benefits: ["1 Personal Daily Affirmation", "View Community Reflections", "Join up to 3 Local Circles", "Ad-supported experience"],
+    },
     compass: {
         benefits: ["Unlimited Private Reflections (Journal)", "Join up to 5 Circles", "Standard Daily Guidance"],
     },
@@ -59,14 +64,23 @@ export const SubscriptionScreen = () => {
     const handleSubscribe = async () => {
         setPurchasing(true);
         try {
+            if (selectedTier === 'free') {
+                navigation.goBack();
+                return;
+            }
+
             if (env.useMockServices) {
-                await subscriptionService.subscribe(selectedTier);
+                await subscriptionService.subscribe(selectedTier as any);
+                notificationService.scheduleDailyAffirmation(selectedTier);
+                notificationService.scheduleDailyJournaling(selectedTier);
                 navigation.goBack();
             } else if (offering) {
                 // Find the package that matches the selected tier
                 const pkg = offering.availablePackages.find(p => p.packageType.toLowerCase().includes(selectedTier)) || offering.availablePackages[0];
                 const success = await subscriptionService.purchasePackage(pkg);
                 if (success) {
+                    notificationService.scheduleDailyAffirmation(selectedTier);
+                    notificationService.scheduleDailyJournaling(selectedTier);
                     navigation.goBack();
                 }
             }
@@ -77,16 +91,111 @@ export const SubscriptionScreen = () => {
         }
     };
 
+    const renderHeader = () => (
+        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <ChevronLeft size={28} color={theme.colors.text} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Choose Your Path</Text>
+            <View style={styles.spacer} />
+        </View>
+    );
+
+    const renderTierList = () => (
+        <View style={styles.tierContainer}>
+            <FadeIn delay={100} from="bottom">
+                <TierCard
+                    name="Free"
+                    price="Free"
+                    period=""
+                    subtext="Basic Experience"
+                    benefits={TIER_METADATA.free.benefits}
+                    icon={TIER_ICONS.free}
+                    isSelected={selectedTier === 'free'}
+                    onSelect={() => setSelectedTier('free')}
+                />
+            </FadeIn>
+
+            {loading ? (
+                <ActivityIndicator color={palette.softGold} size="large" style={{ marginTop: 40 }} />
+            ) : offering ? (
+                offering.availablePackages.map((pkg: any, index: number) => {
+                    const product = pkg.product || pkg.storeProduct;
+                    const productId = product.identifier.toLowerCase();
+
+                    let tierId: Tier = 'true_north';
+                    if (productId.includes('compass')) tierId = 'compass';
+                    else if (productId.includes('zenith')) tierId = 'zenith';
+                    else if (pkg.packageType.toLowerCase().includes('annual')) tierId = 'compass';
+                    else if (pkg.packageType.toLowerCase().includes('monthly')) tierId = 'true_north';
+
+                    const meta = TIER_METADATA[tierId] || TIER_METADATA.true_north;
+
+                    return (
+                        <FadeIn key={pkg.identifier} delay={200 + index * 100} from="bottom">
+                            <TierCard
+                                name={product.title}
+                                price={product.priceString}
+                                period={pkg.packageType.toLowerCase().includes('annual') ? '/ year' : '/ month'}
+                                subtext={product.description}
+                                benefits={meta.benefits}
+                                icon={TIER_ICONS[tierId] || Star}
+                                isSelected={selectedTier === tierId}
+                                onSelect={() => setSelectedTier(tierId as Tier)}
+                                isPopular={meta.isPopular}
+                            />
+                        </FadeIn>
+                    );
+                })
+            ) : (
+                <>
+                    <FadeIn delay={200} from="bottom">
+                        <TierCard
+                            name="Compass"
+                            price="$5.99"
+                            period="/ month"
+                            subtext="Billed Annually ($69.99/yr)"
+                            benefits={TIER_METADATA.compass.benefits}
+                            icon={CompassIcon}
+                            isSelected={selectedTier === 'compass'}
+                            onSelect={() => setSelectedTier('compass')}
+                        />
+                    </FadeIn>
+
+                    <FadeIn delay={300} from="bottom">
+                        <TierCard
+                            name="True North"
+                            price="$12.99"
+                            period="/ month"
+                            subtext="Monthly Alignment"
+                            benefits={TIER_METADATA.true_north.benefits}
+                            icon={Star}
+                            isSelected={selectedTier === 'true_north'}
+                            onSelect={() => setSelectedTier('true_north')}
+                            isPopular
+                        />
+                    </FadeIn>
+
+                    <FadeIn delay={400} from="bottom">
+                        <TierCard
+                            name="Zenith"
+                            price="$19.99"
+                            period="/ month"
+                            subtext="Peak Spiritual IQ"
+                            benefits={TIER_METADATA.zenith.benefits}
+                            icon={Zap}
+                            isSelected={selectedTier === 'zenith'}
+                            onSelect={() => setSelectedTier('zenith')}
+                        />
+                    </FadeIn>
+                </>
+            )}
+        </View>
+    );
 
     return (
         <View style={styles.container}>
-            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ChevronLeft size={28} color={theme.colors.text} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Choose Your Path</Text>
-                <View style={styles.spacer} />
-            </View>
+            {renderHeader()}
 
             <TrueNorthFlashList
                 data={[]}
@@ -97,104 +206,39 @@ export const SubscriptionScreen = () => {
                 showsVerticalScrollIndicator={false}
                 ListHeaderComponent={
                     <>
-                        <View style={styles.tierContainer}>
-                            {loading ? (
-                                <ActivityIndicator color={palette.softGold} size="large" style={{ marginTop: 40 }} />
-                            ) : offering ? (
-                                offering.availablePackages.map((pkg: any) => {
-                                    const product = pkg.product || pkg.storeProduct;
-                                    const productId = product.identifier.toLowerCase();
+                        {renderTierList()}
 
-                                    let tierId: Tier = 'true_north';
-                                    if (productId.includes('compass')) tierId = 'compass';
-                                    else if (productId.includes('zenith')) tierId = 'zenith';
-                                    else if (pkg.packageType.toLowerCase().includes('annual')) tierId = 'compass';
-                                    else if (pkg.packageType.toLowerCase().includes('monthly')) tierId = 'true_north';
-
-                                    const meta = TIER_METADATA[tierId] || TIER_METADATA.true_north;
-
-                                    return (
-                                        <TierCard
-                                            key={pkg.identifier}
-                                            name={product.title}
-                                            price={product.priceString}
-                                            period={pkg.packageType.toLowerCase().includes('annual') ? '/ year' : '/ month'}
-                                            subtext={product.description}
-                                            benefits={meta.benefits}
-                                            icon={TIER_ICONS[tierId] || Star}
-                                            isSelected={selectedTier === tierId}
-                                            onSelect={() => setSelectedTier(tierId as Tier)}
-                                            isPopular={meta.isPopular}
-                                        />
-                                    );
-                                })
-                            ) : (
-                                <>
-                                    <TierCard
-                                        name="Compass"
-                                        price="$5.99"
-                                        period="/ month"
-                                        subtext="Billed Annually ($69.99/yr)"
-                                        benefits={TIER_METADATA.compass.benefits}
-                                        icon={CompassIcon}
-                                        isSelected={selectedTier === 'compass'}
-                                        onSelect={() => setSelectedTier('compass')}
-                                    />
-
-                                    <TierCard
-                                        name="True North"
-                                        price="$12.99"
-                                        period="/ month"
-                                        subtext="Monthly Alignment"
-                                        benefits={TIER_METADATA.true_north.benefits}
-                                        icon={Star}
-                                        isSelected={selectedTier === 'true_north'}
-                                        onSelect={() => setSelectedTier('true_north')}
-                                        isPopular
-                                    />
-
-                                    <TierCard
-                                        name="Zenith"
-                                        price="$19.99"
-                                        period="/ month"
-                                        subtext="Peak Spiritual IQ"
-                                        benefits={TIER_METADATA.zenith.benefits}
-                                        icon={Zap}
-                                        isSelected={selectedTier === 'zenith'}
-                                        onSelect={() => setSelectedTier('zenith')}
-                                    />
-                                </>
-                            )}
-                        </View>
-
-                        <TouchableOpacity
-                            style={[styles.ctaButton, (loading || purchasing) && { opacity: 0.7 }]}
-                            onPress={handleSubscribe}
-                            disabled={loading || purchasing}
-                        >
-                            {purchasing ? (
-                                <ActivityIndicator color={palette.ivory} />
-                            ) : (
-                                <>
-                                    <Text style={styles.ctaButtonText}>
-                                        {offering
-                                            ? `Start Journey`
-                                            : (selectedTier === 'compass' ? 'Start Annual Journey' : 'Begin Monthly Alignment')
-                                        }
-                                    </Text>
-                                    {!offering && (
-                                        <Text style={styles.ctaButtonSub}>
-                                            {selectedTier === 'compass' ? '$69.99 / year' : `${selectedTier === 'true_north' ? '$12.99' : '$19.99'} / month`}
+                        <FadeIn delay={600} from="bottom">
+                            <TouchableOpacity
+                                style={[styles.ctaButton, (loading || purchasing) && { opacity: 0.7 }]}
+                                onPress={handleSubscribe}
+                                disabled={loading || purchasing}
+                            >
+                                {purchasing ? (
+                                    <ActivityIndicator color={palette.ivory} />
+                                ) : (
+                                    <>
+                                        <Text style={styles.ctaButtonText}>
+                                            {selectedTier === 'free'
+                                                ? "Continue with Free"
+                                                : offering
+                                                    ? `Start Journey`
+                                                    : (selectedTier === 'compass' ? 'Start Annual Journey' : 'Begin Monthly Alignment')
+                                            }
                                         </Text>
-                                    )}
-                                </>
-                            )}
-                        </TouchableOpacity>
+                                        {!offering && selectedTier !== 'free' && (
+                                            <Text style={styles.ctaButtonSub}>
+                                                {selectedTier === 'compass' ? '$69.99 / year' : `${selectedTier === 'true_north' ? '$12.99' : '$19.99'} / month`}
+                                            </Text>
+                                        )}
+                                    </>
+                                )}
+                            </TouchableOpacity>
+                        </FadeIn>
 
                         <Text style={styles.footerNote}>Secured and encrypted. Cancel anytime.</Text>
                     </>
                 }
-
             />
         </View>
     );
@@ -219,19 +263,17 @@ const TierCard = ({ name, price, period, subtext, benefits, icon: Icon, isSelect
                 <Icon size={24} color={isSelected ? palette.ivory : palette.softGold} />
             </View>
             <View style={styles.flex1}>
-                <Text style={[styles.tierName, styles.tierNameSelected]}>{name}</Text>
+                <Text style={[styles.tierName, isSelected && styles.tierNameTextSelected]}>{name}</Text>
                 <Text style={styles.tierSubtext}>{subtext}</Text>
             </View>
             <View style={styles.priceContainer}>
                 <Text style={[styles.tierPrice, isSelected && styles.tierPriceSelected]}>{price}</Text>
-                <Text style={styles.tierPeriod}>{period}</Text>
+                {period && <Text style={styles.tierPeriod}>{period}</Text>}
             </View>
         </View>
 
         {isSelected && (
-            <View
-                style={styles.benefitContainer}
-            >
+            <View style={styles.benefitContainer}>
                 <View style={styles.divider} />
                 {benefits.map((benefit: string, i: number) => (
                     <View key={i} style={styles.benefitRow}>
@@ -258,6 +300,7 @@ const styles = StyleSheet.create({
     tierCard: {
         padding: theme.spacing.xl, borderRadius: theme.borderRadius.lg,
         backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border,
+        marginBottom: 8
     },
     tierCardSelected: {
         borderColor: palette.softGold, backgroundColor: '#FFFDF9',
@@ -265,7 +308,7 @@ const styles = StyleSheet.create({
     },
     popularBadge: {
         position: 'absolute', top: -10, right: 20, backgroundColor: palette.softGold,
-        paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
+        paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, zIndex: 1
     },
     popularText: { fontFamily: theme.typography.sansBold, fontSize: 10, color: palette.ivory, letterSpacing: 0.5 },
     tierHeader: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
@@ -276,7 +319,7 @@ const styles = StyleSheet.create({
     },
     tierIconSelected: { backgroundColor: palette.softGold, borderColor: palette.softGold },
     tierName: { fontFamily: theme.typography.serifBold, fontSize: 20, color: theme.colors.text },
-    tierNameSelected: { color: palette.softGold },
+    tierNameTextSelected: { color: palette.softGold },
     tierSubtext: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText },
     priceContainer: { alignItems: 'flex-end' },
     tierPrice: { fontFamily: theme.typography.serifBold, fontSize: 22, color: theme.colors.text, textAlign: 'right' },

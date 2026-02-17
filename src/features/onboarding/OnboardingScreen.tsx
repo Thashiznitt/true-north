@@ -38,6 +38,13 @@ const BELIEF_META: Record<string, { icon: React.FC<any>, desc: string }> = { // 
     Exploring: { icon: Compass, desc: "Discovering your own unique spiritual path." },
 };
 
+const TIER_BENEFITS: Record<string, string[]> = {
+    free: ["1 Personal Daily Affirmation", "View Community Reflections", "Join up to 3 Local Circles"],
+    compass: ["Unlimited Private Reflections", "Join up to 5 Circles", "Standard Daily Guidance"],
+    true_north: ["Unlimited Community Reflections", "Personalized Spiritual Guidance", "Join Unlimited Circles"],
+    zenith: ["Elite Spiritual Mentoring", "Deep Community Analysis", "Unlimited Circle Creation"],
+};
+
 const INTRO_BG = require('../../../assets/onboarding_intro_bg.png'); // eslint-disable-line
 
 const GOAL_KEYS = [
@@ -327,11 +334,9 @@ export const OnboardingScreen = () => {
                 const success = await subscriptionService.purchasePackage(pkg);
                 if (success) {
                     setLoggedIn(true);
+                    notificationService.scheduleDailyAffirmation(tier as any);
+                    notificationService.scheduleDailyJournaling(tier as any);
                     setOnboarded(true);
-                    const hasPermission = await notificationService.requestPermissions();
-                    if (hasPermission) {
-                        await notificationService.scheduleDailyAffirmation('true_north');
-                    }
                 }
                 setIsPurchasing(false);
             } else {
@@ -449,12 +454,14 @@ export const OnboardingScreen = () => {
 
     const renderStep1 = () => (
         <StepContainer>
-            {renderHeader("Core Themes", "What areas of life do you want to focus on?")}
+            <FadeIn delay={100} from="bottom">
+                {renderHeader("Core Themes", "What areas of life do you want to focus on?")}
+            </FadeIn>
             <View style={styles.grid}>
                 {THEMES.map((t, index) => {
                     const Icon = THEME_ICONS[t];
                     return (
-                        <View key={t} style={{ width: '47.5%' }}>
+                        <FadeIn key={t} delay={200 + index * 100} from="bottom" style={{ width: '47.5%' }}>
                             <TouchableOpacity
                                 style={[styles.themeCard, selectedThemes.includes(t) && styles.themeCardActive, { width: '100%' }]}
                                 onPress={() => toggleTheme(t)}
@@ -469,13 +476,15 @@ export const OnboardingScreen = () => {
                                 </View>
                                 <Text style={[styles.themeText, selectedThemes.includes(t) && styles.themeTextActive]}>{t}</Text>
                             </TouchableOpacity>
-                        </View>
+                        </FadeIn>
                     );
                 })}
             </View>
-            <TouchableOpacity style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
-                <Text style={styles.loginLinkText}>Have an account? <Text style={styles.loginLinkHighlight}>Log In</Text></Text>
-            </TouchableOpacity>
+            <FadeIn delay={800} from="bottom">
+                <TouchableOpacity style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
+                    <Text style={styles.loginLinkText}>Have an account? <Text style={styles.loginLinkHighlight}>Log In</Text></Text>
+                </TouchableOpacity>
+            </FadeIn>
         </StepContainer>
     );
 
@@ -494,27 +503,31 @@ export const OnboardingScreen = () => {
             {/* eslint-disable-next-line truenorth-performance/no-scrollview */}
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
                 <StepContainer>
-                    {renderHeader("Daily Goals", "Tell us about your current priorities (max 10 words)")}
+                    <FadeIn delay={100} from="bottom">
+                        {renderHeader("Daily Goals", "Tell us about your current priorities (max 10 words)")}
+                    </FadeIn>
                     {GOAL_KEYS.map((key, index) => (
-                        <View key={key} style={styles.inputGroup}>
-                            <Text style={styles.label}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
-                            <TextInput
-                                ref={(el) => { inputRefs.current[index] = el; }}
-                                style={styles.input}
-                                placeholder={`Your ${key} goal...`}
-                                placeholderTextColor={theme.colors.secondaryText}
-                                value={(goals as any)[key]}
-                                onChangeText={(text) => handleGoalChange(key, text)}
-                                maxLength={100}
-                                returnKeyType={index === GOAL_KEYS.length - 1 ? "done" : "next"}
-                                onSubmitEditing={() => {
-                                    if (index < GOAL_KEYS.length - 1) {
-                                        inputRefs.current[index + 1]?.focus();
-                                    }
-                                }}
-                                blurOnSubmit={false}
-                            />
-                        </View>
+                        <FadeIn key={key} delay={200 + index * 50} from="bottom">
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
+                                <TextInput
+                                    ref={(el) => { inputRefs.current[index] = el; }}
+                                    style={styles.input}
+                                    placeholder={`Your ${key} goal...`}
+                                    placeholderTextColor={theme.colors.secondaryText}
+                                    value={(goals as any)[key]}
+                                    onChangeText={(text) => handleGoalChange(key, text)}
+                                    maxLength={100}
+                                    returnKeyType={index === GOAL_KEYS.length - 1 ? "done" : "next"}
+                                    onSubmitEditing={() => {
+                                        if (index < GOAL_KEYS.length - 1) {
+                                            inputRefs.current[index + 1]?.focus();
+                                        }
+                                    }}
+                                    blurOnSubmit={false}
+                                />
+                            </View>
+                        </FadeIn>
                     ))}
                 </StepContainer>
             </ScrollView>
@@ -523,7 +536,9 @@ export const OnboardingScreen = () => {
 
     const renderStep3 = () => (
         <StepContainer>
-            {renderHeader("Spiritual Path", "This helps us personalize your affirmations and guidance.")}
+            <FadeIn delay={100} from="bottom">
+                {renderHeader("Spiritual Path", "This helps us personalize your affirmations and guidance.")}
+            </FadeIn>
             <View style={styles.beliefGrid}>
                 {BELIEFS.map((b, index) => {
                     const meta = BELIEF_META[b];
@@ -531,8 +546,10 @@ export const OnboardingScreen = () => {
                     const isActive = beliefType === b;
 
                     return (
-                        <View
+                        <FadeIn
                             key={b}
+                            delay={200 + index * 100}
+                            from="bottom"
                         >
                             <TouchableOpacity
                                 style={[styles.beliefCard, isActive && styles.beliefCardActive]}
@@ -558,7 +575,7 @@ export const OnboardingScreen = () => {
                                     </View>
                                 )}
                             </TouchableOpacity>
-                        </View>
+                        </FadeIn>
                     );
                 })}
             </View>
@@ -660,40 +677,48 @@ export const OnboardingScreen = () => {
 
     const renderStep6 = () => (
         <StepContainer>
-            {renderHeader("Choose Username", "How should we address you in True North?")}
-            <View style={styles.inputGroup}>
-                <Text style={styles.label}>Username</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Enter your username..."
-                    placeholderTextColor={theme.colors.secondaryText}
-                    value={username}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    onChangeText={setUsername}
-                />
-            </View>
+            <FadeIn delay={100} from="bottom">
+                {renderHeader("Choose Username", "How should we address you in True North?")}
+            </FadeIn>
+            <FadeIn delay={300} from="bottom">
+                <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Username</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Enter your username..."
+                        placeholderTextColor={theme.colors.secondaryText}
+                        value={username}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        onChangeText={setUsername}
+                    />
+                </View>
+            </FadeIn>
         </StepContainer>
     );
 
     const renderStep7 = () => (
         <StepContainer>
-            {renderHeader("Profile Picture", "Let the community put a face to your name (Optional)")}
-            <View style={styles.avatarPickerContainer}>
-                <TouchableOpacity style={styles.avatarCircle} onPress={pickImage}>
-                    {profileImage ? (
-                        <OptimizedImage source={{ uri: profileImage }} style={styles.avatarImage} />
-                    ) : (
-                        <View style={styles.avatarPlaceholder}>
-                            <OptimizedImage source={{ uri: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?auto=format&fit=crop&q=80&w=400' }} style={[styles.avatarImage, { opacity: 0.3 }]} />
-                            <View style={styles.plusOverlay}>
-                                <Plus size={24} color={palette.ivory} />
+            <FadeIn delay={100} from="bottom">
+                {renderHeader("Profile Picture", "Let the community put a face to your name (Optional)")}
+            </FadeIn>
+            <FadeIn delay={300} from="bottom">
+                <View style={styles.avatarPickerContainer}>
+                    <TouchableOpacity style={styles.avatarCircle} onPress={pickImage}>
+                        {profileImage ? (
+                            <OptimizedImage source={{ uri: profileImage }} style={styles.avatarImage} />
+                        ) : (
+                            <View style={styles.avatarPlaceholder}>
+                                <OptimizedImage source={{ uri: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?auto=format&fit=crop&q=80&w=400' }} style={[styles.avatarImage, { opacity: 0.3 }]} />
+                                <View style={styles.plusOverlay}>
+                                    <Plus size={24} color={palette.ivory} />
+                                </View>
                             </View>
-                        </View>
-                    )}
-                </TouchableOpacity>
-                <Text style={styles.pickerHint}>{profileImage ? 'Tap to change' : 'Tap to upload'}</Text>
-            </View>
+                        )}
+                    </TouchableOpacity>
+                    <Text style={styles.pickerHint}>{profileImage ? 'Tap to change' : 'Tap to upload'}</Text>
+                </View>
+            </FadeIn>
         </StepContainer>
     );
 
@@ -704,70 +729,80 @@ export const OnboardingScreen = () => {
             keyboardShouldPersistTaps="handled"
         >
             <StepContainer>
-                {renderHeader("Privacy & Security", "Protect your private reflections with biometrics or a PIN.")}
+                <FadeIn delay={100} from="bottom">
+                    {renderHeader("Privacy & Security", "Protect your private reflections with biometrics or a PIN.")}
+                </FadeIn>
 
-                <TouchableOpacity
-                    style={[styles.securityCard, setupBiometrics && styles.securityCardActive]}
-                    onPress={() => setSetupBiometrics(!setupBiometrics)}
-                >
-                    <View style={styles.securityIconContainer}>
-                        <Fingerprint size={28} color={setupBiometrics ? palette.ivory : theme.colors.text} />
-                    </View>
-                    <View style={styles.securityTextContainer}>
-                        <Text style={[styles.securityTitle, setupBiometrics && styles.securityTextActive]}>Enable Biometrics</Text>
-                        <Text style={[styles.securityDesc, setupBiometrics && styles.securityTextActive]}>Use FaceID or TouchID to unlock your journal.</Text>
-                    </View>
-                    {setupBiometrics && <Check size={20} color={palette.ivory} />}
-                </TouchableOpacity>
+                <FadeIn delay={300} from="bottom">
+                    <TouchableOpacity
+                        style={[styles.securityCard, setupBiometrics && styles.securityCardActive]}
+                        onPress={() => setSetupBiometrics(!setupBiometrics)}
+                    >
+                        <View style={styles.securityIconContainer}>
+                            <Fingerprint size={28} color={setupBiometrics ? palette.ivory : theme.colors.text} />
+                        </View>
+                        <View style={styles.securityTextContainer}>
+                            <Text style={[styles.securityTitle, setupBiometrics && styles.securityTextActive]}>Enable Biometrics</Text>
+                            <Text style={[styles.securityDesc, setupBiometrics && styles.securityTextActive]}>Use FaceID or TouchID to unlock your journal.</Text>
+                        </View>
+                        {setupBiometrics && <Check size={20} color={palette.ivory} />}
+                    </TouchableOpacity>
+                </FadeIn>
 
-                <View style={[styles.pinSection, { marginBottom: 60 }]}>
-                    <Text style={styles.label}>Or set a 4-digit PIN</Text>
-                    <TextInput
-                        style={styles.pinInput}
-                        placeholder="••••"
-                        placeholderTextColor={theme.colors.secondaryText}
-                        keyboardType="number-pad"
-                        maxLength={4}
-                        value={pin}
-                        onChangeText={setPin}
-                        secureTextEntry
-                    />
-                    <Text style={styles.pinHint}>Recommended if biometrics are unavailable.</Text>
-                </View>
+                <FadeIn delay={500} from="bottom">
+                    <View style={[styles.pinSection, { marginBottom: 60 }]}>
+                        <Text style={styles.label}>Or set a 4-digit PIN</Text>
+                        <TextInput
+                            style={styles.pinInput}
+                            placeholder="••••"
+                            placeholderTextColor={theme.colors.secondaryText}
+                            keyboardType="number-pad"
+                            maxLength={4}
+                            value={pin}
+                            onChangeText={setPin}
+                            secureTextEntry
+                        />
+                        <Text style={styles.pinHint}>Recommended if biometrics are unavailable.</Text>
+                    </View>
+                </FadeIn>
             </StepContainer>
         </ScrollView>
     );
 
     const renderStep9 = () => (
         <StepContainer>
-            {renderHeader("Local Communities", "Find fellow seekers in your area for deeper connection.")}
+            <FadeIn delay={100} from="bottom">
+                {renderHeader("Local Communities", "Find fellow seekers in your area for deeper connection.")}
+            </FadeIn>
 
-            <View style={styles.locationCard}>
-                <View style={styles.locationIconContainer}>
-                    <Compass size={40} color={palette.softGold} />
+            <FadeIn delay={300} from="bottom">
+                <View style={styles.locationCard}>
+                    <View style={styles.locationIconContainer}>
+                        <Compass size={40} color={palette.softGold} />
+                    </View>
+                    <Text style={styles.locationTitle}>Find Your Community</Text>
+                    <Text style={styles.locationDesc}>
+                        Granting location access helps us prioritize local groups near you. Your exact position is never shared.
+                    </Text>
+
+                    <TouchableOpacity
+                        style={styles.locationButton}
+                        onPress={async () => {
+                            const { status } = await Location.requestForegroundPermissionsAsync();
+                            if (status !== 'granted') {
+                                Alert.alert("Permission Needed", "Location access helps us find nearby communities. You can enable this later in settings.");
+                            }
+                            nextStep();
+                        }}
+                    >
+                        <Text style={styles.locationButtonText}>Enable Location Access</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.skipButton} onPress={nextStep}>
+                        <Text style={styles.skipButtonText}>Maybe Later</Text>
+                    </TouchableOpacity>
                 </View>
-                <Text style={styles.locationTitle}>Find Your Community</Text>
-                <Text style={styles.locationDesc}>
-                    Granting location access helps us prioritize local groups near you. Your exact position is never shared.
-                </Text>
-
-                <TouchableOpacity
-                    style={styles.locationButton}
-                    onPress={async () => {
-                        const { status } = await Location.requestForegroundPermissionsAsync();
-                        if (status !== 'granted') {
-                            Alert.alert("Permission Needed", "Location access helps us find nearby communities. You can enable this later in settings.");
-                        }
-                        nextStep();
-                    }}
-                >
-                    <Text style={styles.locationButtonText}>Enable Location Access</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.skipButton} onPress={nextStep}>
-                    <Text style={styles.skipButtonText}>Maybe Later</Text>
-                </TouchableOpacity>
-            </View>
+            </FadeIn>
         </StepContainer>
     );
 
@@ -885,7 +920,6 @@ export const OnboardingScreen = () => {
                             <TouchableOpacity
                                 key="free-tier"
                                 style={{
-                                    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
                                     padding: 16, borderRadius: 16,
                                     backgroundColor: tier === 'free' ? palette.ivory : 'rgba(255,255,255,0.05)',
                                     borderWidth: 1, borderColor: tier === 'free' ? palette.ivory : 'rgba(255,255,255,0.1)',
@@ -893,24 +927,35 @@ export const OnboardingScreen = () => {
                                 }}
                                 onPress={() => setTier('free')}
                             >
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                    <View style={{
-                                        width: 20, height: 20, borderRadius: 10,
-                                        borderWidth: 2, borderColor: tier === 'free' ? theme.colors.text : 'rgba(255,255,255,0.5)',
-                                        alignItems: 'center', justifyContent: 'center'
-                                    }}>
-                                        {tier === 'free' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.text }} />}
+                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: tier === 'free' ? 12 : 0 }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                        <View style={{
+                                            width: 20, height: 20, borderRadius: 10,
+                                            borderWidth: 2, borderColor: tier === 'free' ? theme.colors.text : 'rgba(255,255,255,0.5)',
+                                            alignItems: 'center', justifyContent: 'center'
+                                        }}>
+                                            {tier === 'free' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.text }} />}
+                                        </View>
+                                        <View>
+                                            <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 16, color: tier === 'free' ? theme.colors.text : palette.ivory }}>Free Plan</Text>
+                                            {!tier || tier !== 'free' && <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: palette.softGold, opacity: 0.7 }}>Daily Personal Affirmation</Text>}
+                                        </View>
                                     </View>
-                                    <View>
-                                        <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 16, color: tier === 'free' ? theme.colors.text : palette.ivory }}>Basic</Text>
-                                        <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: tier === 'free' ? theme.colors.secondaryText : palette.softGold, opacity: tier === 'free' ? 1 : 0.7 }}>
-                                            Daily Affirmation
-                                        </Text>
-                                    </View>
+                                    <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 18, color: tier === 'free' ? theme.colors.text : palette.ivory }}>
+                                        Free
+                                    </Text>
                                 </View>
-                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 18, color: tier === 'free' ? theme.colors.text : palette.ivory }}>
-                                    Free
-                                </Text>
+
+                                {tier === 'free' && (
+                                    <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.1)', paddingTop: 12, gap: 8 }}>
+                                        {TIER_BENEFITS.free.map((b, i) => (
+                                            <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                                <Check size={14} color={palette.softGold} />
+                                                <Text style={{ fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.text, opacity: 0.8 }}>{b}</Text>
+                                            </View>
+                                        ))}
+                                    </View>
+                                )}
                             </TouchableOpacity>
                         </View>
 

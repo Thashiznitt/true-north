@@ -77,4 +77,25 @@ export const notificationService = {
             } as Notifications.CalendarTriggerInput,
         });
     },
+
+    scheduleDailyJournaling: async (tier: 'free' | 'compass' | 'true_north' | 'zenith') => {
+        const isPaid = tier !== 'free';
+        const hour = isPaid ? 8 : 9;
+        const minute = isPaid ? 30 : 0;
+
+        await Notifications.scheduleNotificationAsync({
+            content: {
+                title: isPaid ? "Morning Reflection" : "Daily Growth",
+                body: isPaid
+                    ? "Time to journal. Your morning reflection awaits to keep you aligned."
+                    : "Journal your experiences today. Sharing helps us provide better personalized advice!",
+            },
+            trigger: {
+                type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+                hour,
+                minute,
+                repeats: true,
+            } as Notifications.CalendarTriggerInput,
+        });
+    },
 };

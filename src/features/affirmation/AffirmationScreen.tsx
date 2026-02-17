@@ -12,6 +12,7 @@ import {
     MessageSquare
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { FadeIn } from '../../components/FadeIn';
 import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
 import { contentAgentService } from '../../services/ContentAgentService';
@@ -154,55 +155,63 @@ export const AffirmationScreen = () => {
                         ListHeaderComponent={
                             <>
                                 <View style={styles.content}>
-                                    <View>
-                                        <Text style={styles.quoteText}>&quot;{current.text}&quot;</Text>
-                                    </View>
+                                    <FadeIn from="none" duration={1000}>
+                                        <View>
+                                            <Text style={styles.quoteText}>&quot;{current.text}&quot;</Text>
+                                        </View>
+                                    </FadeIn>
                                     <View style={{ height: 20 }} />
-                                    <View>
-                                        <Text style={styles.authorText}>{current.author}</Text>
-                                    </View>
+                                    <FadeIn delay={300} from="bottom">
+                                        <View>
+                                            <Text style={styles.authorText}>{current.author}</Text>
+                                        </View>
+                                    </FadeIn>
 
                                     {!isWallpaperMode && (
-                                        <View style={styles.actions}>
-                                            <TouchableOpacity style={styles.actionButton} onPress={copyToClipboard}>
-                                                <CopyIcon color={palette.softGold} size={24} />
-                                            </TouchableOpacity>
-                                            <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
-                                                <ShareIcon color={palette.softGold} size={24} />
-                                            </TouchableOpacity>
-                                            <TouchableOpacity style={styles.actionButton} onPress={toggleFavorite}>
-                                                <HeartIcon
-                                                    color={isFavorite ? palette.softGold : palette.ivory + '80'}
-                                                    fill={isFavorite ? palette.softGold : 'transparent'}
-                                                    size={24}
-                                                />
-                                            </TouchableOpacity>
-                                            <TouchableOpacity style={styles.actionButton} onPress={handleGetAdvice}>
-                                                <AdviceIcon color={palette.softGold} size={24} />
-                                            </TouchableOpacity>
-                                        </View>
+                                        <FadeIn delay={600} from="bottom">
+                                            <View style={styles.actions}>
+                                                <TouchableOpacity style={styles.actionButton} onPress={copyToClipboard}>
+                                                    <CopyIcon color={palette.softGold} size={24} />
+                                                </TouchableOpacity>
+                                                <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+                                                    <ShareIcon color={palette.softGold} size={24} />
+                                                </TouchableOpacity>
+                                                <TouchableOpacity style={styles.actionButton} onPress={toggleFavorite}>
+                                                    <HeartIcon
+                                                        color={isFavorite ? palette.softGold : palette.ivory + '80'}
+                                                        fill={isFavorite ? palette.softGold : 'transparent'}
+                                                        size={24}
+                                                    />
+                                                </TouchableOpacity>
+                                                <TouchableOpacity style={styles.actionButton} onPress={handleGetAdvice}>
+                                                    <AdviceIcon color={palette.softGold} size={24} />
+                                                </TouchableOpacity>
+                                            </View>
+                                        </FadeIn>
                                     )}
                                 </View>
 
                                 {!isWallpaperMode && (
-                                    <View style={styles.bottomActions}>
-                                        <TouchableOpacity
-                                            style={styles.wallpaperButton}
-                                            onPress={() => setIsWallpaperMode(true)}
-                                        >
-                                            <Text style={styles.wallpaperButtonText}>Sacred Wallpaper</Text>
-                                        </TouchableOpacity>
+                                    <FadeIn delay={900} from="bottom">
+                                        <View style={styles.bottomActions}>
+                                            <TouchableOpacity
+                                                style={styles.wallpaperButton}
+                                                onPress={() => setIsWallpaperMode(true)}
+                                            >
+                                                <Text style={styles.wallpaperButtonText}>Sacred Wallpaper</Text>
+                                            </TouchableOpacity>
 
-                                        <TouchableOpacity
-                                            style={styles.journalButton}
-                                            onPress={() => navigation.navigate('JournalDetail', {
-                                                isNew: true,
-                                                initialContent: `Reflecting on today's affirmation:\n\n"${current.text}"\n\n`
-                                            })}
-                                        >
-                                            <Text style={styles.journalButtonText}>Reflect in Journal</Text>
-                                        </TouchableOpacity>
-                                    </View>
+                                            <TouchableOpacity
+                                                style={styles.journalButton}
+                                                onPress={() => navigation.navigate('JournalDetail', {
+                                                    isNew: true,
+                                                    initialContent: `Reflecting on today's affirmation:\n\n"${current.text}"\n\n`
+                                                })}
+                                            >
+                                                <Text style={styles.journalButtonText}>Reflect in Journal</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </FadeIn>
                                 )}
 
                                 {!isWallpaperMode && (

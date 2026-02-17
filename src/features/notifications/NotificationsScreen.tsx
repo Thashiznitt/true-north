@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { Bell, LucideIcon, Heart, Sparkles, MessageCircle, ChevronLeft, X } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { FadeIn } from '../../components/FadeIn';
 
 import { useStore } from '../../store';
 import { useEffect } from 'react';
@@ -38,29 +39,35 @@ export const NotificationsScreen = () => {
         return 'just now';
     };
 
-    const renderNotification = ({ item }: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const renderNotification = ({ item, index }: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         const Icon = getIcon(item.type);
         return (
-            <View style={styles.card}>
-                <View style={styles.iconContainer}>
-                    <Icon size={20} color={theme.colors.primary} />
+            <FadeIn delay={Math.min(index * 100, 1000)} from="bottom">
+                <View style={styles.card}>
+                    <View style={styles.iconContainer}>
+                        <Icon size={20} color={theme.colors.primary} />
+                    </View>
+                    <View style={styles.content}>
+                        <Text style={styles.cardTitle}>{item.title}</Text>
+                        <Text style={styles.cardMessage}>{item.message}</Text>
+                        <Text style={styles.cardTime}>{formatTime(item.createdAt)}</Text>
+                    </View>
                 </View>
-                <View style={styles.content}>
-                    <Text style={styles.cardTitle}>{item.title}</Text>
-                    <Text style={styles.cardMessage}>{item.message}</Text>
-                    <Text style={styles.cardTime}>{formatTime(item.createdAt)}</Text>
-                </View>
-            </View>
+            </FadeIn>
         );
     };
 
     return (
         <View style={styles.container}>
             <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <X size={24} color={theme.colors.text} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Notifications</Text>
+                <FadeIn from="left">
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <X size={24} color={theme.colors.text} />
+                    </TouchableOpacity>
+                </FadeIn>
+                <FadeIn delay={100} from="top">
+                    <Text style={styles.headerTitle}>Notifications</Text>
+                </FadeIn>
                 <View style={{ width: 40 }} />
             </View>
 

@@ -6,6 +6,7 @@ import { useStore } from '../../store';
 import { authService, AuthProvider } from '../../services/auth';
 import { ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { FadeIn } from '../../components/FadeIn';
 
 export const LoginScreen = () => {
     const insets = useSafeAreaInsets();
@@ -68,13 +69,15 @@ export const LoginScreen = () => {
     return (
         <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
             <View style={styles.content}>
-                <View style={styles.header}>
-                    <View style={styles.logoContainer}>
-                        <ShieldCheck size={40} color={palette.softGold} />
+                <FadeIn delay={100} from="top">
+                    <View style={styles.header}>
+                        <View style={styles.logoContainer}>
+                            <ShieldCheck size={40} color={palette.softGold} />
+                        </View>
+                        <Text style={styles.title}>Welcome Back</Text>
+                        <Text style={styles.subtitle}>Enter your sanctuary to continue your journey of reflection.</Text>
                     </View>
-                    <Text style={styles.title}>Welcome Back</Text>
-                    <Text style={styles.subtitle}>Enter your sanctuary to continue your journey of reflection.</Text>
-                </View>
+                </FadeIn>
 
                 {loading ? (
                     <View style={styles.loadingContainer}>
@@ -82,24 +85,26 @@ export const LoginScreen = () => {
                         <Text style={styles.loadingText}>Opening Sanctuary...</Text>
                     </View>
                 ) : mode === 'options' ? (
-                    <View style={styles.optionsContainer}>
-                        <TouchableOpacity style={styles.socialButton} onPress={() => handleLogin('Apple')}>
-                            <Text style={styles.socialButtonText}>Continue with Apple</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={[styles.socialButton, styles.googleButton]} onPress={() => handleLogin('Google')}>
-                            <Text style={[styles.socialButtonText, styles.googleButtonText]}>Continue with Google</Text>
-                        </TouchableOpacity>
+                    <FadeIn delay={300} from="bottom">
+                        <View style={styles.optionsContainer}>
+                            <TouchableOpacity style={styles.socialButton} onPress={() => handleLogin('Apple')}>
+                                <Text style={styles.socialButtonText}>Continue with Apple</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.socialButton, styles.googleButton]} onPress={() => handleLogin('Google')}>
+                                <Text style={[styles.socialButtonText, styles.googleButtonText]}>Continue with Google</Text>
+                            </TouchableOpacity>
 
-                        <View style={styles.divider}>
-                            <View style={styles.dividerLine} />
-                            <Text style={styles.dividerText}>or</Text>
-                            <View style={styles.dividerLine} />
+                            <View style={styles.divider}>
+                                <View style={styles.dividerLine} />
+                                <Text style={styles.dividerText}>or</Text>
+                                <View style={styles.dividerLine} />
+                            </View>
+
+                            <TouchableOpacity style={styles.emailButton} onPress={() => setMode('email')}>
+                                <Text style={styles.emailButtonText}>Continue with Email</Text>
+                            </TouchableOpacity>
                         </View>
-
-                        <TouchableOpacity style={styles.emailButton} onPress={() => setMode('email')}>
-                            <Text style={styles.emailButtonText}>Continue with Email</Text>
-                        </TouchableOpacity>
-                    </View>
+                    </FadeIn>
                 ) : (
                     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                         <TouchableOpacity style={styles.backButton} onPress={() => setMode('options')}>
@@ -140,11 +145,13 @@ export const LoginScreen = () => {
                 )}
             </View>
 
-            <View style={styles.footer}>
-                <TouchableOpacity onPress={handleRestartOnboarding}>
-                    <Text style={styles.restartText}>Need to start over? <Text style={styles.restartLink}>Restart Onboarding</Text></Text>
-                </TouchableOpacity>
-            </View>
+            <FadeIn delay={600} from="bottom">
+                <View style={styles.footer}>
+                    <TouchableOpacity onPress={handleRestartOnboarding}>
+                        <Text style={styles.restartText}>Need to start over? <Text style={styles.restartLink}>Restart Onboarding</Text></Text>
+                    </TouchableOpacity>
+                </View>
+            </FadeIn>
         </View>
     );
 };

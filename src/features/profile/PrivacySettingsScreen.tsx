@@ -5,6 +5,7 @@ import { theme, palette } from '../../theme';
 import { ChevronLeft, Shield, Eye, Lock, UserX, Trash2, LucideIcon } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../../store';
+import { FadeIn } from '../../components/FadeIn';
 
 export const PrivacySettingsScreen = () => {
     const insets = useSafeAreaInsets();
@@ -79,41 +80,53 @@ export const PrivacySettingsScreen = () => {
 
             <View style={styles.content}>
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Visibility</Text>
-                    <SettingRow
-                        icon={Lock}
-                        label="Private Profile"
-                        description="Only approved followers can see your reflections."
-                        value={privacy.privateProfile}
-                        onToggle={() => toggleSwitch('privateProfile')}
-                    />
-                    <SettingRow
-                        icon={Eye}
-                        label="Show Online Status"
-                        description="Let others see when you are active."
-                        value={privacy.showOnlineStatus}
-                        onToggle={() => toggleSwitch('showOnlineStatus')}
-                    />
+                    <FadeIn delay={100} from="bottom">
+                        <Text style={styles.sectionTitle}>Visibility</Text>
+                    </FadeIn>
+                    <FadeIn delay={200} from="bottom">
+                        <SettingRow
+                            icon={Lock}
+                            label="Private Profile"
+                            description="Only approved followers can see your reflections."
+                            value={privacy.privateProfile}
+                            onToggle={() => toggleSwitch('privateProfile')}
+                        />
+                    </FadeIn>
+                    <FadeIn delay={300} from="bottom">
+                        <SettingRow
+                            icon={Eye}
+                            label="Show Online Status"
+                            description="Let others see when you are active."
+                            value={privacy.showOnlineStatus}
+                            onToggle={() => toggleSwitch('showOnlineStatus')}
+                        />
+                    </FadeIn>
                 </View>
 
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Safety</Text>
-                    <TouchableOpacity style={styles.actionRow}>
-                        <View style={styles.rowLeft}>
-                            <View style={[styles.iconContainer, { backgroundColor: theme.colors.surface }]}>
-                                <UserX size={20} color={theme.colors.text} />
+                    <FadeIn delay={400} from="bottom">
+                        <Text style={styles.sectionTitle}>Safety</Text>
+                    </FadeIn>
+                    <FadeIn delay={500} from="bottom">
+                        <TouchableOpacity style={styles.actionRow} onPress={() => navigation.navigate('BlockedUsers' as never)}>
+                            <View style={styles.rowLeft}>
+                                <View style={[styles.iconContainer, { backgroundColor: theme.colors.surface }]}>
+                                    <UserX size={20} color={theme.colors.text} />
+                                </View>
+                                <Text style={styles.label}>Blocked Accounts</Text>
                             </View>
-                            <Text style={styles.label}>Blocked Accounts</Text>
-                        </View>
-                        <ChevronLeft size={20} color={theme.colors.border} style={{ transform: [{ rotate: '180deg' }] }} />
-                    </TouchableOpacity>
+                            <ChevronLeft size={20} color={theme.colors.border} style={{ transform: [{ rotate: '180deg' }] }} />
+                        </TouchableOpacity>
+                    </FadeIn>
                 </View>
 
                 <View style={[styles.section, { marginTop: 40 }]}>
-                    <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
-                        <Trash2 size={20} color={'#FF4444'} />
-                        <Text style={styles.deleteText}>Delete Account</Text>
-                    </TouchableOpacity>
+                    <FadeIn delay={600} from="bottom">
+                        <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
+                            <Trash2 size={20} color={'#FF4444'} />
+                            <Text style={styles.deleteText}>Delete Account</Text>
+                        </TouchableOpacity>
+                    </FadeIn>
                 </View>
             </View>
         </View>

@@ -193,15 +193,19 @@ export const JournalScreen = () => {
             <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
                 {!isSearching ? (
                     <>
-                        <Text style={styles.headerTitle}>Journal</Text>
-                        <View style={styles.headerActions}>
-                            <TouchableOpacity style={styles.searchButton} onPress={toggleSearch}>
-                                <Search size={22} color={theme.colors.text} />
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.searchButton} onPress={() => navigation.navigate('Notifications')}>
-                                <Bell size={22} color={theme.colors.text} />
-                            </TouchableOpacity>
-                        </View>
+                        <FadeIn from="left">
+                            <Text style={styles.headerTitle}>Journal</Text>
+                        </FadeIn>
+                        <FadeIn from="right">
+                            <View style={styles.headerActions}>
+                                <TouchableOpacity style={styles.searchButton} onPress={toggleSearch}>
+                                    <Search size={22} color={theme.colors.text} />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.searchButton} onPress={() => navigation.navigate('Notifications')}>
+                                    <Bell size={22} color={theme.colors.text} />
+                                </TouchableOpacity>
+                            </View>
+                        </FadeIn>
                     </>
                 ) : (
                     <View style={styles.searchHeader}>
@@ -220,30 +224,32 @@ export const JournalScreen = () => {
             </View>
 
             {new Date().getHours() >= 18 && dailyGoals.eveningGratitude && (
-                <TouchableOpacity
-                    style={styles.gratitudeCard}
-                    onPress={() => navigation.navigate('JournalDetail', { type: 'gratitude' })}
-                >
-                    <LinearGradient
-                        colors={[palette.softGold, '#D4AF37']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.gratitudeGradient}
+                <FadeIn delay={300} from="bottom">
+                    <TouchableOpacity
+                        style={styles.gratitudeCard}
+                        onPress={() => navigation.navigate('JournalDetail', { type: 'gratitude' })}
                     >
-                        <View style={styles.gratitudeContent}>
-                            <View style={styles.gratitudeIcon}>
-                                <Heart size={24} color={palette.ivory} fill={palette.ivory} />
+                        <LinearGradient
+                            colors={[palette.softGold, '#D4AF37']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.gratitudeGradient}
+                        >
+                            <View style={styles.gratitudeContent}>
+                                <View style={styles.gratitudeIcon}>
+                                    <Heart size={24} color={palette.ivory} fill={palette.ivory} />
+                                </View>
+                                <View style={styles.gratitudeTextContainer}>
+                                    <Text style={styles.gratitudeTitle} numberOfLines={1}>Evening Gratitude</Text>
+                                    <Text style={styles.gratitudeSubtitle} numberOfLines={1}>Take a moment to give thanks.</Text>
+                                </View>
                             </View>
-                            <View style={styles.gratitudeTextContainer}>
-                                <Text style={styles.gratitudeTitle} numberOfLines={1}>Evening Gratitude</Text>
-                                <Text style={styles.gratitudeSubtitle} numberOfLines={1}>Take a moment to give thanks.</Text>
+                            <View style={styles.gratitudeButton}>
+                                <Text style={styles.gratitudeButtonText}>Begin</Text>
                             </View>
-                        </View>
-                        <View style={styles.gratitudeButton}>
-                            <Text style={styles.gratitudeButtonText}>Begin</Text>
-                        </View>
-                    </LinearGradient>
-                </TouchableOpacity>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </FadeIn>
             )}
 
             <TrueNorthFlashList

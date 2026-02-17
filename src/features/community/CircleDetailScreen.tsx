@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, ActionSheetIOS, Share } from 'react-native'; // eslint-disable-line react-native/split-platform-components
 import { Image } from 'expo-image';
-import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
-import { GhostReflection } from '../../services/ContentAgentService';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { Users, Lock, ChevronLeft, Heart, Share2, MoreVertical, Plus, Send, Clock, MapPin, Sparkles, X, Image as ImageIcon, Flag, Link } from 'lucide-react-native';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
-import { contentAgentService, LIFE_CIRCLES } from '../../services/ContentAgentService';
+import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
+import { FadeIn } from '../../components/FadeIn';
+import { contentAgentService, LIFE_CIRCLES, GhostReflection } from '../../services/ContentAgentService';
 import { useStore, BeliefType } from '../../store';
 
 const MOCK_EVENTS = [
@@ -21,7 +21,7 @@ export const CircleDetailScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const isFocused = useIsFocused();
-    const { createdCircles, bookmarkedCircleIds, toggleBookmark, deleteCreatedCircle } = useStore();
+    const { createdCircles, bookmarkedCircleIds, toggleBookmark, deleteCreatedCircle, blockedUserIds, blockUser, blockCircle } = useStore();
     const { circleId, circleName: initialName } = (route.params as any) || {}; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     // Check in both ghost circles and user-created circles
@@ -53,14 +53,17 @@ export const CircleDetailScreen = () => {
         loadReflections();
     }, [circleId, isFocused]);
 
-    const MOCK_POSTS = reflections.map(r => ({
-        id: r.id,
-        user: r.userName,
-        type: 'Reflection',
-        content: r.content,
-        blessings: r.blessings,
-        time: r.time
-    }));
+    const MOCK_POSTS = reflections
+        .filter(r => !blockedUserIds.includes(r.userId || r.user)) // Filter out blocked users
+        .map(r => ({
+            id: r.id,
+            user: r.userName || r.user,
+            userId: r.userId || r.user,
+            type: 'Reflection',
+            content: r.content,
+            blessings: r.blessings,
+            time: r.time
+        }));
 
     const [isSharing, setIsSharing] = useState(false);
     const [isAddingEvent, setIsAddingEvent] = useState(false);
@@ -145,32 +148,49 @@ export const CircleDetailScreen = () => {
         if (Platform.OS === 'ios') {
             ActionSheetIOS.showActionSheetWithOptions(
                 {
-                    options: ['Cancel', 'Report Reflection'],
-                    destructiveButtonIndex: 1,
+                    options: ['Cancel', 'Report Reflection', 'Block User'],
+                    destructiveButtonIndex: 2,
                     cancelButtonIndex: 0,
                     title: 'Community Safety',
-                    message: 'Report this reflection for AI assessment if it contains fraud, numbers, or misaligned content.'
+                    message: 'Report this reflection for AI assessment or block this user to hide their content.'
                 },
                 (buttonIndex) => {
                     if (buttonIndex === 1) {
                         Alert.alert("AI Assessment Started", "Our moderation AI is reviewing this post. It will be hidden if it violates our sacred space policies.");
+                    } else if (buttonIndex === 2) {
+                        const post = MOCK_POSTS.find(p => p.id === postId);
+                        if (post && post.userId) {
+                            blockUser(post.userId);
+                            Alert.alert("User Blocked", "You will no longer see reflections from this seeker.");
+                        }
                     }
                 }
             );
         } else {
             Alert.alert(
-                "Report Reflection",
-                "Start AI assessment for this post?",
+                "Community Safety",
+                "How would you like to proceed?",
                 [
                     { text: "Cancel", style: "cancel" },
-                    { text: "Report", onPress: () => Alert.alert("AI Assessment Started", "Our moderation AI is reviewing this post.") }
+                    { text: "Report", onPress: () => Alert.alert("AI Assessment Started", "Our moderation AI is reviewing this post.") },
+                    {
+                        text: "Block User",
+                        style: "destructive",
+                        onPress: () => {
+                            const post = MOCK_POSTS.find(p => p.id === postId);
+                            if (post && post.userId) {
+                                blockUser(post.userId);
+                                Alert.alert("User Blocked", "You will no longer see reflections from this seeker.");
+                            }
+                        }
+                    }
                 ]
             );
         }
     };
 
     const handleCircleMenu = () => {
-        const options = ['Cancel', 'Flag Sanctuary'];
+        const options = ['Cancel', 'Flag Sanctuary', 'Block Sanctuary'];
         if (isAdmin) options.push('Delete Sanctuary');
 
         if (Platform.OS === 'ios') {
@@ -184,19 +204,39 @@ export const CircleDetailScreen = () => {
                 },
                 (buttonIndex) => {
                     if (buttonIndex === 1) handleFlagCircle();
-                    if (isAdmin && buttonIndex === 2) handleDeleteCircle();
+                    if (buttonIndex === 2) handleBlockCircle();
+                    if (isAdmin && buttonIndex === 3) handleDeleteCircle();
                 }
             );
         } else {
             const buttons: any[] = [ // eslint-disable-line @typescript-eslint/no-explicit-any
                 { text: "Cancel", style: "cancel" },
-                { text: "Flag Sanctuary", onPress: handleFlagCircle }
+                { text: "Flag Sanctuary", onPress: handleFlagCircle },
+                { text: "Block Sanctuary", style: "destructive", onPress: handleBlockCircle }
             ];
             if (isAdmin) {
                 buttons.push({ text: "Delete Sanctuary", style: "destructive", onPress: handleDeleteCircle });
             }
             Alert.alert(circleName, "Sanctuary Management", buttons);
         }
+    };
+
+    const handleBlockCircle = () => {
+        Alert.alert(
+            "Block Sanctuary?",
+            "You will no longer see this sanctuary in your community list. This can be reversed in Privacy settings.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Block",
+                    style: "destructive",
+                    onPress: () => {
+                        blockCircle(circleId);
+                        navigation.goBack();
+                    }
+                }
+            ]
+        );
     };
 
     const handleFlagCircle = () => {
@@ -242,7 +282,19 @@ export const CircleDetailScreen = () => {
         </View>
     );
 
-    const renderPost = ({ item }: { item: any }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const handleBless = (postId: string) => {
+        setReflections(prev => prev.map(p => p.id === postId ? { ...p, blessings: (p.blessings || 0) + 1 } : p));
+    };
+
+    const renderPost = React.useCallback(({ item, index }: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+        return (
+            <FadeIn delay={Math.min(index * 100, 1000)} from="bottom">
+                <PostItem item={item} onBless={() => handleBless(item.id)} onReport={() => handleReport(item.id)} />
+            </FadeIn>
+        );
+    }, [blockedUserIds, handleBless]);
+
+    const PostItem = React.memo(({ item, onBless, onReport }: { item: any, onBless: () => void, onReport: () => void }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         const userName = item.userName || item.user || 'Anonymous';
         return (
             <View style={styles.postCard}>
@@ -273,7 +325,8 @@ export const CircleDetailScreen = () => {
                 </View>
             </View>
         );
-    };
+    });
+    PostItem.displayName = 'PostItem';
 
     return (
         <View style={styles.container}>
