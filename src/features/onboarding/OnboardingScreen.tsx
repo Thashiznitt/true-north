@@ -238,6 +238,7 @@ export const OnboardingScreen = () => {
                         username: username,
                         avatar_url: profileImage,
                         date_of_birth: dateOfBirth,
+                        astrology_enabled: useStore.getState().astrologyEnabled,
                         role: 'member',
                         subscription_tier: tier,
                         created_at: new Date().toISOString(),
@@ -273,6 +274,7 @@ export const OnboardingScreen = () => {
                         themes: selectedThemes,
                         is_onboarded: true,
                         date_of_birth: dateOfBirth,
+                        astrology_enabled: useStore.getState().astrologyEnabled,
                         biometrics_enabled: setupBiometrics,
                         security_pin: pin,
                         notifications_enabled: true

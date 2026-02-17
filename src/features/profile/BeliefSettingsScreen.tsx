@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useStore, BeliefType } from '../../store';
 import { FadeIn } from '../../components/FadeIn';
 import { Moon } from 'lucide-react-native';
+import { supabase } from '../../services/supabase';
 
 const BELIEF_TYPES: { type: BeliefType; description: string }[] = [
     { type: 'Christian', description: 'Grounded in biblical wisdom and Christ-centered living.' },
@@ -23,9 +24,25 @@ export const BeliefSettingsScreen = () => {
     const [selected, setSelected] = useState<BeliefType | null>(beliefType);
     const [cosmicEnabled, setCosmicEnabled] = useState(astrologyEnabled);
 
-    const handleSave = () => {
+    const handleSave = async () => {
         setBeliefType(selected);
         setAstrologyEnabled(cosmicEnabled);
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                await supabase
+                    .from('users')
+                    .update({
+                        belief_type: selected,
+                        astrology_enabled: cosmicEnabled
+                    })
+                    .eq('id', user.id);
+            }
+        } catch (error) {
+            console.error('Error syncing belief settings:', error);
+        }
+
         navigation.goBack();
     };
 
