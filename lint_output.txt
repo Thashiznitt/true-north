@@ -1,0 +1,120 @@
+
+> true-north@1.0.0 lint
+> eslint .
+
+
+/Users/rn/Github/true-north/App.tsx
+  36:36  warning  Inline style: { flex: 1 }  react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/components/Button.tsx
+  2:46  warning  'View' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/components/FaithAd.tsx
+   3:24  warning  'Sparkles' is defined but never used             @typescript-eslint/no-unused-vars
+   3:34  warning  'X' is defined but never used                    @typescript-eslint/no-unused-vars
+  45:33  warning  'onClose' is defined but never used              @typescript-eslint/no-unused-vars
+  46:11  warning  'navigation' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/components/performance/InteractivePressable.tsx
+  2:37  warning  'StyleSheet' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/components/performance/OptimizedImage.tsx
+  3:10  warning  'StyleSheet' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/features/admin/SuperAdminScreen.tsx
+    6:57  warning  'MoreVertical' is defined but never used                                               @typescript-eslint/no-unused-vars
+  171:59  warning  Inline style: { backgroundColor: "user.status === 'active' ? '#E6F4EA' : '#FCE8E6'" }  react-native/no-inline-styles
+  172:62  warning  Inline style: { color: "user.status === 'active' ? '#137333' : '#C5221F'" }            react-native/no-inline-styles
+  373:59  warning  Inline style: { color: '#E57373' }                                                     react-native/no-inline-styles
+  391:34  warning  Inline style: { alignItems: 'flex-end' }                                               react-native/no-inline-styles
+  394:57  warning  Inline style: { color: "tx.status === 'Success' ? '#137333' : '#C5221F'" }             react-native/no-inline-styles
+  419:63  warning  Inline style: { backgroundColor: "ad.status === 'Active' ? '#E6F4EA' : '#FCE8E6'" }    react-native/no-inline-styles
+  420:66  warning  Inline style: { color: "ad.status === 'Active' ? '#137333' : '#C5221F'" }              react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/features/affirmation/AffirmationScreen.tsx
+    2:83  warning  'Platform' is defined but never used                @typescript-eslint/no-unused-vars
+   47:11  warning  'insets' is assigned a value but never used         @typescript-eslint/no-unused-vars
+   58:12  warning  'loadingAdvice' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  112:18  warning  'error' is defined but never used                   @typescript-eslint/no-unused-vars
+  132:18  warning  'error' is defined but never used                   @typescript-eslint/no-unused-vars
+  141:90  warning  Inline style: { flex: 1 }                           react-native/no-inline-styles
+  164:50  warning  Inline style: { height: 20 }                        react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/features/auth/LoginScreen.tsx
+  11:13  warning  'setLoggedIn' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  34:18  warning  'error' is defined but never used                 @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/features/community/CircleDetailScreen.tsx
+    5:10   warning  'GhostReflection' is defined but never used                   @typescript-eslint/no-unused-vars
+    8:10   warning  'Users' is defined but never used                             @typescript-eslint/no-unused-vars
+    8:17   warning  'Lock' is defined but never used                              @typescript-eslint/no-unused-vars
+    8:71   warning  'Send' is defined but never used                              @typescript-eslint/no-unused-vars
+    8:77   warning  'Clock' is defined but never used                             @typescript-eslint/no-unused-vars
+    8:84   warning  'MapPin' is defined but never used                            @typescript-eslint/no-unused-vars
+    8:92   warning  'Sparkles' is defined but never used                          @typescript-eslint/no-unused-vars
+    8:125  warning  'Flag' is defined but never used                              @typescript-eslint/no-unused-vars
+   25:35   warning  'initialName' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  144:27   warning  'postId' is defined but never used                            @typescript-eslint/no-unused-vars
+  374:67   warning  Inline style: { opacity: 'newPostContent.trim() ? 1 : 0.5' }  react-native/no-inline-styles
+  400:56   warning  Inline style: { height: 'auto' }                              react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/features/community/CommunityScreen.tsx
+    9:31  warning  'GhostCircle' is defined but never used  @typescript-eslint/no-unused-vars
+   14:20  warning  'MotiText' is defined but never used     @typescript-eslint/no-unused-vars
+  155:77  warning  Inline style: { marginBottom: 8 }        react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/features/community/CreateCircleScreen.tsx
+    7:10  warning  'ChevronLeft' is defined but never used  @typescript-eslint/no-unused-vars
+   58:26  warning  Inline style: { width: 40 }              react-native/no-inline-styles
+   75:30  warning  Inline style: { flex: 1 }                react-native/no-inline-styles
+   85:30  warning  Inline style: { flex: 1 }                react-native/no-inline-styles
+  176:61  warning  Inline style: { opacity: 0.5 }           react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/features/journal/JournalScreen.tsx
+    6:33  warning  'Calendar' is defined but never used                  @typescript-eslint/no-unused-vars
+    6:53  warning  'Fingerprint' is defined but never used               @typescript-eslint/no-unused-vars
+    6:74  warning  'LucideLock' is defined but never used                @typescript-eslint/no-unused-vars
+    6:86  warning  'Heart' is defined but never used                     @typescript-eslint/no-unused-vars
+   21:10  warning  'LinearGradient' is defined but never used            @typescript-eslint/no-unused-vars
+   22:10  warning  'ImageBackground' is defined but never used           @typescript-eslint/no-unused-vars
+   25:7   warning  'JOURNAL_BG' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  117:11  warning  'handleSubscribe' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  121:11  warning  'getBeliefTrait' is assigned a value but never used   @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/features/notifications/NotificationsScreen.tsx
+   1:52  warning  'StatusBar' is defined but never used    @typescript-eslint/no-unused-vars
+   5:16  warning  'LucideIcon' is defined but never used   @typescript-eslint/no-unused-vars
+   5:60  warning  'ChevronLeft' is defined but never used  @typescript-eslint/no-unused-vars
+  64:30  warning  Inline style: { width: 40 }              react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/features/onboarding/OnboardingScreen.tsx
+  114:18   warning  'error' is defined but never used                                                           @typescript-eslint/no-unused-vars
+  165:69   warning  Inline style: { marginBottom: 24 }                                                          react-native/no-inline-styles
+  193:33   warning  'index' is defined but never used                                                           @typescript-eslint/no-unused-vars
+  196:46   warning  Inline style: { width: '47.5%' }                                                            react-native/no-inline-styles
+  198:113  warning  Inline style: { width: '100%' }                                                             react-native/no-inline-styles
+  234:85   warning  Inline style: { paddingBottom: 40 }                                                         react-native/no-inline-styles
+  237:51   warning  'index' is defined but never used                                                           @typescript-eslint/no-unused-vars
+  316:30   warning  Inline style: { marginTop: 40 }                                                             react-native/no-inline-styles
+  318:52   warning  Inline style: { opacity: 0.8 }                                                              react-native/no-inline-styles
+  321:48   warning  Inline style: { marginTop: 40 }                                                             react-native/no-inline-styles
+  323:89   warning  Inline style: { marginTop: 40 }                                                             react-native/no-inline-styles
+  333:97   warning  Inline style: {
+  backgroundColor: 'transparent',
+  borderColor: 'rgba(255,255,255,0.3)'
+}  react-native/no-inline-styles
+  341:67   warning  Inline style: { backgroundColor: 'rgba(255,255,255,0.2)' }                                  react-native/no-inline-styles
+  342:67   warning  Inline style: { opacity: 0.5 }                                                              react-native/no-inline-styles
+  343:67   warning  Inline style: { backgroundColor: 'rgba(255,255,255,0.2)' }                                  react-native/no-inline-styles
+  345:75   warning  Inline style: { borderColor: 'rgba(255,255,255,0.3)' }                                      react-native/no-inline-styles
+  404:186  warning  Inline style: { opacity: 0.3 }                                                              react-native/no-inline-styles
+  418:36   warning  Inline style: { paddingBottom: 150 }                                                        react-native/no-inline-styles
+  439:50   warning  Inline style: { marginBottom: 60 }                                                          react-native/no-inline-styles
+  493:114  warning  Inline style: { paddingBottom: 60 }                                                         react-native/no-inline-styles
+  536:62   warning  Inline style: { opacity: 0.7 }                                                              react-native/no-inline-styles
+  539:58   warning  Inline style: { opacity: 0.5 }                                                              react-native/no-inline-styles
+  581:53   warning  Inline style: { opacity: 0.5 }                                                              react-native/no-inline-styles
+  582:56   warning  Inline style: { opacity: 0.5 }                                                              react-native/no-inline-styles
+
+✖ 82 problems (0 errors, 82 warnings)
+

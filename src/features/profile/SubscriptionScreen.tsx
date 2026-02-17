@@ -7,7 +7,6 @@ import { ChevronLeft, Check, Compass as CompassIcon, Star, Zap } from 'lucide-re
 import { useNavigation } from '@react-navigation/native';
 import { subscriptionService } from '../../services/subscription';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
-import { MotiView } from 'moti';
 
 type Tier = 'compass' | 'true_north' | 'zenith';
 
@@ -129,10 +128,8 @@ const TierCard = ({ name, price, period, subtext, benefits, icon: Icon, isSelect
         </View>
 
         {isSelected && (
-            <MotiView
-                from={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                style={styles.benefitContainer as any}
+            <View
+                style={styles.benefitContainer}
             >
                 <View style={styles.divider} />
                 {benefits.map((benefit: string, i: number) => (
@@ -141,7 +138,7 @@ const TierCard = ({ name, price, period, subtext, benefits, icon: Icon, isSelect
                         <Text style={styles.benefitText}>{benefit}</Text>
                     </View>
                 ))}
-            </MotiView>
+            </View>
         )}
     </TouchableOpacity>
 );

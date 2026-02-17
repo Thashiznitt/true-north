@@ -11,7 +11,6 @@ import { useStore } from '../../store';
 import { FaithAd } from '../../components/FaithAd';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import * as Location from 'expo-location';
-import { MotiView, MotiText } from 'moti';
 
 const getBeliefIcon = (belief: string) => {
     switch (belief) {
@@ -176,10 +175,7 @@ export const CommunityScreen = () => {
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 ListHeaderComponent={
-                    <MotiView
-                        from={{ opacity: 0, translateY: -20 }}
-                        animate={{ opacity: 1, translateY: 0 }}
-                        transition={{ type: 'timing', duration: 800 }}
+                    <View
                         style={[styles.header, { paddingTop: insets.top + 20 }]}
                     >
                         <View style={styles.titleRow}>
@@ -189,13 +185,9 @@ export const CommunityScreen = () => {
                             </TouchableOpacity>
                         </View>
                         {/* eslint-disable-next-line react-native/no-raw-text */}
-                        <MotiView
-                            from={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 300 }}
-                        >
+                        <View>
                             <Text style={styles.subtitle}>Find your sacred sanctuary among fellow seekers.</Text>
-                        </MotiView>
+                        </View>
 
                         <View style={{ marginBottom: theme.spacing.lg }}>
                             <FaithAd type="community" />
@@ -223,7 +215,7 @@ export const CommunityScreen = () => {
                                 </View>
                             </View>
                         )}
-                    </MotiView>
+                    </View>
                 }
             />
 
@@ -378,10 +370,7 @@ const CircleItem = React.memo(({ item, index, bookmarkedCircleIds, navigation }:
     const delay = index * 100;
 
     return (
-        <MotiView
-            from={{ opacity: 0, scale: 0.9, translateY: 10 }}
-            animate={{ opacity: 1, scale: 1, translateY: 0 }}
-            transition={{ type: 'timing', delay }}
+        <View
             style={styles.cardContainer}
         >
             <TouchableOpacity
@@ -420,7 +409,7 @@ const CircleItem = React.memo(({ item, index, bookmarkedCircleIds, navigation }:
                 </View>
                 <ChevronRight size={18} color={theme.colors.border} style={{ marginLeft: theme.spacing.sm }} />
             </TouchableOpacity>
-        </MotiView>
+        </View>
     );
 });
 CircleItem.displayName = 'CircleItem';

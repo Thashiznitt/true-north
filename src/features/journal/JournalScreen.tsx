@@ -9,7 +9,6 @@ import { FaithAd } from '../../components/FaithAd';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { SanctuaryLock } from '../../components/SanctuaryLock';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
-import { MotiView } from 'moti';
 
 interface JournalEntry {
     id: string;
@@ -128,10 +127,7 @@ export const JournalScreen = () => {
         const delay = index * 100;
 
         return (
-            <MotiView
-                from={{ opacity: 0, scale: 0.9, translateY: 10 }}
-                animate={{ opacity: 1, scale: 1, translateY: 0 }}
-                transition={{ type: 'timing', delay }}
+            <View
                 style={styles.entryCardContainer}
             >
                 <TouchableOpacity
@@ -146,7 +142,7 @@ export const JournalScreen = () => {
                     <Text style={styles.entryTitle}>{item.title}</Text>
                     <Text style={styles.entryPreview} numberOfLines={2}>{item.content}</Text>
                 </TouchableOpacity>
-            </MotiView>
+            </View>
         );
     };
 
@@ -165,10 +161,7 @@ export const JournalScreen = () => {
 
     return (
         <View style={styles.container}>
-            <MotiView
-                from={{ opacity: 0, translateY: -20 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{ type: 'timing', duration: 800 }}
+            <View
                 style={[styles.header, { paddingTop: insets.top + 20 }]}
             >
                 {!isSearching ? (
@@ -197,7 +190,7 @@ export const JournalScreen = () => {
                         </TouchableOpacity>
                     </View>
                 )}
-            </MotiView>
+            </View>
 
             <TrueNorthFlashList
                 data={filteredEntries}

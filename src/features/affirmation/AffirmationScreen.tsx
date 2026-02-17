@@ -16,7 +16,6 @@ import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
 import { contentAgentService } from '../../services/ContentAgentService';
 import { FaithAd } from '../../components/FaithAd';
-import { View as MotiView } from 'moti';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 
 // Define aliases for icons to avoid name conflicts with common words
@@ -155,19 +154,13 @@ export const AffirmationScreen = () => {
                         ListHeaderComponent={
                             <>
                                 <View style={styles.content}>
-                                    <MotiView
-                                        from={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                    >
+                                    <View>
                                         <Text style={styles.quoteText}>&quot;{current.text}&quot;</Text>
-                                    </MotiView>
+                                    </View>
                                     <View style={{ height: 20 }} />
-                                    <MotiView
-                                        from={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                    >
+                                    <View>
                                         <Text style={styles.authorText}>{current.author}</Text>
-                                    </MotiView>
+                                    </View>
 
                                     {!isWallpaperMode && (
                                         <View style={styles.actions}>

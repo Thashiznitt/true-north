@@ -11,7 +11,6 @@ import { useStore } from '../../store';
 import { theme, palette } from '../../theme';
 import { Check, ArrowRight, ChevronLeft, Plus, Shield, Heart, Sparkles, Compass, Fingerprint, Star, Moon } from 'lucide-react-native';
 import { subscriptionService } from '../../services/subscription';
-import { MotiView } from 'moti';
 import * as Location from 'expo-location';
 
 
@@ -262,26 +261,19 @@ export const OnboardingScreen = () => {
                     const isActive = beliefType === b;
 
                     return (
-                        <MotiView
+                        <View
                             key={b}
-                            from={{ opacity: 0, translateY: 20 }}
-                            animate={{ opacity: 1, translateY: 0 }}
-                            transition={{ type: 'timing', duration: 600, delay: index * 150 }}
                         >
                             <TouchableOpacity
                                 style={[styles.beliefCard, isActive && styles.beliefCardActive]}
                                 onPress={() => setBeliefType(b)}
                                 activeOpacity={0.7}
                             >
-                                <MotiView
-                                    animate={{
-                                        scale: isActive ? 1.1 : 1,
-                                        rotate: isActive ? '5deg' : '0deg'
-                                    }}
+                                <View
                                     style={[styles.beliefIconCircle, isActive && styles.beliefIconCircleActive]}
                                 >
                                     <Icon size={32} color={isActive ? palette.ivory : palette.softGold} />
-                                </MotiView>
+                                </View>
 
                                 <View style={styles.beliefContent}>
                                     <Text style={[styles.beliefText, isActive && styles.beliefTextActive]}>{b}</Text>
@@ -289,16 +281,14 @@ export const OnboardingScreen = () => {
                                 </View>
 
                                 {isActive && (
-                                    <MotiView
-                                        from={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
+                                    <View
                                         style={styles.beliefCheck}
                                     >
                                         <Check size={16} color={palette.softGold} />
-                                    </MotiView>
+                                    </View>
                                 )}
                             </TouchableOpacity>
-                        </MotiView>
+                        </View>
                     );
                 })}
             </View>
