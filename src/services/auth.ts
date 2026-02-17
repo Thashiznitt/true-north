@@ -11,8 +11,8 @@ class AuthService {
     constructor() {
         // Initialize Google Sign-In
         GoogleSignin.configure({
-            webClientId: '862052704275-hoap4ue6hbvhuo7c4co9bjbimdmp2adv.apps.googleusercontent.com',
-            iosClientId: '862052704275-64h0rdf93c0futbap8h4r70klf0ql233.apps.googleusercontent.com',
+            webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+            iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
         });
     }
 
