@@ -232,8 +232,18 @@ type SubscriptionTier = 'free' | 'compass' | 'true_north' | 'zenith';
 
 import { UserGoals } from '../store';
 
-const constructSystemPrompt = (belief: BeliefType, context: string, tier: SubscriptionTier = 'free', username?: string, userGoals?: UserGoals) => {
+const constructSystemPrompt = (belief: BeliefType, context: string, tier: SubscriptionTier = 'free', username?: string, userGoals?: UserGoals, dateOfBirth?: string | null) => {
     let dna = `You are the True North Spiritual Guide. Your voice is a sanctuary of ${SPIRITUAL_BRAIN_IDENTITY.vocabulary.slice(0, 4).join(', ').toLowerCase()}. Your tone is ${SPIRITUAL_BRAIN_IDENTITY.tone}. You are wise and compassionate.`;
+
+    // Birthday Logic
+    let birthdayMessage = '';
+    if (dateOfBirth) {
+        const today = new Date();
+        const dob = new Date(dateOfBirth);
+        if (today.getMonth() === dob.getMonth() && today.getDate() === dob.getDate()) {
+            birthdayMessage = `\n\nTODAY IS THE SEEKER'S BIRTHDAY! Celebrate their existence. Start your response with a deeply heartwarming, affirming, and inspiring birthday blessing that aligns with their ${belief} path. Make it feel personal and sacred.`;
+        }
+    }
 
     if (tier === 'zenith') {
         dna += " You are operating at your peak spiritual intelligence. Your insights should be exceptionally deep, multi-layered, and profoundly transformative.";
@@ -275,7 +285,7 @@ The seeker follows a ${belief} path. ${beliefNuance[belief] || beliefNuance.Open
 ${username ? `The seeker's name is ${username}.` : ''}${goalContext}
 
 TASK CONTEXT:
-${context}
+${context}${birthdayMessage}
 
 Always call the user a 'Seeker' and this platform a 'Sanctuary'. Be concise, vulnerable, and deeply supportive.`;
 };
@@ -292,7 +302,7 @@ export const contentAgentService = {
         const theme = customTheme || circle?.theme || 'Wisdom';
         const names = GHOST_USERS[belief as BeliefType] || GHOST_USERS.Open;
         const user = names[Math.floor(Math.random() * names.length)];
-        const tier = useStore.getState().subscriptionTier;
+        const { subscriptionTier: tier, dateOfBirth } = useStore.getState();
 
         const provider = await AIService.getProvider();
 
@@ -305,7 +315,7 @@ export const contentAgentService = {
             content = templates[Math.floor(Math.random() * templates.length)];
         } else {
             try {
-                const systemPrompt = constructSystemPrompt(belief, `You are a member of a ${belief} circle focused on ${theme}. Write a short, personal reflection (max 2 sentences) to share. Be authentic and vulnerable.`, tier);
+                const systemPrompt = constructSystemPrompt(belief, `You are a member of a ${belief} circle focused on ${theme}. Write a short, personal reflection (max 2 sentences) to share. Be authentic and vulnerable.`, tier, undefined, undefined, dateOfBirth);
                 const userPrompt = `Write a sanctuary reflection about ${theme}.`;
                 content = await AIService.generateText(systemPrompt, userPrompt);
             } catch (error) {
@@ -344,7 +354,7 @@ export const contentAgentService = {
     getDailyAdvice: async (username: string, belief: BeliefType, themes: string[], journalInput?: string): Promise<string> => {
         const theme = themes[0] || 'Wisdom';
         const provider = await AIService.getProvider();
-        const tier = useStore.getState().subscriptionTier;
+        const { subscriptionTier: tier, dateOfBirth } = useStore.getState();
 
         if (provider === 'LocalMock') {
             const adviceTemplates: Record<BeliefType, string[]> = {
@@ -392,7 +402,7 @@ export const contentAgentService = {
         } else {
             try {
                 const userGoals = useStore.getState().userGoals;
-                const systemPrompt = constructSystemPrompt(belief, `Provide personalized, compassionate advice for a seeker focusing on ${theme}.`, tier, username, userGoals);
+                const systemPrompt = constructSystemPrompt(belief, `Provide personalized, compassionate advice for a seeker focusing on ${theme}.`, tier, username, userGoals, dateOfBirth);
                 let userPrompt = `Seeker Name: ${username || 'Friend'}. Focus: ${theme}.`;
                 if (journalInput) {
                     userPrompt += ` Recent insights: "${journalInput}".`;
@@ -408,7 +418,7 @@ export const contentAgentService = {
     getDailyPrayerOrQuote: async (username: string, belief: BeliefType): Promise<{ content: string, title: string, buttonLabel: string }> => {
         const isReligious = belief === 'Christian' || belief === 'Muslim';
         const provider = await AIService.getProvider();
-        const tier = useStore.getState().subscriptionTier;
+        const { subscriptionTier: tier, dateOfBirth } = useStore.getState();
 
         if (provider === 'LocalMock') {
             const name = username || 'friend';
@@ -449,7 +459,7 @@ export const contentAgentService = {
             try {
                 const userGoals = useStore.getState().userGoals;
                 const type = isReligious ? (belief === 'Christian' ? 'Prayer' : 'Dua') : 'Quote/Wisdom';
-                const systemPrompt = constructSystemPrompt(belief, `Write a short, powerful ${type} for the seeker. Ensure it is deeply resonant with their path and current life goals.`, tier, username, userGoals);
+                const systemPrompt = constructSystemPrompt(belief, `Write a short, powerful ${type} for the seeker. Ensure it is deeply resonant with their path and current life goals.`, tier, username, userGoals, dateOfBirth);
                 const userPrompt = `Seeker: ${username}. Belief Path: ${belief}. Task: Generate a daily ${type}.`;
                 const content = await AIService.generateText(systemPrompt, userPrompt);
 
@@ -466,7 +476,7 @@ export const contentAgentService = {
 
     getSpiritualAnalysis: async (content: string, belief: BeliefType): Promise<{ title: string, message: string, action: string }> => {
         const provider = await AIService.getProvider();
-        const tier = useStore.getState().subscriptionTier;
+        const { subscriptionTier: tier, dateOfBirth } = useStore.getState();
 
         if (provider === 'LocalMock') {
             const text = content.toLowerCase();
@@ -544,7 +554,7 @@ export const contentAgentService = {
             try {
                 const userGoals = useStore.getState().userGoals;
                 const username = useStore.getState().username;
-                const systemPrompt = constructSystemPrompt(belief, `Analyze the seeker's recent journey. Provide a compassionate insight and a simple action step. Output strictly in JSON with keys: title, message, action.`, tier, username, userGoals);
+                const systemPrompt = constructSystemPrompt(belief, `Analyze the seeker's recent journey. Provide a compassionate insight and a simple action step. Output strictly in JSON with keys: title, message, action.`, tier, username, userGoals, dateOfBirth);
                 const userPrompt = `Seeker Journey: "${content}"`;
                 const jsonStr = await AIService.generateText(systemPrompt, userPrompt);
 
@@ -569,7 +579,7 @@ export const contentAgentService = {
     getDailyAffirmation: async (belief: BeliefType, themes: string[]): Promise<{ text: string, verse?: string }> => {
         const theme = themes[0] || 'Wisdom';
         const provider = await AIService.getProvider();
-        const tier = useStore.getState().subscriptionTier;
+        const { subscriptionTier: tier, dateOfBirth } = useStore.getState();
 
         if (provider === 'LocalMock') {
             const affirmations: Record<BeliefType, Array<{ text: string, verse?: string }>> = {
@@ -613,7 +623,7 @@ export const contentAgentService = {
             try {
                 const userGoals = useStore.getState().userGoals;
                 const username = useStore.getState().username;
-                const systemPrompt = constructSystemPrompt(belief, `Generate a short, powerful, and poetic daily affirmation for a seeker. Ensure it is resonant with their path (${belief}) and profoundly targets their listed life goals. Focus: ${theme}. Return JSON with "text" and "verse" (optional).`, tier, username, userGoals);
+                const systemPrompt = constructSystemPrompt(belief, `Generate a short, powerful, and poetic daily affirmation for a seeker. Ensure it is resonant with their path (${belief}) and profoundly targets their listed life goals. Focus: ${theme}. Return JSON with "text" and "verse" (optional).`, tier, username, userGoals, dateOfBirth);
                 const userPrompt = `Generate a daily sanctuary affirmation for a ${belief} seeker focusing on ${theme}.`;
                 const jsonStr = await AIService.generateText(systemPrompt, userPrompt);
                 try {

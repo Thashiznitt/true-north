@@ -68,6 +68,7 @@ export const OnboardingScreen = () => {
     const setBiometricsEnabled = useStore(state => state.setBiometricsEnabled);
     const setSecurityPin = useStore(state => state.setSecurityPin);
     const setSubscriptionTier = useStore(state => state.setSubscriptionTier);
+    const setDateOfBirthStore = useStore(state => state.setDateOfBirth);
     const setUserGoals = useStore(state => state.setUserGoals);
 
     const navigation = useNavigation<any>(); // eslint-disable-line
@@ -82,6 +83,7 @@ export const OnboardingScreen = () => {
     const [password, setPassword] = useState('');
     const [authMode, setAuthMode] = useState<'social' | 'email'>('social');
     const [pin, setPin] = useState('');
+    const [dateOfBirth, setDateOfBirth] = useState('');
     const [tier, setTier] = useState<string>('compass');
     const [goals, setGoals] = useState({
         spirituality: '',
@@ -168,6 +170,10 @@ export const OnboardingScreen = () => {
                 Alert.alert("Name Required", "Please let us know what to call you.");
                 return;
             }
+            if (!dateOfBirth.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) {
+                Alert.alert("DOB Required", "Please enter your date of birth in YYYY-MM-DD format so we can celebrate your journey.");
+                return;
+            }
             setStep(8);
         } else if (step === 8) {
             if (setupBiometrics && !pin) {
@@ -209,6 +215,7 @@ export const OnboardingScreen = () => {
             setStoreUsername(username);
             setProfilePicture(profileImage);
             if (email) useStore.getState().setEmail(email);
+            setDateOfBirthStore(dateOfBirth);
             setUserGoals(goals);
             setPreferences(beliefType as any, selectedThemes, { // eslint-disable-line
                 dailyReflection: true,
@@ -230,6 +237,7 @@ export const OnboardingScreen = () => {
                         email: email,
                         username: username,
                         avatar_url: profileImage,
+                        date_of_birth: dateOfBirth,
                         role: 'member',
                         subscription_tier: tier,
                         created_at: new Date().toISOString(),
@@ -264,6 +272,7 @@ export const OnboardingScreen = () => {
                         belief_type: beliefType,
                         themes: selectedThemes,
                         is_onboarded: true,
+                        date_of_birth: dateOfBirth,
                         biometrics_enabled: setupBiometrics,
                         security_pin: pin,
                         notifications_enabled: true
@@ -692,6 +701,20 @@ export const OnboardingScreen = () => {
                         autoCorrect={false}
                         onChangeText={setUsername}
                     />
+                </View>
+                <View style={[styles.inputGroup, { marginTop: 24 }]}>
+                    <Text style={styles.label}>Date of Birth</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="YYYY-MM-DD"
+                        placeholderTextColor={theme.colors.secondaryText}
+                        value={dateOfBirth}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        onChangeText={setDateOfBirth}
+                        keyboardType="numeric"
+                    />
+                    <Text style={[styles.pickerHint, { marginTop: 8, textAlign: 'left' }]}>Used for birthday blessings.</Text>
                 </View>
             </FadeIn>
         </StepContainer>
