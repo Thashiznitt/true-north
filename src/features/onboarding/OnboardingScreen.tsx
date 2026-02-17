@@ -2,6 +2,7 @@
 /* eslint-disable truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, ImageBackground } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { OptimizedImage } from '../../components/performance/OptimizedImage';
 import { useNavigation } from '@react-navigation/native';
@@ -72,7 +73,11 @@ export const OnboardingScreen = () => {
     const setUserGoals = useStore(state => state.setUserGoals);
 
     const navigation = useNavigation<any>(); // eslint-disable-line
-    const [step, setStep] = useState(0);
+    const storeStep = useStore(state => state.onboardingStep);
+    const setOnboardingStep = useStore(state => state.setOnboardingStep);
+
+    const [step, setStep] = useState(storeStep || 0);
+    const [showDatePicker, setShowDatePicker] = useState(false);
     const [loading, setLoading] = useState(false);
     const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
     const [beliefType, setBeliefType] = useState<string | null>(null);
@@ -112,6 +117,10 @@ export const OnboardingScreen = () => {
             fetchOfferings();
         }
     }, []);
+
+    React.useEffect(() => {
+        setOnboardingStep(step);
+    }, [step]);
 
 
     const inputRefs = React.useRef<Array<TextInput | null>>([]);
@@ -706,16 +715,32 @@ export const OnboardingScreen = () => {
                 </View>
                 <View style={[styles.inputGroup, { marginTop: 24 }]}>
                     <Text style={styles.label}>Date of Birth</Text>
-                    <TextInput
+                    <TouchableOpacity
                         style={styles.input}
-                        placeholder="YYYY-MM-DD"
-                        placeholderTextColor={theme.colors.secondaryText}
-                        value={dateOfBirth}
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        onChangeText={setDateOfBirth}
-                        keyboardType="numeric"
-                    />
+                        onPress={() => setShowDatePicker(true)}
+                    >
+                        <Text style={{
+                            color: dateOfBirth ? theme.colors.text : theme.colors.secondaryText,
+                            fontFamily: theme.typography.sans
+                        }}>
+                            {dateOfBirth || "Select your birthday..."}
+                        </Text>
+                    </TouchableOpacity>
+                    {showDatePicker && (
+                        <DateTimePicker
+                            mode="date"
+                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                            value={dateOfBirth ? new Date(dateOfBirth) : new Date(2000, 0, 1)}
+                            maximumDate={new Date()}
+                            onChange={(event, selectedDate) => {
+                                setShowDatePicker(false);
+                                if (selectedDate) {
+                                    const formatted = selectedDate.toISOString().split('T')[0];
+                                    setDateOfBirth(formatted);
+                                }
+                            }}
+                        />
+                    )}
                     <Text style={[styles.pickerHint, { marginTop: 8, textAlign: 'left' }]}>Used for birthday blessings.</Text>
                 </View>
             </FadeIn>

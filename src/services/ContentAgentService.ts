@@ -229,6 +229,8 @@ const SPIRITUAL_BRAIN_IDENTITY = {
     ]
 };
 
+import { supabase } from './supabase';
+
 type SubscriptionTier = 'free' | 'compass' | 'true_north' | 'zenith';
 
 const SACRED_CALENDAR = [
@@ -250,12 +252,37 @@ const SACRED_CALENDAR = [
     { name: "Eid al-Fitr", month: 2, day: 20, type: 'Muslim', prompt: "Eid al-Fitr! Celebrate the joy of completion, gratitude for Ramadan, and community blessings." },
 ];
 
-const getZodiacSign = (dobString: string | null) => {
+const getZodiacSign = async (dobString: string | null) => {
     if (!dobString) return null;
     const dob = new Date(dobString);
     const month = dob.getMonth() + 1;
     const day = dob.getDate();
 
+    try {
+        const { data: zodiacs } = await supabase
+            .from('zodiac_definitions')
+            .select('*');
+
+        if (zodiacs && zodiacs.length > 0) {
+            const match = zodiacs.find(z => {
+                const sM = z.start_month;
+                const sD = z.start_day;
+                const eM = z.end_month;
+                const eD = z.end_day;
+
+                // Handle Year Wrap (Capricorn)
+                if (sM > eM) {
+                    return (month === sM && day >= sD) || (month === eM && day <= eD) || (month > sM) || (month < eM);
+                }
+                return (month === sM && day >= sD) || (month === eM && day <= eD) || (month > sM && month < eM);
+            });
+            if (match) return match.sign;
+        }
+    } catch (error) {
+        console.error('Error fetching zodiac from DB:', error);
+    }
+
+    // Fallback logic
     if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return "Aquarius";
     if ((month === 2 && day >= 19) || (month === 3 && day <= 20)) return "Pisces";
     if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return "Aries";
@@ -273,7 +300,7 @@ const getZodiacSign = (dobString: string | null) => {
 
 import { UserGoals } from '../store';
 
-const constructSystemPrompt = (belief: BeliefType, context: string, tier: SubscriptionTier = 'free', username?: string, userGoals?: UserGoals, dateOfBirth?: string | null, astrologyEnabled?: boolean) => {
+const constructSystemPrompt = async (belief: BeliefType, context: string, tier: SubscriptionTier = 'free', username?: string, userGoals?: UserGoals, dateOfBirth?: string | null, astrologyEnabled?: boolean) => {
     let dna = `You are the True North Spiritual Guide. Your voice is a sanctuary of ${SPIRITUAL_BRAIN_IDENTITY.vocabulary.slice(0, 4).join(', ').toLowerCase()}. Your tone is ${SPIRITUAL_BRAIN_IDENTITY.tone}. You are wise, compassionate, and deeply aware of the seeker's sacred markers (Birthdays, Holidays, and Cosmic Alignments).`;
 
     // Holiday & Birthday Logic
@@ -292,19 +319,37 @@ const constructSystemPrompt = (belief: BeliefType, context: string, tier: Subscr
     }
 
     // Check Sacred Calendar
-    const activeHoliday = SACRED_CALENDAR.find(h =>
-        h.month === currentMonth &&
-        h.day === currentDay &&
-        (h.type === 'general' || h.type === belief)
-    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let activeHoliday: any = null;
+    try {
+        const { data: holidays } = await supabase
+            .from('sacred_calendar')
+            .select('*')
+            .eq('month', currentMonth + 1)
+            .eq('day', currentDay);
+
+        if (holidays && holidays.length > 0) {
+            activeHoliday = holidays.find(h => h.type === 'general' || h.type === belief);
+        }
+    } catch (e) {
+        console.error('Error fetching holidays from DB:', e);
+    }
+
+    if (!activeHoliday) {
+        activeHoliday = SACRED_CALENDAR.find(h =>
+            h.month === currentMonth &&
+            h.day === currentDay &&
+            (h.type === 'general' || h.type === belief)
+        );
+    }
 
     if (activeHoliday) {
-        specialContext += `\n\nTODAY IS ${activeHoliday.name.toUpperCase()}! ${activeHoliday.prompt}`;
+        specialContext += `\n\nSACRED CALENDAR AWARENESS: Today is ${activeHoliday.name}. ${activeHoliday.prompt || activeHoliday.prompt_insight || ''}`;
     }
 
     // Check Astrology
     if (astrologyEnabled && dateOfBirth) {
-        const sign = getZodiacSign(dateOfBirth);
+        const sign = await getZodiacSign(dateOfBirth);
         if (sign) {
             specialContext += `\n\nCOSMIC ALIGNMENT ENABLED: The seeker is a ${sign}. Weave in subtle astronomy-themed metaphors or celestial wisdom (stars, orbits, stellar light) that reinforces their ${belief} path. Make the universe feel like a partner in their journey.`;
         }
@@ -380,7 +425,7 @@ export const contentAgentService = {
             content = templates[Math.floor(Math.random() * templates.length)];
         } else {
             try {
-                const systemPrompt = constructSystemPrompt(belief, `You are a member of a ${belief} circle focused on ${theme}. Write a short, personal reflection (max 2 sentences) to share. Be authentic and vulnerable.`, tier, undefined, undefined, dateOfBirth, astrologyEnabled);
+                const systemPrompt = await constructSystemPrompt(belief, `You are a member of a ${belief} circle focused on ${theme}. Write a short, personal reflection (max 2 sentences) to share. Be authentic and vulnerable.`, tier, undefined, undefined, dateOfBirth, astrologyEnabled);
                 const userPrompt = `Write a sanctuary reflection about ${theme}.`;
                 content = await AIService.generateText(systemPrompt, userPrompt);
             } catch (error) {
@@ -467,7 +512,7 @@ export const contentAgentService = {
         } else {
             try {
                 const userGoals = useStore.getState().userGoals;
-                const systemPrompt = constructSystemPrompt(belief, `Provide personalized, compassionate advice for a seeker focusing on ${theme}.`, tier, username, userGoals, dateOfBirth, astrologyEnabled);
+                const systemPrompt = await constructSystemPrompt(belief, `Provide personalized, compassionate advice for a seeker focusing on ${theme}.`, tier, username, userGoals, dateOfBirth, astrologyEnabled);
                 let userPrompt = `Seeker Name: ${username || 'Friend'}. Focus: ${theme}.`;
                 if (journalInput) {
                     userPrompt += ` Recent insights: "${journalInput}".`;
@@ -524,7 +569,7 @@ export const contentAgentService = {
             try {
                 const userGoals = useStore.getState().userGoals;
                 const type = isReligious ? (belief === 'Christian' ? 'Prayer' : 'Dua') : 'Quote/Wisdom';
-                const systemPrompt = constructSystemPrompt(belief, `Write a short, powerful ${type} for the seeker. Ensure it is deeply resonant with their path and current life goals.`, tier, username, userGoals, dateOfBirth, astrologyEnabled);
+                const systemPrompt = await constructSystemPrompt(belief, `Write a short, powerful ${type} for the seeker. Ensure it is deeply resonant with their path and current life goals.`, tier, username, userGoals, dateOfBirth, astrologyEnabled);
                 const userPrompt = `Seeker: ${username}. Belief Path: ${belief}. Task: Generate a daily ${type}.`;
                 const content = await AIService.generateText(systemPrompt, userPrompt);
 
@@ -619,7 +664,7 @@ export const contentAgentService = {
             try {
                 const userGoals = useStore.getState().userGoals;
                 const username = useStore.getState().username;
-                const systemPrompt = constructSystemPrompt(belief, `Analyze the seeker's recent journey. Provide a compassionate insight and a simple action step. Output strictly in JSON with keys: title, message, action.`, tier, username, userGoals, dateOfBirth, astrologyEnabled);
+                const systemPrompt = await constructSystemPrompt(belief, `Analyze the seeker's recent journey. Provide a compassionate insight and a simple action step. Output strictly in JSON with keys: title, message, action.`, tier, username, userGoals, dateOfBirth, astrologyEnabled);
                 const userPrompt = `Seeker Journey: "${content}"`;
                 const jsonStr = await AIService.generateText(systemPrompt, userPrompt);
 
@@ -688,7 +733,7 @@ export const contentAgentService = {
             try {
                 const userGoals = useStore.getState().userGoals;
                 const username = useStore.getState().username;
-                const systemPrompt = constructSystemPrompt(belief, `Generate a short, powerful, and poetic daily affirmation for a seeker. Ensure it is resonant with their path (${belief}) and profoundly targets their listed life goals. Focus: ${theme}. Return JSON with "text" and "verse" (optional).`, tier, username, userGoals, dateOfBirth, astrologyEnabled);
+                const systemPrompt = await constructSystemPrompt(belief, `Generate a short, powerful, and poetic daily affirmation for a seeker. Ensure it is resonant with their path (${belief}) and profoundly targets their listed life goals. Focus: ${theme}. Return JSON with "text" and "verse" (optional).`, tier, username, userGoals, dateOfBirth, astrologyEnabled);
                 const userPrompt = `Generate a daily sanctuary affirmation for a ${belief} seeker focusing on ${theme}.`;
                 const jsonStr = await AIService.generateText(systemPrompt, userPrompt);
                 try {

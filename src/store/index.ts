@@ -65,6 +65,7 @@ export interface UserGoals {
 
 interface UserState {
     isOnboarded: boolean;
+    onboardingStep: number;
     subscriptionTier: 'free' | 'compass' | 'true_north' | 'zenith';
     username: string;
     email: string | null;
@@ -93,6 +94,7 @@ interface UserState {
     blockedUserIds: string[];
     blockedCircleIds: string[];
     setOnboarded: (value: boolean) => Promise<void>;
+    setOnboardingStep: (step: number) => void;
     setSubscriptionTier: (tier: 'free' | 'compass' | 'true_north' | 'zenith') => Promise<void>;
     setUsername: (username: string) => void;
     setEmail: (email: string | null) => void;
@@ -131,6 +133,7 @@ export const useStore = create<UserState>()(
     persist(
         (set) => ({
             isOnboarded: false,
+            onboardingStep: 0,
             subscriptionTier: 'free',
             username: '',
             email: null,
@@ -181,10 +184,13 @@ export const useStore = create<UserState>()(
             blockedCircleIds: [],
             setOnboarded: async (isOnboarded: boolean) => {
                 set({ isOnboarded });
+                if (isOnboarded) set({ onboardingStep: 0 }); // Reset on completion
             },
+            setOnboardingStep: (onboardingStep: number) => set({ onboardingStep }),
             reset: () => {
                 set({
                     isOnboarded: false,
+                    onboardingStep: 0,
                     isLoggedIn: false,
                     subscriptionTier: 'free',
                     username: '',
