@@ -7,24 +7,37 @@ interface SanctuaryLockProps {
     onUnlock: () => void;
     onBack: () => void;
     error?: boolean;
+    title?: string;
+    subtitle?: string;
+    buttonText?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    icon?: any;
 }
 
-export const SanctuaryLock = ({ onUnlock, onBack, error }: SanctuaryLockProps) => {
+export const SanctuaryLock = ({
+    onUnlock,
+    onBack,
+    error,
+    title = "Sanctuary Locked",
+    subtitle = "Your reflections are protected by your security settings.",
+    buttonText = "Unlock Journal",
+    icon: Icon = Fingerprint
+}: SanctuaryLockProps) => {
     return (
         <View style={styles.lockContainer}>
             <View style={styles.lockContent}>
                 <View style={styles.lockIconCircle}>
-                    <Fingerprint size={48} color={palette.softGold} />
+                    <Icon size={48} color={palette.softGold} />
                 </View>
-                <Text style={styles.lockTitle}>Sanctuary Locked</Text>
-                <Text style={styles.lockSubtitle}>Your reflections are protected by your security settings.</Text>
+                <Text style={styles.lockTitle}>{title}</Text>
+                <Text style={styles.lockSubtitle}>{subtitle}</Text>
 
                 {error && (
                     <Text style={styles.bioErrorText}>Authentication failed. Please try again.</Text>
                 )}
 
                 <TouchableOpacity style={styles.unlockButton} onPress={onUnlock}>
-                    <Text style={styles.unlockButtonText}>Unlock Journal</Text>
+                    <Text style={styles.unlockButtonText}>{buttonText}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.backButton} onPress={onBack}>

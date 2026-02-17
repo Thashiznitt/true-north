@@ -31,13 +31,21 @@ export default function App() {
       Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
     }
 
-    const iosApiKey = __DEV__ 
-      ? (process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE')
-      : (process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD || '');
+    let iosApiKey = '';
+    let androidApiKey = '';
 
-    const androidApiKey = __DEV__
-      ? (process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE')
-      : (process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || ''); // Add android prod key if available
+    if (__DEV__) {
+      iosApiKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE';
+      androidApiKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE';
+    } else {
+      // Production / TestFlight / Release
+      iosApiKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD || process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || '';
+      androidApiKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || '';
+
+      if (!iosApiKey && Platform.OS === 'ios') {
+        console.warn("RevenueCat: No iOS API Key found for production environment.");
+      }
+    }
 
     if (Platform.OS === 'ios' && iosApiKey) {
       Purchases.configure({ apiKey: iosApiKey });

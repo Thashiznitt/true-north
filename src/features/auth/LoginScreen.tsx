@@ -5,10 +5,13 @@ import { theme, palette } from '../../theme';
 import { useStore } from '../../store';
 import { authService, AuthProvider } from '../../services/auth';
 import { ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 
 export const LoginScreen = () => {
     const insets = useSafeAreaInsets();
-    const { setLoggedIn, setOnboarded, reset } = useStore();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const navigation = useNavigation<any>();
+    const { reset } = useStore();
     const [loading, setLoading] = useState(false);
     const [mode, setMode] = useState<'options' | 'email'>('options');
     const [email, setEmail] = useState('');
@@ -44,7 +47,20 @@ export const LoginScreen = () => {
             "This will clear your current progress and let you begin the onboarding journey again.",
             [
                 { text: "Cancel", style: "cancel" },
-                { text: "Restart", style: "destructive", onPress: () => reset() }
+                {
+                    text: "Restart",
+                    style: "destructive",
+                    onPress: async () => {
+                        reset();
+                        // Give a slight delay to ensure state update propagates before navigating
+                        setTimeout(() => {
+                            navigation.reset({
+                                index: 0,
+                                routes: [{ name: 'Onboarding' }],
+                            });
+                        }, 100);
+                    }
+                }
             ]
         );
     };

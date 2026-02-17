@@ -30,6 +30,14 @@ export const ThemeSettingsScreen = () => {
                 Alert.alert("Sacred Focus", "We recommend focusing on no more than 3 themes at a time to maintain clarity.");
                 return;
             }
+
+            // Limit check for free tier handled implicitly or add explicit check:
+            const isFree = useStore.getState().subscriptionTier === 'free';
+            if (isFree && selectedThemes.length >= 1) {
+                Alert.alert("Available in Premium", "The Seeker Tier allows focusing on 1 sacred theme. Upgrade to unlock more.");
+                return;
+            }
+
             setSelectedThemes([...selectedThemes, title]);
         }
     };

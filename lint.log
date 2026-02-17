@@ -1,0 +1,252 @@
+
+> true-north@1.0.0 lint
+> eslint .
+
+
+/Users/rn/Github/true-north/App.tsx
+  68:36  warning  Inline style: { flex: 1 }  react-native/no-inline-styles
+
+/Users/rn/Github/true-north/scripts/seed-review-user.ts
+  43:13  warning  'isNewUser' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/components/Button.tsx
+  2:46  warning  'View' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/components/DailyWisdomModal.tsx
+   4:10  warning  'X' is defined but never used                @typescript-eslint/no-unused-vars
+   4:13  warning  'Share2' is defined but never used           @typescript-eslint/no-unused-vars
+   9:9   warning  'width' is assigned a value but never used   @typescript-eslint/no-unused-vars
+   9:16  warning  'height' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  66:38  warning  Inline style: { flex: 1 }                    react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/components/FaithAd.tsx
+   3:24  warning  'Sparkles' is defined but never used             @typescript-eslint/no-unused-vars
+   3:34  warning  'X' is defined but never used                    @typescript-eslint/no-unused-vars
+  45:33  warning  'onClose' is defined but never used              @typescript-eslint/no-unused-vars
+  46:11  warning  'navigation' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/components/SanctuaryLock.tsx
+  13:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/rn/Github/true-north/src/components/performance/InteractivePressable.tsx
+  2:37  warning  'StyleSheet' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/components/performance/OptimizedImage.tsx
+  3:10  warning  'StyleSheet' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/features/admin/SuperAdminScreen.tsx
+    6:57  warning  'MoreVertical' is defined but never used                                               @typescript-eslint/no-unused-vars
+  171:59  warning  Inline style: { backgroundColor: "user.status === 'active' ? '#E6F4EA' : '#FCE8E6'" }  react-native/no-inline-styles
+  172:62  warning  Inline style: { color: "user.status === 'active' ? '#137333' : '#C5221F'" }            react-native/no-inline-styles
+  373:59  warning  Inline style: { color: '#E57373' }                                                     react-native/no-inline-styles
+  391:34  warning  Inline style: { alignItems: 'flex-end' }                                               react-native/no-inline-styles
+  394:57  warning  Inline style: { color: "tx.status === 'Success' ? '#137333' : '#C5221F'" }             react-native/no-inline-styles
+  419:63  warning  Inline style: { backgroundColor: "ad.status === 'Active' ? '#E6F4EA' : '#FCE8E6'" }    react-native/no-inline-styles
+  420:66  warning  Inline style: { color: "ad.status === 'Active' ? '#137333' : '#C5221F'" }              react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/features/affirmation/AffirmationScreen.tsx
+    2:83  warning  'Platform' is defined but never used                @typescript-eslint/no-unused-vars
+   46:11  warning  'insets' is assigned a value but never used         @typescript-eslint/no-unused-vars
+   57:12  warning  'loadingAdvice' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  111:18  warning  'error' is defined but never used                   @typescript-eslint/no-unused-vars
+  131:18  warning  'error' is defined but never used                   @typescript-eslint/no-unused-vars
+  140:90  warning  Inline style: { flex: 1 }                           react-native/no-inline-styles
+  160:50  warning  Inline style: { height: 20 }                        react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/features/auth/LoginScreen.tsx
+  12:38  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  13:13  warning  'setLoggedIn' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  13:26  warning  'setOnboarded' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  36:18  warning  'error' is defined but never used                  @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/features/community/CircleDetailScreen.tsx
+    5:10   warning  'GhostReflection' is defined but never used                   @typescript-eslint/no-unused-vars
+    8:10   warning  'Users' is defined but never used                             @typescript-eslint/no-unused-vars
+    8:17   warning  'Lock' is defined but never used                              @typescript-eslint/no-unused-vars
+    8:71   warning  'Send' is defined but never used                              @typescript-eslint/no-unused-vars
+    8:77   warning  'Clock' is defined but never used                             @typescript-eslint/no-unused-vars
+    8:84   warning  'MapPin' is defined but never used                            @typescript-eslint/no-unused-vars
+    8:92   warning  'Sparkles' is defined but never used                          @typescript-eslint/no-unused-vars
+    8:125  warning  'Flag' is defined but never used                              @typescript-eslint/no-unused-vars
+   25:35   warning  'initialName' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  144:27   warning  'postId' is defined but never used                            @typescript-eslint/no-unused-vars
+  374:67   warning  Inline style: { opacity: 'newPostContent.trim() ? 1 : 0.5' }  react-native/no-inline-styles
+  400:56   warning  Inline style: { height: 'auto' }                              react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/features/community/CommunityScreen.tsx
+    9:31  warning  'GhostCircle' is defined but never used     @typescript-eslint/no-unused-vars
+  154:77  warning  Inline style: { marginBottom: 8 }           react-native/no-inline-styles
+  371:11  warning  'delay' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/features/community/CreateCircleScreen.tsx
+    7:10  warning  'ChevronLeft' is defined but never used  @typescript-eslint/no-unused-vars
+   58:26  warning  Inline style: { width: 40 }              react-native/no-inline-styles
+   75:30  warning  Inline style: { flex: 1 }                react-native/no-inline-styles
+   85:30  warning  Inline style: { flex: 1 }                react-native/no-inline-styles
+  176:61  warning  Inline style: { opacity: 0.5 }           react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/features/journal/JournalScreen.tsx
+    6:33  warning  'Calendar' is defined but never used                  @typescript-eslint/no-unused-vars
+    6:43  warning  'Sparkles' is defined but never used                  @typescript-eslint/no-unused-vars
+    6:53  warning  'Fingerprint' is defined but never used               @typescript-eslint/no-unused-vars
+   22:10  warning  'ImageBackground' is defined but never used           @typescript-eslint/no-unused-vars
+   25:7   warning  'JOURNAL_BG' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  117:11  warning  'handleSubscribe' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  121:11  warning  'getBeliefTrait' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  128:15  warning  'delay' is assigned a value but never used            @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/features/notifications/NotificationsScreen.tsx
+   1:52  warning  'StatusBar' is defined but never used    @typescript-eslint/no-unused-vars
+   5:16  warning  'LucideIcon' is defined but never used   @typescript-eslint/no-unused-vars
+   5:60  warning  'ChevronLeft' is defined but never used  @typescript-eslint/no-unused-vars
+  64:30  warning  Inline style: { width: 40 }              react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/features/onboarding/OnboardingScreen.tsx
+   20:29   warning  'PurchasesPackage' is defined but never used                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+   49:18   warning  Inline style: { flex: 1 }                                                                                                                                                                                                                                                                                                              react-native/no-inline-styles
+  337:18   warning  'error' is defined but never used                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+  423:69   warning  Inline style: { marginBottom: 24 }                                                                                                                                                                                                                                                                                                     react-native/no-inline-styles
+  451:33   warning  'index' is defined but never used                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+  454:46   warning  Inline style: { width: '47.5%' }                                                                                                                                                                                                                                                                                                       react-native/no-inline-styles
+  456:113  warning  Inline style: { width: '100%' }                                                                                                                                                                                                                                                                                                        react-native/no-inline-styles
+  492:85   warning  Inline style: { paddingBottom: 40 }                                                                                                                                                                                                                                                                                                    react-native/no-inline-styles
+  525:34   warning  'index' is defined but never used                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+  572:26   warning  Inline style: { position: 'absolute', zIndex: 10 }                                                                                                                                                                                                                                                                                     react-native/no-inline-styles
+  573:61   warning  Inline style: { width: 40, height: 40, justifyContent: 'center' }                                                                                                                                                                                                                                                                      react-native/no-inline-styles
+  578:30   warning  Inline style: { flex: 1, justifyContent: 'center' }                                                                                                                                                                                                                                                                                    react-native/no-inline-styles
+  580:53   warning  Inline style: { textAlign: 'center' }                                                                                                                                                                                                                                                                                                  react-native/no-inline-styles
+  581:56   warning  Inline style: { opacity: 0.8, textAlign: 'center' }                                                                                                                                                                                                                                                                                    react-native/no-inline-styles
+  584:52   warning  Inline style: { marginTop: 40 }                                                                                                                                                                                                                                                                                                        react-native/no-inline-styles
+  586:93   warning  Inline style: { marginTop: 40 }                                                                                                                                                                                                                                                                                                        react-native/no-inline-styles
+  589:80   warning  Inline style: { opacity: 'loading ? 0.7 : 1' }                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  590:50   warning  Inline style: { position: 'absolute', left: 24 }                                                                                                                                                                                                                                                                                       react-native/no-inline-styles
+  595:101  warning  Inline style: {
+  backgroundColor: 'transparent',
+  borderColor: 'rgba(255,255,255,0.3)',
+  opacity: 'loading ? 0.7 : 1'
+}                                                                                                                                                                                                             react-native/no-inline-styles
+  596:50   warning  Inline style: { position: 'absolute', left: 24 }                                                                                                                                                                                                                                                                                       react-native/no-inline-styles
+  602:71   warning  Inline style: { backgroundColor: 'rgba(255,255,255,0.2)' }                                                                                                                                                                                                                                                                             react-native/no-inline-styles
+  603:71   warning  Inline style: { opacity: 0.5 }                                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  604:71   warning  Inline style: { backgroundColor: 'rgba(255,255,255,0.2)' }                                                                                                                                                                                                                                                                             react-native/no-inline-styles
+  606:79   warning  Inline style: { borderColor: 'rgba(255,255,255,0.3)' }                                                                                                                                                                                                                                                                                 react-native/no-inline-styles
+  685:186  warning  Inline style: { opacity: 0.3 }                                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  697:11   warning  'renderStep8' is assigned a value but never used                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+  699:36   warning  Inline style: { paddingBottom: 150 }                                                                                                                                                                                                                                                                                                   react-native/no-inline-styles
+  720:50   warning  Inline style: { marginBottom: 60 }                                                                                                                                                                                                                                                                                                     react-native/no-inline-styles
+  790:30   warning  Inline style: { position: 'absolute', zIndex: 10 }                                                                                                                                                                                                                                                                                     react-native/no-inline-styles
+  791:65   warning  Inline style: { width: 40, height: 40, justifyContent: 'center' }                                                                                                                                                                                                                                                                      react-native/no-inline-styles
+  797:34   warning  Inline style: { flex: 1, justifyContent: 'center' }                                                                                                                                                                                                                                                                                    react-native/no-inline-styles
+  798:38   warning  Inline style: { alignItems: 'center', marginBottom: 32 }                                                                                                                                                                                                                                                                               react-native/no-inline-styles
+  799:81   warning  Inline style: { marginBottom: 16 }                                                                                                                                                                                                                                                                                                     react-native/no-inline-styles
+  800:57   warning  Inline style: { textAlign: 'center', fontSize: 32 }                                                                                                                                                                                                                                                                                    react-native/no-inline-styles
+  801:60   warning  Inline style: { opacity: 0.9, textAlign: 'center', maxWidth: '90%' }                                                                                                                                                                                                                                                                   react-native/no-inline-styles
+  806:38   warning  Inline style: { gap: 12, marginBottom: 32 }                                                                                                                                                                                                                                                                                            react-native/no-inline-styles
+  819:52   warning  Inline style: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: 16,
+  borderRadius: 16,
+  backgroundColor: "active ? palette.ivory : 'rgba(255,255,255,0.1)'",
+  borderWidth: 1,
+  borderColor: "active ? palette.ivory : 'rgba(255,255,255,0.2)'"
+}                                     react-native/no-inline-styles
+  827:58   warning  Inline style: { flexDirection: 'row', alignItems: 'center', gap: 12 }                                                                                                                                                                                                                                                                  react-native/no-inline-styles
+  828:62   warning  Inline style: {
+  width: 20,
+  height: 20,
+  borderRadius: 10,
+  borderWidth: 2,
+  borderColor: "active ? theme.colors.text : 'rgba(255,255,255,0.5)'",
+  alignItems: 'center',
+  justifyContent: 'center'
+}                                                                                                                           react-native/no-inline-styles
+  833:77   warning  Inline style: { width: 10, height: 10, borderRadius: 5 }                                                                                                                                                                                                                                                                               react-native/no-inline-styles
+  836:66   warning  Inline style: { fontSize: 16 }                                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  837:66   warning  Inline style: { fontSize: 10 }                                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  840:58   warning  Inline style: { fontSize: 18 }                                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  852:52   warning  Inline style: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: 16,
+  borderRadius: 16,
+  backgroundColor: "active ? palette.ivory : 'rgba(255,255,255,0.1)'",
+  borderWidth: 1,
+  borderColor: "active ? palette.ivory : 'rgba(255,255,255,0.2)'"
+}                                     react-native/no-inline-styles
+  860:58   warning  Inline style: { flexDirection: 'row', alignItems: 'center', gap: 12 }                                                                                                                                                                                                                                                                  react-native/no-inline-styles
+  861:62   warning  Inline style: {
+  width: 20,
+  height: 20,
+  borderRadius: 10,
+  borderWidth: 2,
+  borderColor: "active ? theme.colors.text : 'rgba(255,255,255,0.5)'",
+  alignItems: 'center',
+  justifyContent: 'center'
+}                                                                                                                           react-native/no-inline-styles
+  866:77   warning  Inline style: { width: 10, height: 10, borderRadius: 5 }                                                                                                                                                                                                                                                                               react-native/no-inline-styles
+  869:66   warning  Inline style: { fontSize: 16 }                                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  870:77   warning  Inline style: { fontSize: 12 }                                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  873:58   warning  Inline style: { fontSize: 18 }                                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  874:72   warning  Inline style: { fontSize: 14, opacity: 0.7 }                                                                                                                                                                                                                                                                                           react-native/no-inline-styles
+  884:40   warning  Inline style: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: 16,
+  borderRadius: 16,
+  backgroundColor: "tier === 'free' ? palette.ivory : 'rgba(255,255,255,0.05)'",
+  borderWidth: 1,
+  borderColor: "tier === 'free' ? palette.ivory : 'rgba(255,255,255,0.1)'",
+  marginTop: 8
+}  react-native/no-inline-styles
+  893:46   warning  Inline style: { flexDirection: 'row', alignItems: 'center', gap: 12 }                                                                                                                                                                                                                                                                  react-native/no-inline-styles
+  894:50   warning  Inline style: {
+  width: 20,
+  height: 20,
+  borderRadius: 10,
+  borderWidth: 2,
+  borderColor: "tier === 'free' ? theme.colors.text : 'rgba(255,255,255,0.5)'",
+  alignItems: 'center',
+  justifyContent: 'center'
+}                                                                                                                  react-native/no-inline-styles
+  899:74   warning  Inline style: { width: 10, height: 10, borderRadius: 5 }                                                                                                                                                                                                                                                                               react-native/no-inline-styles
+  902:54   warning  Inline style: { fontSize: 16 }                                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  903:54   warning  Inline style: { fontSize: 12, opacity: "tier === 'free' ? 1 : 0.7" }                                                                                                                                                                                                                                                                   react-native/no-inline-styles
+  908:46   warning  Inline style: { fontSize: 18 }                                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  915:61   warning  Inline style: { height: 60, marginBottom: 20 }                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  915:167  warning  Inline style: { opacity: 0.7 }                                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  922:75   warning  Inline style: { fontSize: 18 }                                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  933:50   warning  Inline style: { padding: 12, alignItems: 'center' }                                                                                                                                                                                                                                                                                    react-native/no-inline-styles
+  934:42   warning  Inline style: { fontSize: 16, textDecorationLine: 'underline' }                                                                                                                                                                                                                                                                        react-native/no-inline-styles
+  937:62   warning  Inline style: { opacity: 0.5, marginTop: 10 }                                                                                                                                                                                                                                                                                          react-native/no-inline-styles
+  963:43   warning  Inline style: { flex: 1 }                                                                                                                                                                                                                                                                                                              react-native/no-inline-styles
+  983:53   warning  Inline style: { opacity: 0.5 }                                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  984:66   warning  Inline style: { opacity: 0.5 }                                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+  985:56   warning  Inline style: { opacity: 0.5 }                                                                                                                                                                                                                                                                                                         react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/features/profile/NotificationSettingsScreen.tsx
+  5:23  warning  'Bell' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/features/profile/PrivacySettingsScreen.tsx
+    5:23  warning  'Shield' is defined but never used  @typescript-eslint/no-unused-vars
+  112:47  warning  Inline style: { marginTop: 40 }     react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/features/profile/ProfileScreen.tsx
+  149:22  warning  Inline style: { height: 20 }  react-native/no-inline-styles
+  299:28  warning  Inline style: { flex: 1 }     react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/features/profile/SubscriptionScreen.tsx
+  102:97  warning  Inline style: { marginTop: 40 }  react-native/no-inline-styles
+  171:82  warning  Inline style: { opacity: 0.7 }   react-native/no-inline-styles
+
+/Users/rn/Github/true-north/src/services/supabase.ts
+  4:10  warning  'env' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/rn/Github/true-north/src/store/index.ts
+  122:15  warning  'get' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 143 problems (2 errors, 141 warnings)
+

@@ -9,6 +9,7 @@ import { FaithAd } from '../../components/FaithAd';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { SanctuaryLock } from '../../components/SanctuaryLock';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
+import { FadeIn } from '../../components/FadeIn';
 
 interface JournalEntry {
     id: string;
@@ -127,29 +128,49 @@ export const JournalScreen = () => {
         const delay = index * 100;
 
         return (
-            <View
-                style={styles.entryCardContainer}
-            >
-                <TouchableOpacity
-                    style={styles.entryCard}
-                    onPress={() => navigation.navigate('JournalDetail', {
-                        entryId: item.id,
-                        entryTitle: item.title,
-                        entryContent: item.content
-                    })}
+            <FadeIn delay={Math.min(index * 100, 1000)} from="bottom">
+                <View
+                    style={styles.entryCardContainer}
                 >
-                    <Text style={styles.entryDate}>{item.date}</Text>
-                    <Text style={styles.entryTitle}>{item.title}</Text>
-                    <Text style={styles.entryPreview} numberOfLines={2}>{item.content}</Text>
-                </TouchableOpacity>
-            </View>
+                    <TouchableOpacity
+                        style={styles.entryCard}
+                        onPress={() => navigation.navigate('JournalDetail', {
+                            entryId: item.id,
+                            entryTitle: item.title,
+                            entryContent: item.content
+                        })}
+                    >
+                        <Text style={styles.entryDate}>{item.date}</Text>
+                        <Text style={styles.entryTitle}>{item.title}</Text>
+                        <Text style={styles.entryPreview} numberOfLines={2}>{item.content}</Text>
+                    </TouchableOpacity>
+                </View>
+            </FadeIn>
         );
     };
 
     // Removed hard paywall - free users can now enter but are limited by count
 
 
-    if (isLocked && subscriptionTier !== 'free') {
+    if (subscriptionTier === 'free') {
+        const handleUnlock = () => {
+            navigation.navigate('Subscription');
+        };
+
+        return (
+            <SanctuaryLock
+                onUnlock={handleUnlock}
+                onBack={() => navigation.goBack()}
+                error={false}
+                title="Sacred Journal"
+                subtitle="Unlock your private sanctuary with a premium membership."
+                buttonText="Upgrade to Access"
+                icon={LucideLock}
+            />
+        );
+    }
+
+    if (isLocked) {
         return (
             <SanctuaryLock
                 onUnlock={authenticate}
@@ -237,22 +258,7 @@ export const JournalScreen = () => {
             <TouchableOpacity
                 style={[styles.fab, { bottom: insets.bottom + 20 }]}
                 onPress={() => {
-                    if (subscriptionTier === 'free') {
-                        const today = new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-                        const todayEntries = journalEntries.filter(e => e.date === today);
-                        if (todayEntries.length >= 3) {
-                            Alert.alert(
-                                "Journal Limit",
-                                "The Seeker Tier allows 3 reflections per day. Upgrade to Compass or higher for unlimited journaling.",
-                                [
-                                    { text: "Later", style: "cancel" },
-                                    { text: "Upgrade", onPress: () => navigation.navigate('Subscription') }
-                                ]
-                            );
-                            return;
-                        }
-                        navigation.navigate('JournalDetail', { isNew: true });
-                    }
+                    navigation.navigate('JournalDetail', { isNew: true });
                 }}
             >
                 <Plus size={28} color={palette.ivory} />

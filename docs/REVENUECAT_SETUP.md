@@ -21,7 +21,24 @@ You will need your **App Store Shared Secret** for RevenueCat:
 2. Scroll to the **App-Specific Shared Secret** section.
 3. Manage or generate a new secret and copy it.
 
-## 2. RevenueCat Dashboard Setup
+## 2. Google Play Console Setup
+
+Create three **Subscriptions** in Google Play Console with the following Product IDs:
+
+| Tier | Product ID | Recommended Price |
+|------|------------|-------------------|
+| **Compass** | `tn_annual_compass_7188` | $69.99 (Annual) |
+| **True North** | `tn_monthly_alignment_1299` | $12.99 (Monthly) |
+| **Zenith** | `tn_monthly_zenith_1999` | $19.99 (Monthly) |
+
+### Service Account Key (JSON)
+RevenueCat needs a **Service Account** to communicate with Google Play:
+1. Go to **Google Cloud Console**.
+2. Create a Service Account with **Google Play Android Developer** permission.
+3. Generate a **JSON Key**.
+4. Upload this file to RevenueCat > Project Settings > Android.
+
+## 3. RevenueCat Dashboard Setup
 
 ### Create Entitlements
 1. Navigate to **Entitlements** in your RevenueCat project.
@@ -38,7 +55,7 @@ You will need your **App Store Shared Secret** for RevenueCat:
 ### Attach Entitlements to Products
 1. In the **Products** section, ensure all three products are attached to the `premium` entitlement.
 
-## 3. API Key & Credentials (iOS)
+## 4. API Key & Credentials (iOS/Android)
 
 RevenueCat needs to talk to Apple to verify receipts and handle renewals.
 
@@ -49,7 +66,7 @@ RevenueCat needs to talk to Apple to verify receipts and handle renewals.
 4. Download the **.p8** file and copy the **Key ID**.
 5. Upload the .p8 file and paste the Issuer ID and Key ID into RevenueCat Settings.
 
-## 4. Environment Variables
+## 5. Environment Variables
 
 Ensure your `.env` file (or Expo environment) has the correct RevenueCat API keys. The app automatically switches between Test and Production keys based on the environment (`__DEV__`).
 
@@ -65,13 +82,13 @@ EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD=your_production_api_key_here
 - **Local Development**: Uses `EXPO_PUBLIC_REVENUECAT_IOS_KEY` (Test Mode). You will see a "Using a Test Store API key" warning.
 - **Production/TestFlight**: Uses `EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD`. No warning will be shown.
 
-## 4. Review Information (Apple Requirement)
+## 6. Review Information (Apple/Google Requirement)
 
 Before you can submit the app for review, Apple requires:
 - **Screenshot**: A 1242 x 2208 pixel (or similar) screenshot of your app's **Subscription Screen** showing these tiers. (You can use a placeholder for now or wait until the app is built to take a real one).
 - **Review Notes**: A brief explanation for the reviewer. Example: *"This subscription unlocks premium journaling features, personalized spiritual guidance, and unlimited community circles."*
 
-## 6. Verification & Sandbox Testing
+## 7. Verification & Sandbox Testing
 
 Once configured:
 1. Re-run the app.
@@ -85,3 +102,28 @@ If RevenueCat shows a connection issue, double-check that the **Issuer ID**, **K
 To test on a simulator, you need a **Sandbox Tester** account in App Store Connect.
 > [!TIP]
 > Use the **"plus trick"** if your email is already taken: `yourname+sandbox@email.com`. Apple will treat this as a unique account but send emails to your regular inbox.
+> [!TIP]
+> Use the **"plus trick"** if your email is already taken: `yourname+sandbox@email.com`. Apple will treat this as a unique account but send emails to your regular inbox.
+
+## 8. Remaining Android Setup (To Do Later)
+
+### 1. Google Play Console (Prerequisite)
+Ensure you have created these **Subscriptions** in the Google Play Console > Monetize > Products > Subscriptions:
+*   `tn_annual_compass_7188`
+*   `tn_monthly_alignment_1299`
+*   `tn_monthly_zenith_1999`
+
+### 2. RevenueCat Dashboard (Linking)
+Once the subscriptions are created in Google Play, link them in RevenueCat:
+
+**Step A: Add Products to Entitlement**
+1.  Go to **Entitlements** side menu.
+2.  Click `premium`.
+3.  Click **+ Attach** > **Google Play Store**.
+4.  Add: `tn_annual_compass_7188`, `tn_monthly_alignment_1299`, `tn_monthly_zenith_1999`.
+
+**Step B: Add Products to Offering**
+1.  Go to **Offerings** side menu > `default_offering`.
+2.  Click **Compass** package > Select **Google Play Store** > Attach `tn_annual_compass_7188`.
+3.  Click **True North** package > Select **Google Play Store** > Attach `tn_monthly_alignment_1299`.
+4.  Click **Zenith** package > Select **Google Play Store** > Attach `tn_monthly_zenith_1999`.

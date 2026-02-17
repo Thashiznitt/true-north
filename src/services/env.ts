@@ -11,5 +11,9 @@ export const env = {
         : 'https://api.truenorth.app', // Production backend
     // RevenueCat
     revenueCatIosKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY,
+    revenueCatIosKeyProd: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD,
     revenueCatAndroidKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY,
+
+    // AI
+    geminiApiKey: process.env.GEMINI_API_KEY,
 };

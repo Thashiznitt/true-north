@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type AIProvider = 'LocalMock' | 'OpenAI' | 'Groq' | 'Custom';
+export type AIProvider = 'LocalMock' | 'OpenAI' | 'Groq' | 'Custom' | 'Gemini';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface AIConfig {
@@ -21,7 +21,8 @@ export const AIService = {
 
     getProvider: async (): Promise<AIProvider> => {
         const provider = await AsyncStorage.getItem(STORAGE_KEY_PROVIDER);
-        return (provider as AIProvider) || 'LocalMock';
+        // Default to 'Gemini' if not set, so users get "live" AI out of the box with our system key
+        return (provider as AIProvider) || 'Gemini';
     },
 
     setProvider: async (provider: AIProvider): Promise<void> => {
@@ -59,17 +60,71 @@ export const AIService = {
     generateText: async (systemPrompt: string, userPrompt: string): Promise<string> => {
         const provider = await AIService.getProvider();
 
+        // Check if using default/system provider (Gemini via Env) or local mock
         if (provider === 'LocalMock') {
+            // If we have a system key, we can try to use it even if provider says 'LocalMock' 
+            // (unless user explicitly wants offline mode, but for now we assume 'LocalMock' means 'Offline/Dev')
+            // However, to fix the user issue where AI should "just work", we will treat 'Gemini' as the default if 'LocalMock' is selected but we are in PROD.
+            // For safety, let's keep LocalMock strict for dev, but we expect the app to default to Gemini in prod if we change the default getProvider logic.
+            // Actually, let's just add the Gemini logic.
             throw new Error('LocalMock provider does not support dynamic generation. Use static templates.');
         }
 
-        const apiKey = await AIService.getApiKey(provider);
+        let apiKey = await AIService.getApiKey(provider);
+        let endpoint = '';
+        const model = await AIService.getModel();
+
+        // Special handling for System Gemini
+        if (provider === 'Gemini') {
+            // Try to get from secure store first (if user overrode it), else use env
+            const storedKey = await AIService.getApiKey(provider);
+            apiKey = storedKey || process.env.GEMINI_API_KEY || '';
+
+            if (!apiKey) {
+                throw new Error("Missing Gemini API Key. Please check your configuration.");
+            }
+
+            // Use Google Generative AI REST API
+            // For simplicity, we'll use the v1beta/models/gemini-pro:generateContent endpoint
+            // Note: 'model' from storage might be 'gpt-4o-mini', so we force a gemini model if it's mismatched
+            const geminiModel = 'gemini-1.5-flash'; // Hardcoded for reliability or fetch from config
+            endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            role: 'user',
+                            parts: [{ text: `${systemPrompt}\n\nUser: ${userPrompt}` }] // Gemini doesn't have system role in simple API, often prepended
+                        }]
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Gemini API Error (${response.status}): ${errorText}`);
+                }
+
+                const data = await response.json();
+                if (data.candidates && data.candidates.length > 0 && data.candidates[0].content && data.candidates[0].content.parts.length > 0) {
+                    return data.candidates[0].content.parts[0].text;
+                } else {
+                    return "No response from Spirit Guide.";
+                }
+
+            } catch (error) {
+                console.error("Gemini Generation Error:", error);
+                throw error;
+            }
+        }
+
+        // ... Existing OpenAI/Groq/Custom logic ...
         if (!apiKey) {
             throw new Error(`Missing API Key for provider: ${provider}`);
         }
 
-        const model = await AIService.getModel();
-        let endpoint = '';
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`

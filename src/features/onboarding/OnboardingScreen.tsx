@@ -5,6 +5,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Keyboa
 import { LinearGradient } from 'expo-linear-gradient';
 import { OptimizedImage } from '../../components/performance/OptimizedImage';
 import { useNavigation } from '@react-navigation/native';
+import { FadeIn } from '../../components/FadeIn';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '../../store';
@@ -38,6 +39,11 @@ const BELIEF_META: Record<string, { icon: React.FC<any>, desc: string }> = { // 
 };
 
 const INTRO_BG = require('../../../assets/onboarding_intro_bg.png'); // eslint-disable-line
+
+const GOAL_KEYS = [
+    'spirituality', 'spouse', 'career', 'business',
+    'health', 'family', 'children', 'friends', 'finances'
+];
 
 const StepContainer = ({ children }: { children: React.ReactNode }) => (
     <View style={{ flex: 1, paddingHorizontal: theme.spacing.xl }}>
@@ -111,7 +117,16 @@ export const OnboardingScreen = () => {
             }
             setStep(2);
         } else if (step === 2) {
-            // Goals are optional or validation can be added here if needed
+            // Validate goals - find first empty field
+            const emptyFieldIndex = GOAL_KEYS.findIndex(key => !goals[key as keyof typeof goals]?.trim());
+
+            if (emptyFieldIndex !== -1) {
+                // Focus the empty input
+                inputRefs.current[emptyFieldIndex]?.focus();
+                // Optional: Show toast or alert if needed, but focus behavior is usually enough context
+                return;
+            }
+
             setStep(3);
         } else if (step === 3) {
             if (!beliefType) {
@@ -266,6 +281,12 @@ export const OnboardingScreen = () => {
     const handleSubscribe = async () => {
         setIsPurchasing(true);
         try {
+            if (tier === 'free') {
+                await finishOnboarding();
+                setIsPurchasing(false);
+                return;
+            }
+
             if (env.useMockServices) {
                 // Emulate subscription process
                 setTimeout(async () => {
@@ -318,6 +339,35 @@ export const OnboardingScreen = () => {
         }
     };
 
+    const handleSocialLogin = async (provider: 'Apple' | 'Google') => {
+        setLoading(true);
+        try {
+            const success = await authService.login(provider);
+            if (success) {
+                setAuthMode('social');
+                // User is logged in, proceed to username or next appropriate step
+                // Check if username is set, if so validation might pass to skip step 7
+                const currentUsername = useStore.getState().username;
+                if (currentUsername && currentUsername.trim().length > 0) {
+                    setUsername(currentUsername);
+                }
+
+                // Navigate to next steps - likely skipping email/password 
+                // We go to step 7 (Username) to confirm/set it
+                setStep(7);
+            } else {
+                // Determine if it was a cancellation or error
+                // For now, consistent error
+                // Alert.alert("Sign In Failed", `Could not sign in with ${provider}.`);
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert("Error", "An unexpected error occurred.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -345,9 +395,13 @@ export const OnboardingScreen = () => {
     };
 
     const toggleTheme = (t: string) => {
-        setSelectedThemes(prev =>
-            prev.includes(t) ? prev.filter(i => i !== t) : [...prev, t]
-        );
+        // Enforce 1 theme limit for new users (free tier start) - radio behavior
+        if (selectedThemes.includes(t)) {
+            setSelectedThemes(prev => prev.filter(i => i !== t));
+        } else {
+            // Clear others and select new
+            setSelectedThemes([t]);
+        }
     };
 
     const renderHeader = (title: string, subtitle: string) => (
@@ -438,7 +492,7 @@ export const OnboardingScreen = () => {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
                 <StepContainer>
                     {renderHeader("Daily Goals", "Tell us about your current priorities (max 10 words)")}
-                    {Object.keys(goals).map((key, index, array) => (
+                    {GOAL_KEYS.map((key, index) => (
                         <View key={key} style={styles.inputGroup}>
                             <Text style={styles.label}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
                             <TextInput
@@ -449,9 +503,9 @@ export const OnboardingScreen = () => {
                                 value={(goals as any)[key]}
                                 onChangeText={(text) => handleGoalChange(key, text)}
                                 maxLength={100}
-                                returnKeyType={index === array.length - 1 ? "done" : "next"}
+                                returnKeyType={index === GOAL_KEYS.length - 1 ? "done" : "next"}
                                 onSubmitEditing={() => {
-                                    if (index < array.length - 1) {
+                                    if (index < GOAL_KEYS.length - 1) {
                                         inputRefs.current[index + 1]?.focus();
                                     }
                                 }}
@@ -532,18 +586,16 @@ export const OnboardingScreen = () => {
                             <ActivityIndicator color={palette.softGold} size="large" style={{ marginTop: 40 }} />
                         ) : (
                             <>
-                                <TouchableOpacity style={[styles.socialButton, { backgroundColor: palette.ivory }]} onPress={() => {
-                                    setAuthMode('social');
-                                    useStore.getState().setEmail('remy_shiznitt@hotmail.com');
-                                    nextStep();
-                                }}>
+                                <TouchableOpacity style={[styles.socialButton, { backgroundColor: palette.ivory, opacity: loading ? 0.7 : 1 }]} onPress={() => handleSocialLogin('Apple')} disabled={loading}>
+                                    <View style={{ position: 'absolute', left: 24 }}>
+                                        {/* Apple Logo placeholder or icon if available */}
+                                    </View>
                                     <Text style={[styles.socialButtonText, { color: theme.colors.text }]}>Continue with Apple</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={[styles.socialButton, styles.googleButton, { backgroundColor: 'transparent', borderColor: 'rgba(255,255,255,0.3)' }]} onPress={() => {
-                                    setAuthMode('social');
-                                    useStore.getState().setEmail('remyngatia@gmail.com');
-                                    nextStep();
-                                }}>
+                                <TouchableOpacity style={[styles.socialButton, styles.googleButton, { backgroundColor: 'transparent', borderColor: 'rgba(255,255,255,0.3)', opacity: loading ? 0.7 : 1 }]} onPress={() => handleSocialLogin('Google')} disabled={loading}>
+                                    <View style={{ position: 'absolute', left: 24 }}>
+                                        {/* Google Logo placeholder */}
+                                    </View>
                                     <Text style={[styles.socialButtonText, { color: palette.ivory }]}>Continue with Google</Text>
                                 </TouchableOpacity>
                                 <View style={styles.authDivider}>
@@ -825,6 +877,38 @@ export const OnboardingScreen = () => {
                                     );
                                 })
                             )}
+
+                            {/* Free Tier Card */}
+                            <TouchableOpacity
+                                key="free-tier"
+                                style={{
+                                    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                                    padding: 16, borderRadius: 16,
+                                    backgroundColor: tier === 'free' ? palette.ivory : 'rgba(255,255,255,0.05)',
+                                    borderWidth: 1, borderColor: tier === 'free' ? palette.ivory : 'rgba(255,255,255,0.1)',
+                                    marginTop: 8
+                                }}
+                                onPress={() => setTier('free')}
+                            >
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                    <View style={{
+                                        width: 20, height: 20, borderRadius: 10,
+                                        borderWidth: 2, borderColor: tier === 'free' ? theme.colors.text : 'rgba(255,255,255,0.5)',
+                                        alignItems: 'center', justifyContent: 'center'
+                                    }}>
+                                        {tier === 'free' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.text }} />}
+                                    </View>
+                                    <View>
+                                        <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 16, color: tier === 'free' ? theme.colors.text : palette.ivory }}>Basic</Text>
+                                        <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: tier === 'free' ? theme.colors.secondaryText : palette.softGold, opacity: tier === 'free' ? 1 : 0.7 }}>
+                                            Daily Affirmation
+                                        </Text>
+                                    </View>
+                                </View>
+                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 18, color: tier === 'free' ? theme.colors.text : palette.ivory }}>
+                                    Free
+                                </Text>
+                            </TouchableOpacity>
                         </View>
 
                         <TouchableOpacity
@@ -836,9 +920,11 @@ export const OnboardingScreen = () => {
                                 <ActivityIndicator color={palette.ivory} />
                             ) : (
                                 <Text style={[styles.subscribeButtonText, { fontSize: 18 }]}>
-                                    {offering
-                                        ? `Subscribe Now`
-                                        : `Subscribe ${DEFAULT_TIERS.find(t => t.id === tier)?.price}`
+                                    {tier === 'free'
+                                        ? "Continue to App"
+                                        : offering
+                                            ? "Subscribe Now"
+                                            : `Subscribe ${DEFAULT_TIERS.find(t => t.id === tier)?.price}`
                                     }
                                 </Text>
                             )}
@@ -873,19 +959,21 @@ export const OnboardingScreen = () => {
                 </View>
             )}
 
-            < View style={styles.content} >
-                {step === 0 && renderIntroStep()}
-                {step === 1 && renderStep1()}
-                {step === 2 && renderStep2()}
-                {step === 3 && renderStep3()}
-                {step === 4 && renderStep4()}
-                {step === 5 && renderStep5()}
-                {step === 6 && renderStepPassword()}
-                {step === 7 && renderStep6()}
-                {step === 8 && renderStep7()}
-                {step === 9 && renderStep9()}
-                {step === 10 && renderStep10()}
-            </View >
+            <View style={styles.content}>
+                <FadeIn key={step} style={{ flex: 1 }} delay={100}>
+                    {step === 0 && renderIntroStep()}
+                    {step === 1 && renderStep1()}
+                    {step === 2 && renderStep2()}
+                    {step === 3 && renderStep3()}
+                    {step === 4 && renderStep4()}
+                    {step === 5 && renderStep5()}
+                    {step === 6 && renderStepPassword()}
+                    {step === 7 && renderStep6()}
+                    {step === 8 && renderStep7()}
+                    {step === 9 && renderStep9()}
+                    {step === 10 && renderStep10()}
+                </FadeIn>
+            </View>
 
             {step !== 0 && step !== 4 && step !== 9 && step !== 10 && (
                 <View style={styles.footer}>

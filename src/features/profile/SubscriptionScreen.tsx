@@ -7,7 +7,7 @@ import { ChevronLeft, Check, Compass as CompassIcon, Star, Zap } from 'lucide-re
 import { useNavigation } from '@react-navigation/native';
 import { subscriptionService } from '../../services/subscription';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
-import { PurchasesPackage, PurchasesOffering } from 'react-native-purchases';
+import { PurchasesOffering } from 'react-native-purchases';
 import { env } from '../../services/env';
 import { ActivityIndicator } from 'react-native';
 
