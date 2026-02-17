@@ -4,48 +4,123 @@ import { ExternalLink, Sparkles, X } from 'lucide-react-native';
 import { theme, palette } from '../theme';
 import { useNavigation } from '@react-navigation/native';
 
+import { useStore } from '../store';
+
 interface FaithAdProps {
     type?: 'event' | 'product' | 'community';
     onClose?: () => void;
 }
 
 const MOCK_ADS = [
+    // Christian Ads
     {
-        id: '1',
+        id: 'c1',
         title: 'Gather: Youth Revival 2026',
         subtitle: 'Community Event • Nairobi',
         description: 'Join thousands of seekers for a night of worship and reflection.',
         cta: 'Get Tickets',
         url: 'https://example.com/events/revival',
         image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=400',
-        type: 'event'
+        type: 'event',
+        belief: 'Christian'
     },
     {
-        id: '2',
-        title: 'The Sacred Journal (Premium Edition)',
+        id: 'c2',
+        title: 'The Sacred Journal (Biblical)',
         subtitle: 'Product • Faith Living',
-        description: 'A hand-crafted leather journal designed for your daily devotions.',
+        description: 'Keep your sermon notes and prayers in this luxury leather journal.',
         cta: 'Shop Now',
         url: 'https://example.com/shop/journal',
         image: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&q=80&w=400',
-        type: 'product'
+        type: 'product',
+        belief: 'Christian'
+    },
+    // Muslim Ads
+    {
+        id: 'm1',
+        title: 'Ramadan Night Market',
+        subtitle: 'Community Event • Dubai',
+        description: 'Experience the beauty of the community this holy season.',
+        cta: 'Explore More',
+        url: 'https://example.com/events/ramadan',
+        image: 'https://images.unsplash.com/photo-1542151733-431526549219?auto=format&fit=crop&q=80&w=400',
+        type: 'event',
+        belief: 'Muslim'
     },
     {
-        id: '3',
+        id: 'm2',
+        title: 'Modern Misbaha Set',
+        subtitle: 'Product • Al-Amin Designs',
+        description: 'Hand-crafted Tasbih beads for your daily Dhikr.',
+        cta: 'Shop Collection',
+        url: 'https://example.com/shop/tasbih',
+        image: 'https://images.unsplash.com/photo-1563223552-90d0349633e0?auto=format&fit=crop&q=80&w=400',
+        type: 'product',
+        belief: 'Muslim'
+    },
+    // Spiritual/Secular Ads
+    {
+        id: 's1',
+        title: 'Zenith Meditation Retreat',
+        subtitle: 'Experience • Sedona',
+        description: 'Three days of silence and soul alignment in the desert.',
+        cta: 'Book Now',
+        url: 'https://example.com/events/retreat',
+        image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=400',
+        type: 'event',
+        belief: 'Spiritual'
+    },
+    {
+        id: 's2',
+        title: 'Aura Alignment Stones',
+        subtitle: 'Product • Essence Shop',
+        description: 'Natural crystals to harmonize your sanctuary space.',
+        cta: 'View Store',
+        url: 'https://example.com/shop/crystals',
+        image: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=400',
+        type: 'product',
+        belief: 'Spiritual'
+    },
+    // Open/Exploring Ads
+    {
+        id: 'o1',
         title: 'Open Hearts Community',
         subtitle: 'Global Sanctuary',
         description: 'Find your peace in our newest digital meditation circle.',
         cta: 'Join Circle',
         url: 'truenorth://invite?circleId=c3',
         image: 'https://images.unsplash.com/photo-1518057111178-44a106bad636?auto=format&fit=crop&q=80&w=400',
-        type: 'community'
+        type: 'community',
+        belief: 'Open'
+    },
+    {
+        id: 'o2',
+        title: 'True North Guiding App',
+        subtitle: 'Featured Partner',
+        description: 'Unlock higher levels of spiritual intelligence today.',
+        cta: 'Upgrade',
+        url: 'truenorth://subscription',
+        image: 'https://images.unsplash.com/photo-1449156006008-251f02f928a6?auto=format&fit=crop&q=80&w=400',
+        type: 'product',
+        belief: 'Exploring'
     }
 ];
 
 export const FaithAd = ({ type, onClose }: FaithAdProps) => {
     const navigation = useNavigation<any>(); // eslint-disable-line @typescript-eslint/no-explicit-any
-    const ad = type
-        ? MOCK_ADS.find(a => a.type === type) || MOCK_ADS[0]
+    const beliefType = useStore(state => state.beliefType);
+
+    // Filter by belief and type
+    const availableAds = MOCK_ADS.filter(a => {
+        // Must match type if specified
+        if (type && a.type !== type) return false;
+
+        // Match belief or be Open
+        return a.belief === beliefType || a.belief === 'Open' || a.belief === 'Exploring' || beliefType === 'Exploring';
+    });
+
+    const ad = availableAds.length > 0
+        ? availableAds[Math.floor(Math.random() * availableAds.length)]
         : MOCK_ADS[Math.floor(Math.random() * MOCK_ADS.length)];
 
     const handlePress = () => {

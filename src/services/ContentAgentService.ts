@@ -374,9 +374,9 @@ export const contentAgentService = {
                     "Keep seeking {{theme}}, {{name}}. The questions are more important than the answers right now."
                 ],
                 Spiritual: [
-                    "{{name}}, focusing on {{theme}} today? Remember that consistency is better than intensity. What's one tiny step you can take right now?",
-                    "Your path in {{theme}} is becoming clearer, {{name}}. Trust the process and honor your boundaries today.",
-                    "{{name}}, science and stillness both agree: your growth in {{theme}} requires rest. Don't forget to unplug tonight."
+                    "{{name}}, your soul is seeking deeper alignment in {{theme}}. Trust the whispers of your intuition today.",
+                    "The universe is supporting your growth in {{theme}}, {{name}}. Stay open to the flow of energy and light.",
+                    "{{name}}, remember that your path in {{theme}} is a sacred dance between form and spirit. Honor both today."
                 ]
             };
 
@@ -599,9 +599,9 @@ export const contentAgentService = {
                     { text: "I choose to radiate peace and receive the abundance of this moment.", verse: "Sanctuary Breath" }
                 ],
                 Spiritual: [
-                    { text: "I am the architect of my own peace, building a life of intention and clarity.", verse: "Stoic Wisdom" },
-                    { text: "Growth is a quiet journey. I honor my progress and embrace the lessons of today.", verse: "Modern Philosophy" },
-                    { text: "Direction is more important than speed. I am aligned with my true values.", verse: "Mindfulness" }
+                    { text: "I am a vessel of light and love, perfectly aligned with the rhythm of the universe.", verse: "Universal Spirit" },
+                    { text: "My soul is at peace, and my heart is open to the infinite wisdom within.", verse: "Inner Light" },
+                    { text: "I radiate high-vibrational energy, attracting peace and purpose into my field.", verse: "Sacred Flow" }
                 ]
             };
 
