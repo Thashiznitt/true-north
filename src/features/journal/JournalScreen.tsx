@@ -152,6 +152,14 @@ export const JournalScreen = () => {
     // Removed hard paywall - free users can now enter but are limited by count
 
 
+    const getBeliefSubtitle = () => {
+        if (beliefType === 'Christian') return "Capture your sermon notes, prayers, and daily walk with Christ.";
+        if (beliefType === 'Muslim') return "Record your Khutbah reflections, Duas, and spiritual journey.";
+        if (beliefType === 'Spiritual') return "Document your meditation insights, mindfulness journey, and inner growth.";
+        if (beliefType === 'Exploring') return "Journal your discoveries, questions, and path to finding your truth.";
+        return "Unlock your private sanctuary to document your unique journey.";
+    };
+
     if (subscriptionTier === 'free') {
         const handleUnlock = () => {
             navigation.navigate('Subscription');
@@ -163,7 +171,7 @@ export const JournalScreen = () => {
                 onBack={() => navigation.goBack()}
                 error={false}
                 title="Sacred Journal"
-                subtitle="Unlock your private sanctuary with a premium membership."
+                subtitle={getBeliefSubtitle()}
                 buttonText="Upgrade to Access"
                 icon={LucideLock}
             />
