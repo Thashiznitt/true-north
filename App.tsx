@@ -39,11 +39,13 @@ export default function App() {
       androidApiKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE';
     } else {
       // Production / TestFlight / Release
-      iosApiKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD || process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || '';
-      androidApiKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || '';
+      // Strictly use PROD key, no fallback to test keys to avoid RevenueCat security block
+      iosApiKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD || '';
+      androidApiKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY_PROD || '';
 
       if (!iosApiKey && Platform.OS === 'ios') {
-        console.warn("RevenueCat: No iOS API Key found for production environment.");
+        // Last resort safety: if env var missing in build, use the validated production key
+        iosApiKey = 'appl_XkmqCwmuRnOaxhvHAtIczSdJbsd';
       }
     }
 
