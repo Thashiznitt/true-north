@@ -12,7 +12,9 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 export const HelpCenterScreen = () => {
     const insets = useSafeAreaInsets();
-    const navigation = useNavigation();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const navigation = useNavigation<any>();
+
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
     const toggleAccordion = (index: number) => {
@@ -79,10 +81,14 @@ export const HelpCenterScreen = () => {
                     <Mail size={24} color={palette.softGold} />
                     <Text style={styles.supportText}>Email Support</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.supportCard}>
+                <TouchableOpacity
+                    style={styles.supportCard}
+                    onPress={() => navigation.navigate('UserGuide')}
+                >
                     <Book size={24} color={palette.softGold} />
                     <Text style={styles.supportText}>User Guide</Text>
                 </TouchableOpacity>
+
             </View>
 
             <Text style={styles.version}>True North v1.0.0 (Build 42)</Text>

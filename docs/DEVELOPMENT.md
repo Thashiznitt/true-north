@@ -39,6 +39,14 @@ This project is strictly aligned with **Expo SDK 52**.
 - **React Native**: 0.76.9
 Do not upgrade these packages beyond these versions as it will break native module compatibility.
 
+## Testing Payments (Mock Mode)
+The app currently uses a mock payment service for development/testing.
+- **Stripe**: Simulates a successful card payment.
+- **M-Pesa**: Simulates an STK Push. Requires a phone number input.
+    -   Triggers a simulated "Check your phone" alert.
+    -   After a short delay, simulates a successful transaction.
+
+
 ## Seeding Test Data
 
 ### Apple Review Account

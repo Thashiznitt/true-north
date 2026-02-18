@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, LayoutAnimation, A
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { theme, palette } from '../../theme';
-import { Search, Plus, X, Bell, Calendar, Sparkles, Fingerprint, Lock as LucideLock, Heart } from 'lucide-react-native';
+import { Search, Plus, X, Bell, Calendar, Sparkles, Fingerprint, Lock as LucideLock, Heart, Tag } from 'lucide-react-native';
 import { useStore } from '../../store';
 import { FaithNews } from '../../components/FaithNews';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -11,12 +11,15 @@ import { SanctuaryLock } from '../../components/SanctuaryLock';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { FadeIn } from '../../components/FadeIn';
 
+
 interface JournalEntry {
     id: string;
     date: string;
     title: string;
     content: string;
+    tags?: string[];
 }
+
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { ImageBackground } from 'react-native';
@@ -105,8 +108,10 @@ export const JournalScreen = () => {
 
     const filteredEntries = journalEntries.filter(entry =>
         entry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        entry.content.toLowerCase().includes(searchQuery.toLowerCase())
+        entry.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (entry.tags && entry.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
     );
+
 
     const toggleSearch = () => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -119,10 +124,11 @@ export const JournalScreen = () => {
     };
 
     const getBeliefTrait = () => {
-        if (beliefType === 'Christian') return 'sermons';
+        if (beliefType === 'Catholic' || beliefType === 'Protestant' || beliefType === 'Christian') return 'sermons';
         if (beliefType === 'Muslim') return 'khutbahs';
         return 'favorite talks';
     };
+
 
     const renderEntry = ({ item, index }: { item: JournalEntry, index: number }) => {
         const delay = index * 100;
@@ -137,13 +143,26 @@ export const JournalScreen = () => {
                         onPress={() => navigation.navigate('JournalDetail', {
                             entryId: item.id,
                             entryTitle: item.title,
-                            entryContent: item.content
+                            entryContent: item.content,
+                            entryTags: item.tags
                         })}
+
                     >
                         <Text style={styles.entryDate}>{item.date}</Text>
                         <Text style={styles.entryTitle}>{item.title}</Text>
                         <Text style={styles.entryPreview} numberOfLines={2}>{item.content}</Text>
+                        {item.tags && item.tags.length > 0 && (
+                            <View style={styles.entryTags}>
+                                {item.tags.map((tag, i) => (
+                                    <View key={i} style={styles.entryTag}>
+                                        <Tag size={10} color={palette.softGold} style={{ marginRight: 4 }} />
+                                        <Text style={styles.entryTagText}>{tag}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
                     </TouchableOpacity>
+
                 </View>
             </FadeIn>
         );
@@ -153,12 +172,14 @@ export const JournalScreen = () => {
 
 
     const getBeliefSubtitle = () => {
-        if (beliefType === 'Christian') return "Capture your sermon notes, prayers, and daily walk with Christ.";
+        if (beliefType === 'Catholic') return "Capture your Mass reflections, prayers for grace, and journey of faith.";
+        if (beliefType === 'Protestant' || beliefType === 'Christian') return "Capture your sermon notes, prayers, and daily walk with Christ.";
         if (beliefType === 'Muslim') return "Record your Khutbah reflections, Duas, and spiritual journey.";
         if (beliefType === 'Spiritual') return "Document your meditation insights, mindfulness journey, and inner growth.";
         if (beliefType === 'Exploring') return "Journal your discoveries, questions, and path to finding your truth.";
         return "Unlock your private sanctuary to document your unique journey.";
     };
+
 
     if (subscriptionTier === 'free') {
         const handleUnlock = () => {
@@ -261,23 +282,60 @@ export const JournalScreen = () => {
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
                     <View style={styles.emptyState}>
-                        <Text style={styles.emptyStateText}>
-                            {searchQuery ? "No entries match your search." : "No entries yet. Start reflecting today."}
+                        <Sparkles size={48} color={palette.softGold} style={{ marginBottom: 16, opacity: 0.5 }} />
+                        <Text style={styles.emptyStateTitle}>
+                            {searchQuery ? "No entries found" : "Your Sanctuary Awaits"}
                         </Text>
+                        <Text style={styles.emptyStateText}>
+                            {searchQuery
+                                ? "No reflections match your search."
+                                : beliefType === 'Catholic'
+                                    ? "Start by sharing a reflection on today's Mass, a prayer for grace, or a moment of divine guidance."
+                                    : beliefType === 'Protestant' || beliefType === 'Christian'
+                                        ? "Record your first sermon insight, a heartfelt prayer, or a step in your walk with Christ."
+                                        : beliefType === 'Muslim'
+                                            ? "Begin by recording a reflection on the Khutbah, a sincere Dua, or a moment of spiritual clarity."
+                                            : beliefType === 'Spiritual'
+                                                ? "Share your first meditation insight, a moment of presence, or a ripple of universal wisdom."
+                                                : beliefType === 'Exploring'
+                                                    ? "Start by journaling a discovery, a question that sparks your soul, or a step on your path."
+                                                    : "Start your sacred journal today."
+                            }
+                        </Text>
+                        <TouchableOpacity
+                            style={{
+                                marginTop: 24,
+                                backgroundColor: palette.softGold,
+                                paddingHorizontal: 24,
+                                paddingVertical: 12,
+                                borderRadius: 30,
+                                flexDirection: 'row',
+                                alignItems: 'center'
+                            }}
+                            onPress={() => navigation.navigate('JournalDetail')}
+                        >
+                            <Plus size={20} color={palette.ivory} style={{ marginRight: 8 }} />
+                            <Text style={{ fontFamily: theme.typography.sansBold, color: palette.ivory, fontSize: 16 }}>
+                                New Reflection
+                            </Text>
+                        </TouchableOpacity>
                     </View>
+
                 }
+
                 ListFooterComponent={!isSubscribed ? <FaithNews type="product" /> : null}
             />
 
             <TouchableOpacity
                 style={[styles.fab, { bottom: insets.bottom + 20 }]}
                 onPress={() => {
-                    navigation.navigate('JournalDetail', { isNew: true });
+                    navigation.navigate('JournalDetail', { isNew: true, entryTags: [] });
                 }}
             >
                 <Plus size={28} color={palette.ivory} />
             </TouchableOpacity>
         </View >
+
     );
 };
 
@@ -343,6 +401,12 @@ const styles = StyleSheet.create({
         alignItems: 'center', justifyContent: 'center', shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 5
     },
-    emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: 120 },
-    emptyStateText: { fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.secondaryText },
+    emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: 100, paddingHorizontal: 40 },
+    emptyStateTitle: { fontFamily: theme.typography.serifBold, fontSize: 24, color: theme.colors.text, marginBottom: 8, textAlign: 'center' },
+    emptyStateText: { fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.secondaryText, textAlign: 'center', lineHeight: 24 },
+    entryTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 },
+    entryTag: { flexDirection: 'row', alignItems: 'center', backgroundColor: palette.softGold + '10', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+    entryTagText: { fontFamily: theme.typography.sansMedium, fontSize: 11, color: palette.softGold },
 });
+
+

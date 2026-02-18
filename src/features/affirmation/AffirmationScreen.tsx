@@ -9,8 +9,10 @@ import {
     Copy,
     Sparkles,
     X,
-    MessageSquare
+    MessageSquare,
+    BookOpen
 } from 'lucide-react-native';
+
 import { useNavigation } from '@react-navigation/native';
 import { FadeIn } from '../../components/FadeIn';
 import ViewShot from 'react-native-view-shot';
@@ -25,6 +27,8 @@ const ShareIcon = Share2;
 const CopyIcon = Copy;
 const AdviceIcon = MessageSquare;
 const CloseIcon = X;
+const GuideIcon = BookOpen;
+
 
 const BACKGROUNDS = [
     'https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=2000&auto=format&fit=crop', // Lush mountains
@@ -143,6 +147,17 @@ export const AffirmationScreen = () => {
                     source={{ uri: BACKGROUNDS[bgIdx] }}
                     style={styles.background}
                 >
+                    <FadeIn delay={100} from="top">
+                        <View style={[styles.headerOverlay, { top: insets.top + 10 }]}>
+                            <TouchableOpacity
+                                style={styles.guideButton}
+                                onPress={() => navigation.navigate('UserGuide')}
+                            >
+                                <GuideIcon color={palette.ivory} size={24} />
+                            </TouchableOpacity>
+                        </View>
+                    </FadeIn>
+
                     <View style={styles.overlay} />
 
                     <TrueNorthFlashList
@@ -240,6 +255,8 @@ export const AffirmationScreen = () => {
                 )
             }
 
+
+
             <Modal
                 visible={showAdvice}
                 transparent
@@ -327,5 +344,14 @@ const styles = StyleSheet.create({
     closeBtnText: { fontFamily: theme.typography.sansBold, fontSize: 14, color: theme.colors.background, textTransform: 'uppercase', letterSpacing: 1 },
     wallpaperOverlay: {
         position: 'absolute', bottom: 50, left: 0, right: 0, alignItems: 'center', zIndex: 100
+    },
+    headerOverlay: {
+        position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: 50
+    },
+    guideButton: {
+        width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.15)',
+        alignItems: 'center', justifyContent: 'center'
     }
 });
+
+

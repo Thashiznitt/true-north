@@ -314,6 +314,37 @@ export const CommunityScreen = () => {
                         )}
                     </View>
                 }
+                ListEmptyComponent={
+                    <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 60, paddingHorizontal: 40 }}>
+                        <Users size={48} color={theme.colors.border} />
+                        <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 18, color: theme.colors.text, marginTop: 16, textAlign: 'center' }}>
+                            {searchQuery ? "No Sanctuaries Found" : "Be the First"}
+                        </Text>
+                        <Text style={{ fontFamily: theme.typography.sans, fontSize: 15, color: theme.colors.secondaryText, textAlign: 'center', marginTop: 8, lineHeight: 22 }}>
+                            {searchQuery
+                                ? "Try adjusting your search terms or create a new circle to gather your community."
+                                : "The path is open. Create a new circle to gather your community and start a movement."}
+                        </Text>
+                        <TouchableOpacity
+                            style={{
+                                marginTop: 24,
+                                backgroundColor: palette.softGold,
+                                paddingHorizontal: 24,
+                                paddingVertical: 12,
+                                borderRadius: 30,
+                                flexDirection: 'row',
+                                alignItems: 'center'
+                            }}
+                            onPress={() => navigation.navigate('CreateCircle')}
+                        >
+                            <Plus size={20} color={palette.ivory} style={{ marginRight: 8 }} />
+                            <Text style={{ fontFamily: theme.typography.sansBold, color: palette.ivory, fontSize: 16 }}>
+                                Establish Circle
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                }
+
             />
 
             <TouchableOpacity

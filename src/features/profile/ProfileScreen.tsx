@@ -3,9 +3,13 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, TextInput, Keyb
 import { OptimizedImage } from '../../components/performance/OptimizedImage';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { theme, palette } from '../../theme';
-import { useStore, UserGoals } from '../../store';
-import { BookOpen, ChevronRight, LogOut, Bell, CreditCard, Shield, Sparkles, Camera, Heart, ShieldCheck, LucideIcon, Lock, X, Save, Target } from 'lucide-react-native';
+import { useStore, UserGoals, UserTicket } from '../../store';
+import { BookOpen, ChevronRight, LogOut, Bell, CreditCard, Shield, Sparkles, Camera, Heart, ShieldCheck, LucideIcon, Lock, X, Save, Target, QrCode, Calendar, MapPin, Check } from 'lucide-react-native';
+
+
+
 import { useNavigation } from '@react-navigation/native';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { supabase } from '../../services/supabase';
@@ -25,8 +29,10 @@ export const ProfileScreen = () => {
         profilePicture,
         logout,
         userGoals,
-        setUserGoals
+        setUserGoals,
+        userTickets
     } = useStore();
+
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -145,7 +151,12 @@ export const ProfileScreen = () => {
         </View>
     ), [editingGoals, theme]);
 
+    const renderTicketItem = React.useCallback(({ item }: { item: UserTicket }) => (
+        <TicketItem item={item} />
+    ), []);
+
     const renderProfileContent = React.useCallback(() => (
+
         <View style={{ height: 20 }} />
     ), []);
 
@@ -209,7 +220,35 @@ export const ProfileScreen = () => {
                 </View>
             </FadeIn>
 
+            <FadeIn delay={250} from="bottom">
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>My Sanctuary Tickets</Text>
+                    {userTickets.length > 0 ? (
+                        <TrueNorthFlashList
+                            horizontal
+                            data={userTickets}
+                            keyExtractor={(item) => item.id}
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.ticketList}
+                            estimatedItemSize={280}
+                            renderItem={renderTicketItem}
+                        />
+                    ) : (
+                        <TouchableOpacity
+                            style={styles.emptyTicketsCard}
+                            onPress={() => navigation.navigate('Community')}
+                        >
+                            <Calendar size={32} color={theme.colors.secondaryText} style={{ marginBottom: 8, opacity: 0.5 }} />
+                            <Text style={{ fontFamily: theme.typography.sansMedium, color: theme.colors.secondaryText, marginBottom: 4 }}>No Upcoming Events</Text>
+                            <Text style={{ fontFamily: theme.typography.sansBold, color: palette.softGold }}>Find a Sanctuary Event</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </FadeIn >
+
+
             <FadeIn delay={300} from="bottom">
+
                 <Section title="Growth Plan">
                     <MenuItem
                         icon={Target}
@@ -290,9 +329,11 @@ export const ProfileScreen = () => {
 
             <Text style={styles.versionText}>True North v1.0.0</Text>
         </>
-    ), [insets.top, profilePicture, username, subscriptionTier, beliefType, themes.length, journalEntries.length, notificationsList.length, palette.ivory, palette.softGold, navigation]);
+    ), [insets.top, profilePicture, username, subscriptionTier, beliefType, themes.length, journalEntries.length, notificationsList.length, palette.ivory, palette.softGold, navigation, userTickets, renderTicketItem]);
 
     const renderGoalsModal = () => (
+
+
         <Modal
             visible={showGoalsModal}
             animationType="slide"
@@ -346,6 +387,45 @@ export const ProfileScreen = () => {
         </View>
     );
 };
+
+const TicketItem = React.memo(({ item }: { item: UserTicket }) => (
+    <View style={styles.ticketCard}>
+        <View style={styles.ticketHeader}>
+            <Text style={styles.ticketEventTitle} numberOfLines={1}>{item.eventTitle}</Text>
+            <QrCode size={20} color={palette.softGold} />
+        </View>
+        <View style={styles.ticketInfo}>
+            <View style={styles.ticketInfoItem}>
+                <Calendar size={14} color={theme.colors.secondaryText} />
+                <Text style={styles.ticketInfoText}>{item.eventDate}</Text>
+            </View>
+            <View style={styles.ticketInfoItem}>
+                <MapPin size={14} color={theme.colors.secondaryText} />
+                <Text style={styles.ticketInfoText}>Online/Physical</Text>
+            </View>
+        </View>
+        <View style={styles.qrPlaceholder}>
+            <View style={styles.qrInner}>
+                <View style={styles.qrMockGrid}>
+                    {[...Array(9)].map((_, i) => (
+                        <View key={i} style={[styles.qrMockDot, { opacity: Math.random() > 0.3 ? 1 : 0.2 }]} />
+                    ))}
+                    <View style={styles.qrMockCenter}><QrCode size={24} color={theme.colors.text} strokeWidth={1} /></View>
+                    {[...Array(9)].map((_, i) => (
+                        <View key={i + 9} style={[styles.qrMockDot, { opacity: Math.random() > 0.3 ? 1 : 0.2 }]} />
+                    ))}
+                </View>
+                <Text style={styles.qrStatusText}>{item.status === 'used' ? 'CHECKED IN' : 'READY TO SCAN'}</Text>
+            </View>
+            {item.status === 'used' && <View style={styles.usedOverlay}><Check size={40} color={palette.white} /></View>}
+        </View>
+        <Text style={styles.ticketId}>ID: {item.id.toUpperCase()}</Text>
+    </View>
+));
+
+TicketItem.displayName = 'TicketItem';
+
+
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
@@ -445,5 +525,36 @@ const styles = StyleSheet.create({
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12
     },
     saveButtonText: { fontFamily: theme.typography.sansBold, fontSize: 16, color: palette.ivory },
-    footerSpacer: { height: 100 }
+    footerSpacer: { height: 100 },
+    ticketList: { paddingRight: theme.spacing.xl, gap: theme.spacing.md },
+    ticketCard: {
+        width: 280, backgroundColor: theme.colors.surface, borderRadius: 24, padding: 20,
+        borderWidth: 1, borderColor: theme.colors.border, shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2
+    },
+    ticketHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+    ticketEventTitle: { fontFamily: theme.typography.serifBold, fontSize: 18, color: theme.colors.text, flex: 1, marginRight: 8 },
+    ticketInfo: { marginBottom: 20 },
+    ticketInfoItem: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+    ticketInfoText: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText },
+    qrPlaceholder: {
+        height: 160, backgroundColor: '#FAF9F6', borderRadius: 16, borderStyle: 'dashed',
+        borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center', justifyContent: 'center',
+        position: 'relative', overflow: 'hidden'
+    },
+    qrInner: { alignItems: 'center' },
+    qrStatusText: { fontFamily: theme.typography.sansBold, fontSize: 10, color: theme.colors.secondaryText, marginTop: 12, letterSpacing: 1 },
+    usedOverlay: {
+        ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(76, 175, 80, 0.9)',
+        alignItems: 'center', justifyContent: 'center'
+    },
+    ticketId: { fontFamily: theme.typography.sans, fontSize: 10, color: theme.colors.secondaryText, textAlign: 'center', marginTop: 12, opacity: 0.5 },
+    emptyTicketsCard: {
+        backgroundColor: theme.colors.surface, padding: theme.spacing.xl, borderRadius: theme.borderRadius.lg,
+        borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center', borderStyle: 'dashed'
+    },
+    qrMockGrid: { width: 100, height: 100, flexDirection: 'row', flexWrap: 'wrap', gap: 4, padding: 4, justifyContent: 'center', alignItems: 'center' },
+    qrMockDot: { width: 8, height: 8, backgroundColor: theme.colors.text, borderRadius: 1 },
+    qrMockCenter: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
 });
+

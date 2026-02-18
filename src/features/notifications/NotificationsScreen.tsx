@@ -80,9 +80,15 @@ export const NotificationsScreen = () => {
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
                     <View style={styles.emptyState}>
-                        <Bell size={48} color={theme.colors.border} />
-                        <Text style={styles.emptyText}>Your sanctuary is peaceful.{'\n'}No new notifications.</Text>
+                        <Bell size={48} color={theme.colors.border} style={{ opacity: 0.5 }} />
+                        <Text style={[styles.emptyText, { fontFamily: theme.typography.sansBold, fontSize: 18, color: theme.colors.text, marginTop: 16 }]}>
+                            All Caught Up
+                        </Text>
+                        <Text style={styles.emptyText}>
+                            Your sanctuary is peaceful.{'\n'}We&apos;ll notify you when there&apos;s an update.
+                        </Text>
                     </View>
+
                 }
             />
         </View>

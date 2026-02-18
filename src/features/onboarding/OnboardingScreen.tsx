@@ -20,6 +20,10 @@ import PAYWALL_BG from '../../../assets/journal_paywall_bg.png';
 import * as Location from 'expo-location';
 import { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 import { env } from '../../services/env';
+import { COUNTRIES, COUNTRIES_DATA } from '../../data/locations';
+import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
+import { Search, MapPin, X } from 'lucide-react-native';
+import { Modal } from 'react-native';
 
 
 const THEME_ICONS: Record<string, any> = { // eslint-disable-line
@@ -30,14 +34,16 @@ const THEME_ICONS: Record<string, any> = { // eslint-disable-line
 };
 
 const THEMES = ['Strength', 'Love', 'Wisdom', 'Faith'];
-const BELIEFS = ['Christian', 'Muslim', 'Spiritual', 'Exploring'];
+const BELIEFS = ['Catholic', 'Protestant', 'Muslim', 'Spiritual', 'Exploring'];
 
 const BELIEF_META: Record<string, { icon: React.FC<any>, desc: string }> = { // eslint-disable-line
-    Christian: { icon: Heart, desc: "Personalized daily verses and spiritual guidance." },
+    Catholic: { icon: Heart, desc: "Liturgical dates, Mass reflections, and daily grace." },
+    Protestant: { icon: Star, desc: "Sermon insights, scripture focus, and daily guidance." },
     Muslim: { icon: Moon, desc: "Khutbah insights and daily alignment prompts." },
     Spiritual: { icon: Sparkles, desc: "Universal wisdom and mindfulness reflections." },
     Exploring: { icon: Compass, desc: "Discovering your own unique spiritual path." },
 };
+
 
 const TIER_BENEFITS: Record<string, string[]> = {
     free: ["1 Personal Daily Affirmation", "View Community Reflections", "Join up to 3 Local Circles"],
@@ -104,6 +110,81 @@ export const OnboardingScreen = () => {
     const [offering, setOffering] = useState<PurchasesOffering | null>(null);
     const [offeringLoading, setOfferingLoading] = useState(!env.useMockServices);
     const [isPurchasing, setIsPurchasing] = useState(false);
+
+    // Location State
+    const [locationCountry, setLocationCountry] = useState('');
+    const [locationCity, setLocationCity] = useState('');
+    const [showCountryPicker, setShowCountryPicker] = useState(false);
+    const [showCityPicker, setShowCityPicker] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredCountries = COUNTRIES.filter(c => c.toLowerCase().includes(searchQuery.toLowerCase()));
+    const filteredCities = (COUNTRIES_DATA[locationCountry] || []).filter(c => c.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const renderPickerItem = React.useCallback(({ item, type }: { item: string, type: 'country' | 'city' }) => (
+        <TouchableOpacity
+            style={styles.pickerItem}
+            onPress={() => {
+                if (type === 'country') {
+                    setLocationCountry(item);
+                    setLocationCity(''); // Reset city on country change
+                    setShowCountryPicker(false);
+                } else {
+                    setLocationCity(item);
+                    setShowCityPicker(false);
+                }
+                setSearchQuery('');
+            }}
+        >
+            <MapPin size={18} color={palette.softGold} style={{ marginRight: 12 }} />
+            <Text style={styles.pickerItemText}>{item}</Text>
+            {(type === 'country' ? locationCountry : locationCity) === item && (
+                <Check size={18} color={palette.success} />
+            )}
+        </TouchableOpacity>
+    ), [locationCountry, locationCity, setLocationCountry, setLocationCity, setShowCountryPicker, setShowCityPicker, setSearchQuery]);
+
+    const renderCountryItem = React.useCallback(({ item }: { item: string }) =>
+        renderPickerItem({ item, type: 'country' }),
+        [renderPickerItem]);
+
+    const renderCityItem = React.useCallback(({ item }: { item: string }) =>
+        renderPickerItem({ item, type: 'city' }),
+        [renderPickerItem]);
+
+    const renderLocationPickerModal = (visible: boolean, onClose: () => void, type: 'country' | 'city') => (
+        <Modal visible={visible} animationType="slide" transparent={true}>
+            <View style={styles.modalOverlay}>
+                <View style={[styles.pickerContainer, { paddingTop: insets.top }]}>
+                    <View style={styles.pickerHeader}>
+                        <TouchableOpacity onPress={onClose}>
+                            <X size={24} color={theme.colors.text} />
+                        </TouchableOpacity>
+                        <Text style={styles.pickerTitle}>Select {type === 'country' ? 'Country' : 'City'}</Text>
+                        <View style={{ width: 24 }} />
+                    </View>
+                    <View style={styles.searchBar}>
+                        <Search size={20} color={theme.colors.secondaryText} />
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Search..."
+                            placeholderTextColor={theme.colors.secondaryText}
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            autoFocus
+                        />
+                    </View>
+                    <TrueNorthFlashList
+                        data={type === 'country' ? filteredCountries : filteredCities}
+                        keyExtractor={(item: string) => item}
+                        renderItem={type === 'country' ? renderCountryItem : renderCityItem}
+                        estimatedItemSize={60}
+                        keyboardShouldPersistTaps="handled"
+                    />
+                </View>
+            </View>
+        </Modal>
+    );
 
     React.useEffect(() => {
         if (!env.useMockServices) {
@@ -184,6 +265,7 @@ export const OnboardingScreen = () => {
             setStep(8);
 
         } else if (step === 8) {
+            // This is the Security Step (Biometrics/PIN)
             if (setupBiometrics && !pin) {
                 Alert.alert("PIN Required", "Please set a backup PIN for security.");
                 return;
@@ -194,13 +276,15 @@ export const OnboardingScreen = () => {
             }
             setStep(9);
         } else if (step === 9) {
+            // Location Step
             setStep(10);
         } else if (step === 10) {
-            // Subscription handled by buttons
+            // This will be the Paywall
         } else {
             setStep(step + 1);
         }
     };
+
 
     const finishOnboarding = async () => {
         setLoading(true);
@@ -249,9 +333,13 @@ export const OnboardingScreen = () => {
                         astrology_enabled: useStore.getState().astrologyEnabled,
                         role: 'member',
                         subscription_tier: tier,
+                        belief_type: beliefType,
+                        liturgical_calendar_enabled: beliefType === 'Catholic' || beliefType === 'Protestant',
                         created_at: new Date().toISOString(),
                         updated_at: new Date().toISOString(),
                     });
+
+
 
                 if (userError) console.error("Error creating user profile:", userError);
 
@@ -285,7 +373,10 @@ export const OnboardingScreen = () => {
                         astrology_enabled: useStore.getState().astrologyEnabled,
                         biometrics_enabled: setupBiometrics,
                         security_pin: pin,
+                        liturgical_calendar_enabled: beliefType === 'Catholic' || beliefType === 'Protestant',
                         notifications_enabled: true
+
+
                     });
 
                 if (prefError) console.error("Error creating preferences:", prefError);
@@ -836,42 +927,71 @@ export const OnboardingScreen = () => {
         </ScrollView>
     );
 
-    const renderStep9 = () => (
-        <StepContainer>
-            <FadeIn delay={100} from="bottom">
-                {renderHeader("Local Communities", "Find fellow seekers in your area for deeper connection.")}
-            </FadeIn>
+    const renderStep9 = () => {
+        // We'll use local state for the picker (similar to CreateCircle, but maybe simpler here)
+        // Since we are inside a component, we can add state or just use a simple modal approach
+        // Re-using the logic from CreateCircle for consistency.
 
-            <FadeIn delay={300} from="bottom">
-                <View style={styles.locationCard}>
-                    <View style={styles.locationIconContainer}>
-                        <Compass size={40} color={palette.softGold} />
+        // We need to import COUNTRIES and COUNTRIES_DATA but they are not imported yet.
+        // We will add the import at the top of the file in a separate edit, or just hardcode/copy for NOW to ensure it works,
+        // but best practice is to import. 
+        // For this edit, I will assume I can't easily add the import without a huge replacement.
+        // So I will use the fully qualified name if possible, or just re-define the data access here if I can't add imports easily.
+        // Actually, I should add the import first. 
+        // BUT, I can use a require or just simple logic if I don't want to touch imports.
+        // Let's implement the UI structure first.
+
+        return (
+            <StepContainer>
+                <FadeIn delay={100} from="bottom">
+                    {renderHeader("Your Location", "Connect with a sanctuary near you.")}
+                </FadeIn>
+
+                <FadeIn delay={300} from="bottom">
+                    <View style={{ gap: 20 }}>
+                        <View>
+                            <Text style={styles.label}>Country</Text>
+                            <TouchableOpacity
+                                style={styles.inputDropdown}
+                                onPress={() => {
+                                    setShowCountryPicker(true);
+                                }}
+                            >
+                                <Text style={[styles.inputText, !locationCountry && { color: theme.colors.secondaryText }]}>
+                                    {locationCountry || 'Select Country'}
+                                </Text>
+                                <ChevronLeft size={18} color={theme.colors.secondaryText} style={{ transform: [{ rotate: '-90deg' }] }} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View>
+                            <Text style={styles.label}>City</Text>
+                            <TouchableOpacity
+                                style={[styles.inputDropdown, !locationCountry && { opacity: 0.5 }]}
+                                onPress={() => {
+                                    if (!locationCountry) return;
+                                    setShowCityPicker(true);
+                                }}
+                            >
+                                <Text style={[styles.inputText, !locationCity && { color: theme.colors.secondaryText }]}>
+                                    {locationCity || 'Select City'}
+                                </Text>
+                                <ChevronLeft size={18} color={theme.colors.secondaryText} style={{ transform: [{ rotate: '-90deg' }] }} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity
+                            style={[styles.nextButton, (!locationCountry || !locationCity) && { opacity: 0.5, backgroundColor: theme.colors.border }]}
+                            onPress={nextStep}
+                            disabled={!locationCountry || !locationCity}
+                        >
+                            <Text style={styles.nextButtonText}>Continue</Text>
+                        </TouchableOpacity>
                     </View>
-                    <Text style={styles.locationTitle}>Find Your Community</Text>
-                    <Text style={styles.locationDesc}>
-                        Granting location access helps us prioritize local groups near you. Your exact position is never shared.
-                    </Text>
-
-                    <TouchableOpacity
-                        style={styles.locationButton}
-                        onPress={async () => {
-                            const { status } = await Location.requestForegroundPermissionsAsync();
-                            if (status !== 'granted') {
-                                Alert.alert("Permission Needed", "Location access helps us find nearby communities. You can enable this later in settings.");
-                            }
-                            nextStep();
-                        }}
-                    >
-                        <Text style={styles.locationButtonText}>Enable Location Access</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.skipButton} onPress={nextStep}>
-                        <Text style={styles.skipButtonText}>Maybe Later</Text>
-                    </TouchableOpacity>
-                </View>
-            </FadeIn>
-        </StepContainer>
-    );
+                </FadeIn>
+            </StepContainer>
+        );
+    };
 
     const renderStep10 = () => {
         const DEFAULT_TIERS = [
@@ -881,185 +1001,177 @@ export const OnboardingScreen = () => {
         ];
 
         return (
-            <View style={StyleSheet.absoluteFill}>
-                <ImageBackground
-                    source={PAYWALL_BG}
-                    style={[StyleSheet.absoluteFill, { transform: [{ scale: 1.2 }] }]}
-                    resizeMode="cover"
-                />
-                <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']}
-                    style={StyleSheet.absoluteFill}
-                />
-
-                <View style={{ position: 'absolute', top: insets.top, left: theme.spacing.xl, zIndex: 10 }}>
-                    <TouchableOpacity onPress={prevStep} style={{ width: 40, height: 40, justifyContent: 'center' }}>
-                        <ChevronLeft size={28} color={palette.ivory} />
-                    </TouchableOpacity>
-                </View>
-
-                <StepContainer>
-                    <View style={{ flex: 1, justifyContent: 'center' }}>
-                        <View style={{ alignItems: 'center', marginBottom: 32 }}>
-                            <Sparkles size={48} color={palette.softGold} style={{ marginBottom: 16 }} />
-                            <Text style={[styles.title, { color: palette.ivory, textAlign: 'center', fontSize: 32 }]}>Unlock Full Potential</Text>
-                            <Text style={[styles.subtitle, { color: palette.ivory, opacity: 0.9, textAlign: 'center', maxWidth: '90%' }]}>
-                                Choose the plan that fits your journey.
-                            </Text>
-                        </View>
-
-                        <View style={{ gap: 12, marginBottom: 32 }}>
-                            {offeringLoading ? (
-                                <ActivityIndicator color={palette.softGold} size="large" />
-                            ) : offering ? (
-                                offering.availablePackages.map((pkg: any) => {
-                                    const tierId = pkg.packageType.toLowerCase().includes('annual') ? 'compass' :
-                                        pkg.packageType.toLowerCase().includes('monthly') ? 'true_north' : 'zenith';
-                                    const active = tier === tierId;
-                                    const product = pkg.product || pkg.storeProduct;
-
-                                    return (
-                                        <TouchableOpacity
-                                            key={pkg.identifier}
-                                            style={{
-                                                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                                                padding: 20, borderRadius: 20,
-                                                backgroundColor: active ? palette.ivory : 'rgba(255,255,255,0.1)',
-                                                borderWidth: 1.5, borderColor: active ? palette.ivory : 'rgba(255,255,255,0.2)',
-                                                marginBottom: 8
-                                            }}
-                                            onPress={() => setTier(tierId)}
-                                        >
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                                                <View style={{
-                                                    width: 24, height: 24, borderRadius: 12,
-                                                    borderWidth: 2, borderColor: active ? theme.colors.text : 'rgba(255,255,255,0.5)',
-                                                    alignItems: 'center', justifyContent: 'center'
-                                                }}>
-                                                    {active && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: theme.colors.text }} />}
-                                                </View>
-                                                <View style={{ flex: 1 }}>
-                                                    <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 18, color: active ? theme.colors.text : palette.ivory }}>{product.title}</Text>
-                                                    <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 12, color: active ? palette.softGold : palette.softGold, marginTop: 2 }}>{product.description}</Text>
-                                                </View>
-                                            </View>
-                                            <View style={{ alignItems: 'flex-end' }}>
-                                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 20, color: active ? theme.colors.text : palette.ivory }}>
-                                                    {product.priceString}
-                                                </Text>
-                                            </View>
-                                        </TouchableOpacity>
-                                    );
-                                })
-                            ) : (
-                                DEFAULT_TIERS.map((t) => {
-                                    const active = tier === t.id;
-                                    return (
-                                        <TouchableOpacity
-                                            key={t.id}
-                                            style={{
-                                                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                                                padding: 20, borderRadius: 20,
-                                                backgroundColor: active ? palette.ivory : 'rgba(255,255,255,0.1)',
-                                                borderWidth: 1.5, borderColor: active ? palette.ivory : 'rgba(255,255,255,0.2)',
-                                                marginBottom: 4
-                                            }}
-                                            onPress={() => setTier(t.id as any)}
-                                        >
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                                                <View style={{
-                                                    width: 24, height: 24, borderRadius: 12,
-                                                    borderWidth: 2, borderColor: active ? theme.colors.text : 'rgba(255,255,255,0.5)',
-                                                    alignItems: 'center', justifyContent: 'center'
-                                                }}>
-                                                    {active && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: theme.colors.text }} />}
-                                                </View>
-                                                <View style={{ flex: 1 }}>
-                                                    <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 18, color: active ? theme.colors.text : palette.ivory }}>{t.label}</Text>
-                                                    {t.save && <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 12, color: active ? palette.softGold : palette.softGold, marginTop: 2 }}>{t.save}</Text>}
-                                                </View>
-                                            </View>
-                                            <View style={{ alignItems: 'flex-end' }}>
-                                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 20, color: active ? theme.colors.text : palette.ivory }}>
-                                                    {t.price} <Text style={{ fontSize: 14, fontFamily: theme.typography.sans, opacity: 0.7 }}>{t.sub}</Text>
-                                                </Text>
-                                            </View>
-                                        </TouchableOpacity>
-                                    );
-                                })
-                            )}
-
-                            {/* Free Tier Card */}
-                            <TouchableOpacity
-                                key="free-tier"
-                                style={{
-                                    padding: 16, borderRadius: 16,
-                                    backgroundColor: tier === 'free' ? palette.ivory : 'rgba(255,255,255,0.05)',
-                                    borderWidth: 1, borderColor: tier === 'free' ? palette.ivory : 'rgba(255,255,255,0.1)',
-                                    marginTop: 8
-                                }}
-                                onPress={() => setTier('free')}
-                            >
-                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: tier === 'free' ? 12 : 0 }}>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                        <View style={{
-                                            width: 20, height: 20, borderRadius: 10,
-                                            borderWidth: 2, borderColor: tier === 'free' ? theme.colors.text : 'rgba(255,255,255,0.5)',
-                                            alignItems: 'center', justifyContent: 'center'
-                                        }}>
-                                            {tier === 'free' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.text }} />}
-                                        </View>
-                                        <View>
-                                            <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 16, color: tier === 'free' ? theme.colors.text : palette.ivory }}>Free Plan</Text>
-                                            {!tier || tier !== 'free' && <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: palette.softGold, opacity: 0.7 }}>Daily Personal Affirmation</Text>}
-                                        </View>
-                                    </View>
-                                    <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 18, color: tier === 'free' ? theme.colors.text : palette.ivory }}>
-                                        Free
-                                    </Text>
-                                </View>
-
-                                {tier === 'free' && (
-                                    <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.1)', paddingTop: 12, gap: 8 }}>
-                                        {TIER_BENEFITS.free.map((b, i) => (
-                                            <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                                <Check size={14} color={palette.softGold} />
-                                                <Text style={{ fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.text, opacity: 0.8 }}>{b}</Text>
-                                            </View>
-                                        ))}
-                                    </View>
-                                )}
-                            </TouchableOpacity>
-                        </View>
-
-                        <TouchableOpacity
-                            style={[styles.subscribeButton, { backgroundColor: palette.softGold, height: 60, marginBottom: 20 }, (offeringLoading || isPurchasing) && { opacity: 0.7 }]}
-                            onPress={handleSubscribe}
-                            disabled={offeringLoading || isPurchasing}
-                        >
-                            {isPurchasing ? (
-                                <ActivityIndicator color={palette.ivory} />
-                            ) : (
-                                <Text style={[styles.subscribeButtonText, { fontSize: 18 }]}>
-                                    {tier === 'free'
-                                        ? "Continue to App"
-                                        : offering
-                                            ? "Subscribe Now"
-                                            : `Subscribe ${DEFAULT_TIERS.find(t => t.id === tier)?.price}`
-                                    }
-                                </Text>
-                            )}
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={{ padding: 12, alignItems: 'center' }} onPress={finishOnboarding} disabled={isPurchasing}>
-                            <Text style={{ fontFamily: theme.typography.sansMedium, fontSize: 16, color: palette.ivory, textDecorationLine: 'underline' }}>Maybe Later (Continue Free)</Text>
-                        </TouchableOpacity>
-
-                        <Text style={[styles.disclaimerText, { color: palette.ivory, opacity: 0.5, marginTop: 10 }]}>
-                            No commitment. Cancel anytime in settings.
+            <View style={{ flex: 1 }}>
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingBottom: 120 }}
+                >
+                    <View style={{ alignItems: 'center', marginBottom: 32, marginTop: 40 }}>
+                        <Sparkles size={48} color={palette.softGold} style={{ marginBottom: 16 }} />
+                        <Text style={[styles.title, { color: palette.ivory, textAlign: 'center', fontSize: 32 }]}>Unlock Full Potential</Text>
+                        <Text style={[styles.subtitle, { color: palette.ivory, opacity: 0.9, textAlign: 'center', maxWidth: '90%' }]}>
+                            Choose the plan that fits your journey.
                         </Text>
                     </View>
-                </StepContainer>
+
+                    <View style={{ gap: 16 }}>
+                        {offeringLoading ? (
+                            <ActivityIndicator color={palette.softGold} size="large" />
+                        ) : offering ? (
+                            offering.availablePackages.map((pkg: any) => {
+                                const tierId = pkg.packageType.toLowerCase().includes('annual') ? 'compass' :
+                                    pkg.packageType.toLowerCase().includes('monthly') ? 'true_north' : 'zenith';
+                                const active = tier === tierId;
+                                const product = pkg.product || pkg.storeProduct;
+                                const benefits = TIER_BENEFITS[tierId as keyof typeof TIER_BENEFITS] || [];
+
+                                return (
+                                    <TouchableOpacity
+                                        key={pkg.identifier}
+                                        style={{
+                                            padding: 20, borderRadius: 24,
+                                            backgroundColor: active ? palette.white : 'rgba(255,255,255,0.08)',
+                                            borderWidth: 2, borderColor: active ? palette.softGold : 'rgba(255,255,255,0.1)',
+                                        }}
+                                        onPress={() => setTier(tierId)}
+                                    >
+                                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                                <View style={{
+                                                    width: 24, height: 24, borderRadius: 12,
+                                                    borderWidth: 2, borderColor: active ? palette.softGold : 'rgba(255,255,255,0.5)',
+                                                    alignItems: 'center', justifyContent: 'center'
+                                                }}>
+                                                    {active && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: palette.softGold }} />}
+                                                </View>
+                                                <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 20, color: active ? theme.colors.text : palette.ivory }}>{product.title}</Text>
+                                            </View>
+                                            <View style={{ alignItems: 'flex-end' }}>
+                                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 22, color: active ? theme.colors.text : palette.ivory }}>{product.priceString}</Text>
+                                                <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: active ? theme.colors.secondaryText : palette.softGold, opacity: 0.8 }}>/ month</Text>
+                                            </View>
+                                        </View>
+
+                                        <View style={{ gap: 8, marginTop: 8 }}>
+                                            {benefits.slice(0, 3).map((b, i) => (
+                                                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                                    <Check size={14} color={active ? palette.softGold : 'rgba(255,255,255,0.6)'} />
+                                                    <Text style={{ fontFamily: theme.typography.sans, fontSize: 13, color: active ? theme.colors.secondaryText : palette.ivory, opacity: 0.9 }}>{b}</Text>
+                                                </View>
+                                            ))}
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            })
+                        ) : (
+                            DEFAULT_TIERS.map((t) => {
+                                const active = tier === t.id;
+                                const benefits = TIER_BENEFITS[t.id as keyof typeof TIER_BENEFITS] || [];
+                                return (
+                                    <TouchableOpacity
+                                        key={t.id}
+                                        style={{
+                                            padding: 20, borderRadius: 24,
+                                            backgroundColor: active ? palette.white : 'rgba(255,255,255,0.08)',
+                                            borderWidth: 2, borderColor: active ? palette.softGold : 'rgba(255,255,255,0.1)',
+                                        }}
+                                        onPress={() => setTier(t.id as any)}
+                                    >
+                                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                                <View style={{
+                                                    width: 24, height: 24, borderRadius: 12,
+                                                    borderWidth: 2, borderColor: active ? palette.softGold : 'rgba(255,255,255,0.5)',
+                                                    alignItems: 'center', justifyContent: 'center'
+                                                }}>
+                                                    {active && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: palette.softGold }} />}
+                                                </View>
+                                                <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 20, color: active ? theme.colors.text : palette.ivory }}>{t.label}</Text>
+                                            </View>
+                                            <View style={{ alignItems: 'flex-end' }}>
+                                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 22, color: active ? theme.colors.text : palette.ivory }}>{t.price}</Text>
+                                                <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: active ? theme.colors.secondaryText : palette.softGold, opacity: 0.8 }}>{t.sub}</Text>
+                                            </View>
+                                        </View>
+                                        <View style={{ gap: 8, marginTop: 8 }}>
+                                            {benefits.slice(0, 3).map((b, i) => (
+                                                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                                    <Check size={14} color={active ? palette.softGold : 'rgba(255,255,255,0.6)'} />
+                                                    <Text style={{ fontFamily: theme.typography.sans, fontSize: 13, color: active ? theme.colors.secondaryText : palette.ivory, opacity: 0.9 }}>{b}</Text>
+                                                </View>
+                                            ))}
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            })
+                        )}
+
+                        {/* Free Tier Card */}
+                        <TouchableOpacity
+                            key="free-tier"
+                            style={{
+                                padding: 20, borderRadius: 24,
+                                backgroundColor: tier === 'free' ? palette.white : 'rgba(255,255,255,0.08)',
+                                borderWidth: 2, borderColor: tier === 'free' ? palette.softGold : 'rgba(255,255,255,0.1)',
+                            }}
+                            onPress={() => setTier('free')}
+                        >
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                    <View style={{
+                                        width: 24, height: 24, borderRadius: 12,
+                                        borderWidth: 2, borderColor: tier === 'free' ? palette.softGold : 'rgba(255,255,255,0.5)',
+                                        alignItems: 'center', justifyContent: 'center'
+                                    }}>
+                                        {tier === 'free' && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: palette.softGold }} />}
+                                    </View>
+                                    <View>
+                                        <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 20, color: tier === 'free' ? theme.colors.text : palette.ivory }}>Free Plan</Text>
+                                        <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: tier === 'free' ? theme.colors.secondaryText : palette.softGold, opacity: 0.8 }}>Basic Experience</Text>
+                                    </View>
+                                </View>
+                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 22, color: tier === 'free' ? theme.colors.text : palette.ivory }}>Free</Text>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+
+                    <TouchableOpacity style={{ paddingVertical: 24, alignItems: 'center' }} onPress={finishOnboarding} disabled={isPurchasing}>
+                        <Text style={{ fontFamily: theme.typography.sansMedium, fontSize: 15, color: palette.ivory, opacity: 0.7, textDecorationLine: 'underline' }}>Maybe Later (Continue Free)</Text>
+                    </TouchableOpacity>
+
+                    <Text style={[styles.disclaimerText, { color: palette.ivory, opacity: 0.4, textAlign: 'center', marginBottom: 40 }]}>
+                        No commitment. Cancel anytime in settings.
+                    </Text>
+                </ScrollView>
+
+                {/* ALWAYS FLOATING BUTTON */}
+                <View style={{
+                    position: 'absolute', bottom: 30, left: 0, right: 0,
+                    paddingHorizontal: 20,
+                }}>
+                    <TouchableOpacity
+                        style={[
+                            styles.subscribeButton,
+                            { backgroundColor: palette.softGold, height: 64, borderRadius: 32 },
+                            (offeringLoading || isPurchasing) && { opacity: 0.7 }
+                        ]}
+                        onPress={handleSubscribe}
+                        disabled={offeringLoading || isPurchasing}
+                    >
+                        {isPurchasing ? (
+                            <ActivityIndicator color={palette.ivory} />
+                        ) : (
+                            <Text style={[styles.subscribeButtonText, { fontSize: 18, fontFamily: theme.typography.sansBold }]}>
+                                {tier === 'free'
+                                    ? "Continue to App"
+                                    : offering
+                                        ? "Subscribe Now"
+                                        : `Subscribe ${DEFAULT_TIERS.find(t => t.id === tier)?.price}`
+                                }
+                            </Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
             </View>
         );
     };
@@ -1068,9 +1180,9 @@ export const OnboardingScreen = () => {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={[styles.container, step !== 0 && step !== 4 && step !== 10 && { paddingTop: insets.top + 20, paddingBottom: insets.bottom }]}
+            style={[styles.container, step !== 0 && step !== 4 && step !== 11 && { paddingTop: insets.top + 20, paddingBottom: insets.bottom }]}
         >
-            {step !== 0 && step !== 4 && step !== 9 && step !== 10 && (
+            {step !== 0 && step !== 4 && step !== 10 && step !== 11 && (
                 <View style={styles.nav}>
                     {step > 0 && !loading && (
                         <TouchableOpacity onPress={prevStep}>
@@ -1093,10 +1205,11 @@ export const OnboardingScreen = () => {
                     {step === 8 && renderStep7()}
                     {step === 9 && renderStep9()}
                     {step === 10 && renderStep10()}
+                    {step === 11 && renderStep10()}
                 </FadeIn>
             </View>
 
-            {step !== 0 && step !== 4 && step !== 9 && step !== 10 && (
+            {step !== 0 && step !== 4 && step !== 10 && step !== 11 && (
                 <View style={styles.footer}>
                     <TouchableOpacity
                         style={[
@@ -1253,31 +1366,32 @@ const styles = StyleSheet.create({
         marginBottom: theme.spacing.md
     },
     subscribeButtonText: { fontFamily: theme.typography.sansBold, fontSize: 18, color: palette.ivory },
-    skipButton: { paddingVertical: 12 },
-    skipButtonText: { fontFamily: theme.typography.sansMedium, fontSize: 15, color: theme.colors.secondaryText },
-    locationCard: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: 24,
-        padding: theme.spacing.xl,
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        marginTop: theme.spacing.md,
-        alignItems: 'center',
-    },
-    locationIconContainer: {
-        width: 80, height: 80, borderRadius: 40, backgroundColor: palette.softGold + '15',
-        alignItems: 'center', justifyContent: 'center', marginBottom: theme.spacing.xl
-    },
-    locationTitle: { fontFamily: theme.typography.serifBold, fontSize: 24, color: theme.colors.text, marginBottom: theme.spacing.md },
-    locationDesc: { fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.secondaryText, textAlign: 'center', lineHeight: 24, marginBottom: theme.spacing.xxl },
-    locationButton: {
-        backgroundColor: theme.colors.text,
-        width: '100%',
-        paddingVertical: 18,
-        borderRadius: theme.borderRadius.full,
-        alignItems: 'center',
-        marginBottom: theme.spacing.md
-    },
-    locationButtonText: { fontFamily: theme.typography.sansBold, fontSize: 17, color: palette.ivory },
     disclaimerText: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText, marginTop: theme.spacing.lg, textAlign: 'center', opacity: 0.7 },
+
+    // Location Picker Styles
+    inputDropdown: {
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.md,
+        padding: theme.spacing.lg, borderWidth: 1, borderColor: theme.colors.border,
+        height: 56
+    },
+    inputText: { fontFamily: theme.typography.sansMedium, fontSize: 16, color: theme.colors.text },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+    pickerContainer: {
+        backgroundColor: theme.colors.background, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+        height: '80%', padding: theme.spacing.xl
+    },
+    pickerHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.lg },
+    pickerTitle: { fontFamily: theme.typography.serifBold, fontSize: 20, color: theme.colors.text },
+    searchBar: {
+        flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface,
+        borderRadius: 12, paddingHorizontal: 12, height: 48, marginBottom: 16,
+        borderWidth: 1, borderColor: theme.colors.border
+    },
+    searchInput: { flex: 1, marginLeft: 8, fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.text },
+    pickerItem: {
+        flexDirection: 'row', alignItems: 'center', paddingVertical: 16,
+        borderBottomWidth: 1, borderBottomColor: theme.colors.border
+    },
+    pickerItemText: { fontFamily: theme.typography.sansMedium, fontSize: 16, color: theme.colors.text, flex: 1 },
 });

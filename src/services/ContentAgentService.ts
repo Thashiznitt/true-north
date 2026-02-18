@@ -29,6 +29,13 @@ const GHOST_USERS: Record<BeliefType, string[]> = {
         'Mary W.', 'Peter J.', 'Sarah N.', 'John D.', 'Grace M.', 'Isaac K.', 'Hannah R.', 'Paul S.', 'Lydia B.', 'Mark O.',
         'Ruth A.', 'Apostle T.', 'Sister Martha', 'Brother Jude', 'Faith E.', 'Hope L.', 'Gabriel V.', 'Noel C.', 'Esther P.', 'David S.'
     ],
+    Catholic: [
+        'Maria S.', 'Francis P.', 'Theresa K.', 'John Paul.', 'Bernadette L.', 'Ignatius R.', 'Clare B.', 'Anthony M.', 'Catherine D.', 'Joseph W.'
+    ],
+    Protestant: [
+        'Sarah J.', 'David M.', 'Rachel L.', 'Caleb R.', 'Hannah B.', 'Joshua K.', 'Grace E.', 'Daniel T.', 'Esther S.', 'Micah N.'
+    ],
+
     Muslim: [
         'Amina Z.', 'Omar H.', 'Fatima S.', 'Yusuf A.', 'Zaynab K.', 'Idris M.', 'Mariam B.', 'Bilal R.', 'Safiya T.', 'Hassan L.',
         'Khadija F.', 'Ahmed Q.', 'Layla J.', 'Hamza N.', 'Sumaya B.', 'Rashid G.', 'Zubair K.', 'Nora Y.', 'Saeed M.', 'Aliyah W.'
@@ -71,6 +78,16 @@ const REFLECTION_TEMPLATES: Record<BeliefType, Record<string, string[]>> = {
             "Our purpose isn't found in what we do, but in whose we are. Grounding myself in that truth today.",
             "Light your lamp and let it shine. What's one way you're serving others this week?"
         ]
+    },
+    Catholic: {
+        Strength: ["Drawing strength from the sacraments today.", "St. Michael protect us in battle."],
+        Peace: ["Peace be with you. Finding solace in the Rosary.", "Resting in His sacred heart."],
+        Purpose: ["Discerning my vocation with patience.", "Serving the least of these is our highest calling."]
+    },
+    Protestant: {
+        Strength: ["Sola Fide - faith alone sustains me.", "Standing on the promises of God."],
+        Peace: ["It is well with my soul.", "In Christ alone my hope is found."],
+        Purpose: ["Living out the Great Commission in daily life.", "Called to be salt and light."]
     },
     Muslim: {
         Strength: [
@@ -369,7 +386,10 @@ const constructSystemPrompt = async (belief: BeliefType, context: string, tier: 
         Secular: "Use mindful, ethical, and philosophical language grounded in human experience.",
         Spiritual: "Use mindful, ethical, and philosophical language grounded in human experience.",
         Exploring: "Use universalist, open-ended language focused on light, energy, and truth.",
-        Open: "Use inclusive, heart-centered language applicable to all spiritual seekers."
+
+        Open: "Use inclusive, heart-centered language applicable to all spiritual seekers.",
+        Catholic: "Use sacramental language, references to saints, and focus on tradition and community.",
+        Protestant: "Use scripture-centric language, focus on grace, personal relationship with Jesus, and evangelism."
     };
 
 
@@ -497,6 +517,16 @@ export const contentAgentService = {
                     "{{name}}, your soul is seeking deeper alignment in {{theme}}. Trust the whispers of your intuition today.",
                     "The universe is supporting your growth in {{theme}}, {{name}}. Stay open to the flow of energy and light.",
                     "{{name}}, remember that your path in {{theme}} is a sacred dance between form and spirit. Honor both today."
+                ],
+                Catholic: [
+                    "{{name}}, may the grace of this day guide you in {{theme}}. Lean on the communion of saints.",
+                    "In your focus on {{theme}}, {{name}}, remember the sacraments are a source of constant renewal.",
+                    "{{name}}, let the peace of Christ rule in your heart as you navigate {{theme}} today."
+                ],
+                Protestant: [
+                    "{{name}}, stand firm in faith regarding {{theme}}. His word is a lamp to your feet.",
+                    "{{name}}, trusting that He who began a good work in you concerning {{theme}} will carry it to completion.",
+                    "Grace upon grace for you today, {{name}}, as you walk in {{theme}}."
                 ]
             };
 
@@ -722,6 +752,16 @@ export const contentAgentService = {
                     { text: "I am a vessel of light and love, perfectly aligned with the rhythm of the universe.", verse: "Universal Spirit" },
                     { text: "My soul is at peace, and my heart is open to the infinite wisdom within.", verse: "Inner Light" },
                     { text: "I radiate high-vibrational energy, attracting peace and purpose into my field.", verse: "Sacred Flow" }
+                ],
+                Catholic: [
+                    { text: "I am a temple of the Holy Spirit, called to holiness and love.", verse: "1 Cor 6:19" },
+                    { text: "My soul magnifies the Lord, and my spirit rejoices in God my Savior.", verse: "Luke 1:46" },
+                    { text: "I act with justice, love tenderly, and walk humbly with my God.", verse: "Micah 6:8" }
+                ],
+                Protestant: [
+                    { text: "I am saved by grace through faith, and created for good works.", verse: "Eph 2:8-10" },
+                    { text: "I can do all things through Christ who strengthens me.", verse: "Phil 4:13" },
+                    { text: "I trust in the Lord with all my heart and lean not on my own understanding.", verse: "Prov 3:5" }
                 ]
             };
 

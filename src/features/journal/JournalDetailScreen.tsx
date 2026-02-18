@@ -3,20 +3,24 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingVi
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { ChevronLeft, Share2, Sparkles, Tag, X } from 'lucide-react-native';
+import { ChevronLeft, Share2, Sparkles, Tag, X, Check } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useStore } from '../../store';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { contentAgentService } from '../../services/ContentAgentService';
 import { SanctuaryLock } from '../../components/SanctuaryLock';
-import { Check } from 'lucide-react-native';
+
+
+
 
 interface JournalRouteParams {
     entryId?: string;
     entryTitle?: string;
     entryContent?: string;
+    entryTags?: string[];
     initialContent?: string;
 }
+
 
 const renderItem = () => null;
 
@@ -24,11 +28,13 @@ export const JournalDetailScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<any>(); // eslint-disable-line @typescript-eslint/no-explicit-any
     const route = useRoute();
-    const { entryId, entryTitle, entryContent, initialContent } = (route.params as JournalRouteParams) || {};
+    const { entryId, entryTitle, entryContent, entryTags, initialContent } = (route.params as JournalRouteParams) || {};
+
 
     const [title, setTitle] = useState(entryTitle || '');
     const [content, setContent] = useState(entryContent || initialContent || '');
-    const [tags, setTags] = useState<string[]>([]);
+    const [tags, setTags] = useState<string[]>(entryTags || []);
+
     const [currentTag, setCurrentTag] = useState('');
 
     const beliefType = useStore((state) => state.beliefType);
@@ -137,6 +143,7 @@ export const JournalDetailScreen = () => {
             await Share.share({
                 message: `${title}\n\n${content}\n\n— My True North Reflection`,
             });
+
         } catch (error) {
             console.error(error);
         }

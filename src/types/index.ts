@@ -1,1 +1,1 @@
-export type BeliefType = 'Christian' | 'Muslim' | 'Spiritual' | 'Secular' | 'Exploring' | 'Open';
+export type BeliefType = 'Catholic' | 'Protestant' | 'Christian' | 'Muslim' | 'Spiritual' | 'Secular' | 'Exploring' | 'Open';

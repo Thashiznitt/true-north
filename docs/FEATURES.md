@@ -24,7 +24,17 @@ For non-subscribers, the app serves contextual, faith-friendly ads.
 The app uses automated checks to prevent sharing of sensitive information (like phone numbers or payment requests) in public circles, protecting the community from fraud.
 
 ## 6. Event Management
-Community leaders can create events (online or in-person). Members can RSVP to these events.
+Community leaders can create events (online or in-person).
+-   **Ticketing**: Users can purchase tickets using Card (Stripe) or M-Pesa (STK Push).
+-   **Validation**: Event organizers can scan ticket QR codes to validate attendees.
+-   **Redemption**: Successful scans trigger a "Welcome" pop-up and notification for the attendee.
+
+## 9. User Guide & Support
+A comprehensive Help Center to guide users through the app.
+-   **Searchable Guide**: Users can search for topics like "How to journal" or "Subscription details".
+-   **Deep Links**: Direct navigation from the guide to specific features.
+-   **Accessible**: Available from the Profile and via a quick-access icon on the Affirmation screen.
+
 
 ## 7. Superadmin Dashboard
 A hidden administrative portal for managing the platform.

@@ -48,3 +48,9 @@ When confident in the beta build:
 3.  Fill out release notes and app information.
 4.  **Credentials**: If your app requires login, provide the **Apple Review Test Account** credentials you seeded (`apple-review@truenorth.app`).
 5.  Submit for Review.
+## 6. Physical Event Compliance (Guideline 3.1.3(e))
+The True North app sells tickets to **physical, real-world events** (Sanctuary gatherings, church services). 
+- **Apple Guideline 3.1.3(e)** allows (and requires) using external payment methods for services consumed outside the app.
+- We have implemented direct payments via **M-Pesa** and **Credit Card** (PSP) for these ticketing services.
+- This is distinct from digital products (like "Growth Plan" subscriptions) which correctly use Apple's In-App Purchase system.
+- **Reviewer Note**: If asked, clarify that "Ticketing" is for physical attendance at venues provided in the event details.

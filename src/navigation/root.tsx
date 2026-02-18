@@ -29,9 +29,13 @@ import { TermsOfServiceScreen } from '../features/profile/TermsOfServiceScreen';
 import { NotificationSettingsScreen } from '../features/profile/NotificationSettingsScreen';
 import { PrivacySettingsScreen } from '../features/profile/PrivacySettingsScreen';
 import { HelpCenterScreen } from '../features/profile/HelpCenterScreen';
+import { UserGuideScreen } from '../features/profile/UserGuideScreen';
 import { PrivacyPolicyScreen } from '../features/profile/PrivacyPolicyScreen';
+
 import { UserProfileScreen } from '../features/community/UserProfileScreen';
+import { TicketScannerScreen } from '../features/community/TicketScannerScreen';
 import { DailyWisdomModal } from '../components/DailyWisdomModal';
+
 import { theme, palette } from '../theme';
 
 const Stack = createNativeStackNavigator();
@@ -168,11 +172,18 @@ export const RootNavigator = () => {
                         <Stack.Screen name="PrivacySettings" component={PrivacySettingsScreen} />
                         <Stack.Screen name="HelpCenter" component={HelpCenterScreen} />
                         <Stack.Screen name="UserProfile" component={UserProfileScreen} />
+                        <Stack.Screen name="TicketScanner" component={TicketScannerScreen} />
                     </Stack.Group>
+
                 )}
                 <Stack.Screen
                     name="SuperAdmin"
                     component={SuperAdminScreen}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="UserGuide"
+                    component={UserGuideScreen}
                     options={{ headerShown: false }}
                 />
             </Stack.Navigator>
