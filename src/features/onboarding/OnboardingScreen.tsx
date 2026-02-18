@@ -176,11 +176,13 @@ export const OnboardingScreen = () => {
                 Alert.alert("Name Required", "Please let us know what to call you.");
                 return;
             }
-            if (!dateOfBirth.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) {
-                Alert.alert("DOB Required", "Please enter your date of birth in YYYY-MM-DD format so we can celebrate your journey.");
+            if (!dateOfBirth) {
+                // Instead of alert, just open the date picker for a smoother flow
+                setShowDatePicker(true);
                 return;
             }
             setStep(8);
+
         } else if (step === 8) {
             if (setupBiometrics && !pin) {
                 Alert.alert("PIN Required", "Please set a backup PIN for security.");
@@ -692,7 +694,19 @@ export const OnboardingScreen = () => {
         </StepContainer>
     );
 
+    const formatDisplayDate = (dateString: string) => {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        const day = date.getDate();
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+        return `${day} ${month} ${year}`;
+    };
+
     const renderStep6 = () => (
+
+
         <StepContainer>
             <FadeIn delay={100} from="bottom">
                 {renderHeader("Choose Username", "How should we address you in True North?")}
@@ -720,7 +734,7 @@ export const OnboardingScreen = () => {
                             color: dateOfBirth ? theme.colors.text : theme.colors.secondaryText,
                             fontFamily: theme.typography.sans
                         }}>
-                            {dateOfBirth || "Select your birthday..."}
+                            {dateOfBirth ? formatDisplayDate(dateOfBirth) : "Select your birthday..."}
                         </Text>
                     </TouchableOpacity>
                     {showDatePicker && (
@@ -734,10 +748,16 @@ export const OnboardingScreen = () => {
                                 if (selectedDate) {
                                     const formatted = selectedDate.toISOString().split('T')[0];
                                     setDateOfBirth(formatted);
+
+                                    // Auto-advance if username is filled
+                                    if (username.trim()) {
+                                        setTimeout(() => setStep(8), 300);
+                                    }
                                 }
                             }}
                         />
                     )}
+
                     <Text style={[styles.pickerHint, { marginTop: 8, textAlign: 'left' }]}>Used for birthday blessings.</Text>
                 </View>
             </FadeIn>

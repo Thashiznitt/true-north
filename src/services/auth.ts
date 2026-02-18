@@ -130,15 +130,24 @@ class AuthService {
         } catch (error: unknown) {
             const err = error as any; // eslint-disable-line @typescript-eslint/no-explicit-any
             if (err.code === 'SIGN_IN_CANCELLED') return false;
-            console.error('Google Sign-In Error Details:', {
+
+            console.error('[Google Sign-In Error]', {
                 code: err.code,
                 message: err.message,
-                details: err
+                details: err,
+                stack: err.stack
             });
 
-            Alert.alert("Sign In Error", "Could not complete Google Sign-In at this time. Please ensure you have a stable connection.");
+            const errorMsg = err.message || "Unknown error";
+            const errorCode = err.code || "No code";
+
+            Alert.alert(
+                "Sign In Error",
+                `Could not complete Google Sign-In (${errorCode}).\n\nDetail: ${errorMsg}\n\nPlease ensure your configuration is correct.`
+            );
             return false;
         }
+
     }
 
 
