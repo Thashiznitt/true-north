@@ -6,6 +6,8 @@ import { ChevronLeft, Shield, Eye, Lock, UserX, Trash2, LucideIcon } from 'lucid
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../../store';
 import { FadeIn } from '../../components/FadeIn';
+import { supabase } from '../../services/supabase';
+import { authService } from '../../services/auth';
 
 export const PrivacySettingsScreen = () => {
     const insets = useSafeAreaInsets();
@@ -18,26 +20,40 @@ export const PrivacySettingsScreen = () => {
         showOnlineStatus: true,
     });
 
-    const toggleSwitch = (key: keyof typeof privacy) => {
-        setPrivacy(prev => ({ ...prev, [key]: !prev[key] }));
+    const toggleSwitch = async (key: keyof typeof privacy) => {
+        const newValue = !privacy[key];
+        setPrivacy(prev => ({ ...prev, [key]: newValue }));
+
+        if (key === 'privateProfile') {
+            const user = useStore.getState();
+            if (user.userId) {
+                await supabase
+                    .from('user_preferences')
+                    .update({ is_profile_private: newValue })
+                    .eq('user_id', user.userId);
+            }
+        }
     };
 
 
     const handleDeleteAccount = () => {
         Alert.alert(
             "Delete Account",
-            "Are you sure you want to permanently delete your account? This action cannot be undone.",
+            "Are you sure you want to permanently delete your account? This action cannot be undone and all your reflections will be lost.",
             [
                 { text: "Cancel", style: "cancel" },
                 {
-                    text: "Delete", style: "destructive", onPress: () => {
-                        // In a real app, API call here
-                        logout();
+                    text: "Delete", style: "destructive", onPress: async () => {
+                        const success = await authService.deleteAccount();
+                        if (!success) {
+                            Alert.alert("Error", "Unable to delete account at this time. Please try again later.");
+                        }
                     }
                 }
             ]
         );
     };
+
 
     interface SettingRowProps {
         icon: LucideIcon;

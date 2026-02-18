@@ -29,6 +29,8 @@ import { TermsOfServiceScreen } from '../features/profile/TermsOfServiceScreen';
 import { NotificationSettingsScreen } from '../features/profile/NotificationSettingsScreen';
 import { PrivacySettingsScreen } from '../features/profile/PrivacySettingsScreen';
 import { HelpCenterScreen } from '../features/profile/HelpCenterScreen';
+import { PrivacyPolicyScreen } from '../features/profile/PrivacyPolicyScreen';
+import { UserProfileScreen } from '../features/community/UserProfileScreen';
 import { DailyWisdomModal } from '../components/DailyWisdomModal';
 import { theme, palette } from '../theme';
 
@@ -160,9 +162,12 @@ export const RootNavigator = () => {
                         <Stack.Screen name="Subscription" component={SubscriptionScreen} />
                         <Stack.Screen name="CreateCircle" component={CreateCircleScreen} />
                         <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
+                        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
                         <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+
                         <Stack.Screen name="PrivacySettings" component={PrivacySettingsScreen} />
                         <Stack.Screen name="HelpCenter" component={HelpCenterScreen} />
+                        <Stack.Screen name="UserProfile" component={UserProfileScreen} />
                     </Stack.Group>
                 )}
                 <Stack.Screen

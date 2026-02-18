@@ -16,7 +16,7 @@ import { FadeIn } from '../../components/FadeIn';
 import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
 import { contentAgentService } from '../../services/ContentAgentService';
-import { FaithAd } from '../../components/FaithAd';
+import { FaithNews } from '../../components/FaithNews';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 
 // Define aliases for icons to avoid name conflicts with common words
@@ -216,7 +216,7 @@ export const AffirmationScreen = () => {
 
                                 {!isWallpaperMode && (
                                     <View style={{ marginTop: theme.spacing.md }}>
-                                        <FaithAd type="community" />
+                                        <FaithNews type="community" />
                                     </View>
                                 )}
                             </>

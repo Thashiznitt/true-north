@@ -1,0 +1,17 @@
+
+/Users/rn/Github/true-north/src/features/community/CircleDetailScreen.tsx
+  324:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/rn/Github/true-north/src/features/community/UserProfileScreen.tsx
+    2:1   error  react-native Image is forbidden. Use expo-image with caching enabled          truenorth-performance/no-rn-image
+   16:38  error  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+   18:51  error  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+   23:44  error  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+   24:52  error  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+   25:44  error  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+  199:14  error  ScrollView is forbidden. Use FlashList for any dynamic or scrollable content  truenorth-performance/no-scrollview
+  340:63  error  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+  356:15  error  ScrollView is forbidden. Use FlashList for any dynamic or scrollable content  truenorth-performance/no-scrollview
+
+✖ 10 problems (10 errors, 0 warnings)
+

@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#121111"
+      "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": true,
@@ -22,7 +22,10 @@
         "UIBackgroundModes": [
           "fetch",
           "remote-notification"
-        ]
+        ],
+        "NSFaceIDUsageDescription": "Allow True North to use Face ID for secure access to your sanctuary.",
+        "NSPhotoLibraryUsageDescription": "Allow True North to access your photos to set your profile picture.",
+        "NSCameraUsageDescription": "Allow True North to access your camera to take a profile picture."
       }
     },
     "android": {

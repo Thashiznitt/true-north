@@ -1,18 +1,18 @@
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { Image } from 'expo-image';
-import { ExternalLink, Sparkles, X } from 'lucide-react-native';
+import { ExternalLink, Sparkles, X, Newspaper } from 'lucide-react-native';
 import { theme, palette } from '../theme';
 import { useNavigation } from '@react-navigation/native';
 
 import { useStore } from '../store';
 
-interface FaithAdProps {
+interface FaithNewsProps {
     type?: 'event' | 'product' | 'community';
     onClose?: () => void;
 }
 
-const MOCK_ADS = [
-    // Christian Ads
+const MOCK_NEWS = [
+    // Christian News
     {
         id: 'c1',
         title: 'Gather: Youth Revival 2026',
@@ -35,7 +35,7 @@ const MOCK_ADS = [
         type: 'product',
         belief: 'Christian'
     },
-    // Muslim Ads
+    // Muslim News
     {
         id: 'm1',
         title: 'Ramadan Night Market',
@@ -58,7 +58,7 @@ const MOCK_ADS = [
         type: 'product',
         belief: 'Muslim'
     },
-    // Spiritual/Secular Ads
+    // Spiritual/Secular News
     {
         id: 's1',
         title: 'Zenith Meditation Retreat',
@@ -81,7 +81,7 @@ const MOCK_ADS = [
         type: 'product',
         belief: 'Spiritual'
     },
-    // Open/Exploring Ads
+    // Open/Exploring News
     {
         id: 'o1',
         title: 'Open Hearts Community',
@@ -106,28 +106,28 @@ const MOCK_ADS = [
     }
 ];
 
-export const FaithAd = ({ type, onClose }: FaithAdProps) => {
+export const FaithNews = ({ type, onClose }: FaithNewsProps) => {
     const navigation = useNavigation<any>(); // eslint-disable-line @typescript-eslint/no-explicit-any
     const beliefType = useStore(state => state.beliefType);
 
     // Filter by belief and type
-    const availableAds = MOCK_ADS.filter(a => {
+    const availableNews = MOCK_NEWS.filter(n => {
         // Must match type if specified
-        if (type && a.type !== type) return false;
+        if (type && n.type !== type) return false;
 
         // Match belief or be Open
-        return a.belief === beliefType || a.belief === 'Open' || a.belief === 'Exploring' || beliefType === 'Exploring';
+        return n.belief === beliefType || n.belief === 'Open' || n.belief === 'Exploring' || beliefType === 'Exploring';
     });
 
-    const ad = availableAds.length > 0
-        ? availableAds[Math.floor(Math.random() * availableAds.length)]
-        : MOCK_ADS[Math.floor(Math.random() * MOCK_ADS.length)];
+    const news = availableNews.length > 0
+        ? availableNews[Math.floor(Math.random() * availableNews.length)]
+        : MOCK_NEWS[Math.floor(Math.random() * MOCK_NEWS.length)];
 
     const handlePress = () => {
-        if (ad.url.startsWith('truenorth://')) {
-            Linking.openURL(ad.url);
+        if (news.url.startsWith('truenorth://')) {
+            Linking.openURL(news.url);
         } else {
-            Linking.openURL(ad.url);
+            Linking.openURL(news.url);
         }
     };
 
@@ -135,18 +135,19 @@ export const FaithAd = ({ type, onClose }: FaithAdProps) => {
         <View style={styles.container}>
             <View style={styles.header}>
                 <View style={styles.badge}>
-                    <Text style={styles.badgeText}>COMMUNITY AD</Text>
+                    <Text style={styles.badgeText}>COMMUNITY NEWS</Text>
                 </View>
+                <Newspaper size={12} color={theme.colors.secondaryText} />
             </View>
 
             <TouchableOpacity style={styles.content} onPress={handlePress} activeOpacity={0.9}>
-                <Image source={{ uri: ad.image }} style={styles.image} />
+                <Image source={{ uri: news.image }} style={styles.image} />
                 <View style={styles.textContainer}>
-                    <Text style={styles.subtitle}>{ad.subtitle}</Text>
-                    <Text style={styles.title}>{ad.title}</Text>
-                    <Text style={styles.description} numberOfLines={2}>{ad.description}</Text>
+                    <Text style={styles.subtitle}>{news.subtitle}</Text>
+                    <Text style={styles.title}>{news.title}</Text>
+                    <Text style={styles.description} numberOfLines={2}>{news.description}</Text>
                     <View style={styles.ctaRow}>
-                        <Text style={styles.ctaText}>{ad.cta}</Text>
+                        <Text style={styles.ctaText}>{news.cta}</Text>
                         <ExternalLink size={14} color={palette.softGold} />
                     </View>
                 </View>

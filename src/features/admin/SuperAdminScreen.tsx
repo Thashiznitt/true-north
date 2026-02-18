@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, TextInput, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { ChevronLeft, Shield, Users, Flag, Cpu, Search, MoreVertical, DollarSign, TrendingUp, Megaphone, Plus, ExternalLink } from 'lucide-react-native';
+import { ChevronLeft, Shield, Users, Flag, Cpu, Search, MoreVertical, DollarSign, TrendingUp, Megaphone, Plus, ExternalLink, Newspaper } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { AIService, AIProvider } from '../../services/AIService';
 
-type Tab = 'content' | 'users' | 'spirit' | 'sales' | 'ads';
+type Tab = 'content' | 'users' | 'spirit' | 'sales' | 'news';
 
 const MOCK_FLAGS = [
     { id: '1', type: 'Reflection', content: 'Trying to sell crypto here...', user: 'CryptoKing', time: '2h ago', status: 'pending' },
@@ -398,11 +398,11 @@ export const SuperAdminScreen = () => {
         </ScrollView>
     );
 
-    const renderAdsTab = () => (
+    const renderNewsTab = () => (
         <ScrollView style={styles.tabContent}>
             <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Internal Ad Management</Text>
-                <TouchableOpacity style={styles.addAdButton} onPress={() => Alert.alert("New Ad", "Open ad creator modal.")}>
+                <Text style={styles.sectionTitle}>Internal News Management</Text>
+                <TouchableOpacity style={styles.addAdButton} onPress={() => Alert.alert("New Brief", "Open news creator modal.")}>
                     <Plus size={20} color={palette.ivory} />
                 </TouchableOpacity>
             </View>
@@ -411,34 +411,34 @@ export const SuperAdminScreen = () => {
                 { id: '1', title: 'Gather: Youth Revival 2026', type: 'Event', impressions: '12.4k', clicks: '840', status: 'Active' },
                 { id: '2', title: 'The Sacred Journal (Premium Edition)', type: 'Product', impressions: '8.2k', clicks: '312', status: 'Active' },
                 { id: '3', title: 'Open Hearts Community', type: 'Community', impressions: '5.1k', clicks: '1.2k', status: 'Active' },
-            ].map(ad => (
-                <View key={ad.id} style={styles.adCard}>
+            ].map(news => (
+                <View key={news.id} style={styles.adCard}>
                     <View style={styles.adInfo}>
                         <View style={styles.adHeader}>
-                            <Text style={styles.adTitle}>{ad.title}</Text>
-                            <View style={[styles.statusBadge, { backgroundColor: ad.status === 'Active' ? '#E6F4EA' : '#FCE8E6' }]}>
-                                <Text style={[styles.statusText, { color: ad.status === 'Active' ? '#137333' : '#C5221F' }]}>{ad.status}</Text>
+                            <Text style={styles.adTitle}>{news.title}</Text>
+                            <View style={[styles.statusBadge, { backgroundColor: news.status === 'Active' ? '#E6F4EA' : '#FCE8E6' }]}>
+                                <Text style={[styles.statusText, { color: news.status === 'Active' ? '#137333' : '#C5221F' }]}>{news.status}</Text>
                             </View>
                         </View>
-                        <Text style={styles.adSubtitle}>{ad.type} Card • Persistent List Ad</Text>
+                        <Text style={styles.adSubtitle}>{news.type} Card • Persistent List News</Text>
 
                         <View style={styles.adStats}>
                             <View style={styles.adStatItem}>
                                 <TrendingUp size={14} color={theme.colors.secondaryText} />
-                                <Text style={styles.adStatValue}>{ad.impressions} <Text style={styles.adStatLabel}>Views</Text></Text>
+                                <Text style={styles.adStatValue}>{news.impressions} <Text style={styles.adStatLabel}>Views</Text></Text>
                             </View>
                             <View style={styles.adStatItem}>
                                 <ExternalLink size={14} color={theme.colors.secondaryText} />
-                                <Text style={styles.adStatValue}>{ad.clicks} <Text style={styles.adStatLabel}>Clicks</Text></Text>
+                                <Text style={styles.adStatValue}>{news.clicks} <Text style={styles.adStatLabel}>Clicks</Text></Text>
                             </View>
                         </View>
                     </View>
                     <View style={styles.adActions}>
-                        <TouchableOpacity style={styles.adActionButton} onPress={() => Alert.alert("Edit Ad", `Editing ${ad.title}`)}>
+                        <TouchableOpacity style={styles.adActionButton} onPress={() => Alert.alert("Edit News", `Editing ${news.title}`)}>
                             <Text style={styles.adActionText}>Edit</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={[styles.adActionButton, styles.adPauseButton]} onPress={() => Alert.alert("Pause Ad", "Ad has been paused.")}>
-                            <Text style={styles.adPauseText}>Pause</Text>
+                        <TouchableOpacity style={[styles.adActionButton, styles.adPauseButton]} onPress={() => Alert.alert("Archive", "News item has been archived.")}>
+                            <Text style={styles.adPauseText}>Archive</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -484,10 +484,10 @@ export const SuperAdminScreen = () => {
                     <DollarSign size={20} color={activeTab === 'sales' ? palette.softGold : theme.colors.secondaryText} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                    style={[styles.tab, activeTab === 'ads' && styles.activeTab]}
-                    onPress={() => setActiveTab('ads')}
+                    style={[styles.tab, activeTab === 'news' && styles.activeTab]}
+                    onPress={() => setActiveTab('news')}
                 >
-                    <Megaphone size={20} color={activeTab === 'ads' ? palette.softGold : theme.colors.secondaryText} />
+                    <Newspaper size={20} color={activeTab === 'news' ? palette.softGold : theme.colors.secondaryText} />
                 </TouchableOpacity>
             </View>
 
@@ -496,7 +496,7 @@ export const SuperAdminScreen = () => {
                 {activeTab === 'users' && renderUsersTab()}
                 {activeTab === 'spirit' && renderAITab()}
                 {activeTab === 'sales' && renderSalesTab()}
-                {activeTab === 'ads' && renderAdsTab()}
+                {activeTab === 'news' && renderNewsTab()}
             </View>
         </View>
     );

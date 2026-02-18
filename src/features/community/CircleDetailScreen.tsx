@@ -10,6 +10,21 @@ import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashL
 import { FadeIn } from '../../components/FadeIn';
 import { contentAgentService, LIFE_CIRCLES, GhostReflection } from '../../services/ContentAgentService';
 import { useStore, BeliefType } from '../../store';
+import { supabase } from '../../services/supabase';
+import * as Haptics from 'expo-haptics';
+import { MotiView, AnimatePresence } from 'moti';
+
+interface Reflection {
+    id: string;
+    content: string;
+    user?: string;
+    userName?: string;
+    userId?: string;
+    blessings?: number;
+    time?: string;
+    image?: string;
+}
+
 
 const MOCK_EVENTS = [
     { id: '1', title: 'Community Reflection', time: 'Tomorrow, 7:00 AM', location: 'Online Sanctuary', participants: 12 },
@@ -22,7 +37,8 @@ export const CircleDetailScreen = () => {
     const route = useRoute();
     const isFocused = useIsFocused();
     const { createdCircles, bookmarkedCircleIds, toggleBookmark, deleteCreatedCircle, blockedUserIds, blockUser, blockCircle } = useStore();
-    const { circleId, circleName: initialName } = (route.params as any) || {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const { circleId, circleName: initialName } = (route.params as { circleId: string; circleName?: string }) || {};
+
 
     // Check in both ghost circles and user-created circles
     const ghostCircle = LIFE_CIRCLES.find(c => c.id === circleId);
@@ -34,7 +50,8 @@ export const CircleDetailScreen = () => {
     const isGhostCircle = circleId?.startsWith('c');
 
     // State for local reflections so we can see updates
-    const [reflections, setReflections] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const [reflections, setReflections] = useState<Reflection[]>([]);
+
     const isBookmarked = bookmarkedCircleIds.includes(circleId);
 
     useEffect(() => {
@@ -54,11 +71,13 @@ export const CircleDetailScreen = () => {
     }, [circleId, isFocused]);
 
     const MOCK_POSTS = reflections
-        .filter(r => !blockedUserIds.includes(r.userId || r.user)) // Filter out blocked users
+        .filter(r => !blockedUserIds.includes((r.userId || r.user) || '')) // Filter out blocked users
+
         .map(r => ({
             id: r.id,
             user: r.userName || r.user,
-            userId: r.userId || r.user,
+            userId: r.userId || r.user || '',
+
             type: 'Reflection',
             content: r.content,
             blessings: r.blessings,
@@ -73,7 +92,7 @@ export const CircleDetailScreen = () => {
     const isAdmin = circle.id.startsWith('user-'); // Ghost communities are 'c-', so you are not admin by default
     // If you created it (ID starts with 'user-'), you are the admin.
 
-    const handleShare = () => {
+    const handleShare = async () => {
         // AI Fraud Detection logic
         const phoneRegex = /(\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9})/g;
         const paymentKeywords = [/\$/g, /Ksh/gi, /payment/gi, /send money/gi, /donate/gi, /M-Pesa/gi];
@@ -104,9 +123,25 @@ export const CircleDetailScreen = () => {
         }
 
         if (newPostContent.trim()) {
-            Alert.alert("Blessing Shared", "Your reflection has been shared with the circle.");
-            setNewPostContent('');
-            setIsSharing(false);
+            try {
+                const user = useStore.getState();
+                if (user.userId) {
+                    await supabase.from('journal_entries').insert({
+                        user_id: user.userId,
+                        content: newPostContent.trim(),
+                        is_private: false,
+                        shared_in_circle_id: circleId
+                    });
+                }
+
+                Alert.alert("Blessing Shared", "Your reflection has been shared with the circle.");
+                setNewPostContent('');
+                setIsSharing(false);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            } catch (error) {
+                console.error('Error sharing reflection:', error);
+                Alert.alert("Error", "Could not share your reflection at this time.");
+            }
         }
     };
 
@@ -282,8 +317,9 @@ export const CircleDetailScreen = () => {
         </View>
     );
 
-    const handleBless = (postId: string) => {
+    const handleBless = async (postId: string) => {
         setReflections(prev => prev.map(p => p.id === postId ? { ...p, blessings: (p.blessings || 0) + 1 } : p));
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     };
 
     const renderPost = React.useCallback(({ item, index }: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -299,13 +335,20 @@ export const CircleDetailScreen = () => {
         return (
             <View style={styles.postCard}>
                 <View style={styles.postHeader}>
-                    <View style={styles.userInfo}>
+                    <TouchableOpacity
+                        style={styles.userInfo}
+                        onPress={() => (navigation as { navigate: (s: string, p: object) => void }).navigate('UserProfile', {
+
+                            userId: item.userId,
+                            userName: userName
+                        })}
+                    >
                         <View style={styles.avatar}><Text style={styles.avatarText}>{userName[0]}</Text></View>
                         <View>
                             <Text style={styles.userName}>{userName}</Text>
                             <Text style={styles.postType}>{item.type} • {item.time}</Text>
                         </View>
-                    </View>
+                    </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleReport(item.id)}>
                         <MoreVertical size={18} color={theme.colors.secondaryText} />
                     </TouchableOpacity>
@@ -315,9 +358,16 @@ export const CircleDetailScreen = () => {
                     <Image source={{ uri: item.image }} style={styles.postImage} resizeMode="cover" />
                 )}
                 <View style={styles.postFooter}>
-                    <TouchableOpacity style={styles.blessButton}>
+                    <TouchableOpacity style={styles.blessButton} onPress={onBless}>
                         <Heart size={18} color={palette.softGold} fill={palette.softGold} />
-                        <Text style={styles.blessCount}>{item.blessings} Blessings</Text>
+                        <MotiView
+                            key={item.blessings}
+                            from={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ type: 'spring', damping: 10 }}
+                        >
+                            <Text style={styles.blessCount}>{item.blessings} Blessings</Text>
+                        </MotiView>
                     </TouchableOpacity>
                     <View style={styles.footerActions}>
                         <TouchableOpacity style={styles.actionIcon}><Share2 size={18} color={theme.colors.secondaryText} /></TouchableOpacity>

@@ -8,7 +8,7 @@ import { theme, palette } from '../../theme';
 import { Users, Lock, ChevronRight, Heart, Search, Plus, Bell, BookOpen, Moon, Leaf, Sun, Compass } from 'lucide-react-native';
 import { contentAgentService, GhostCircle } from '../../services/ContentAgentService';
 import { useStore } from '../../store';
-import { FaithAd } from '../../components/FaithAd';
+import { FaithNews } from '../../components/FaithNews';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import * as Location from 'expo-location';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -188,21 +188,21 @@ export const CommunityScreen = () => {
             return 0;
         });
 
-    const dataWithAds = React.useMemo(() => {
+    const dataWithNews = React.useMemo(() => {
         const displayCircles = isSubscribed || searchQuery ? filteredCircles : filteredCircles.slice(0, 3);
 
         const result = [];
         for (let i = 0; i < displayCircles.length; i++) {
             result.push(displayCircles[i]);
-            // Internal Ad Management: Ads show every 4 items regardless of subscription
+            // Internal News Management: News show every 4 items regardless of subscription
             if ((i + 1) % 4 === 0) {
-                result.push({ id: `ad-${i}`, isAd: true });
+                result.push({ id: `news-${i}`, isNews: true });
             }
         }
 
-        // Add one ad at the end if none were added and user is subscribed (for free users, the top ad is enough for short lists)
-        if (isSubscribed && result.length > 0 && !result.some(item => item.isAd)) {
-            result.push({ id: 'ad-end', isAd: true });
+        // Add one news item at the end if none were added and user is subscribed
+        if (isSubscribed && result.length > 0 && !result.some(item => item.isNews)) {
+            result.push({ id: 'news-end', isNews: true });
         }
 
         // Add paywall item at the end for non-subscribers
@@ -265,7 +265,7 @@ export const CommunityScreen = () => {
     return (
         <View style={styles.container}>
             <TrueNorthFlashList
-                data={dataWithAds}
+                data={dataWithNews}
                 renderItem={renderCircle}
                 keyExtractor={(item: any) => item.id}
                 estimatedItemSize={120}
@@ -287,7 +287,7 @@ export const CommunityScreen = () => {
                         </View>
 
                         <View style={{ marginBottom: theme.spacing.lg }}>
-                            <FaithAd type="community" />
+                            <FaithNews type="community" />
                         </View>
 
                         <View style={styles.searchContainer}>
@@ -457,9 +457,9 @@ const styles = StyleSheet.create({
 });
 
 const CircleItem = React.memo(({ item, index, bookmarkedCircleIds, navigation }: { item: any, index: number, bookmarkedCircleIds: string[], navigation: any }) => {
-    if (item.isAd) return (
+    if (item.isNews) return (
         <View style={[styles.cardContainer, { marginHorizontal: theme.spacing.xl }]}>
-            <FaithAd />
+            <FaithNews />
         </View>
     );
 

@@ -858,7 +858,7 @@ export const OnboardingScreen = () => {
 
     const renderStep10 = () => {
         const DEFAULT_TIERS = [
-            { id: 'compass', label: 'Compass', price: '$5.99', sub: '/ mo', save: 'Billed Yearly' },
+            { id: 'compass', label: 'Compass', price: '$5.99', sub: '/ mo', save: 'Paid Yearly ($69.99/yr)' },
             { id: 'true_north', label: 'True North', price: '$12.99', sub: '/ mo', save: 'Most Popular' },
             { id: 'zenith', label: 'Zenith', price: '$19.99', sub: '/ mo', save: 'Best Value' },
         ];
@@ -906,28 +906,31 @@ export const OnboardingScreen = () => {
                                             key={pkg.identifier}
                                             style={{
                                                 flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                                                padding: 16, borderRadius: 16,
+                                                padding: 20, borderRadius: 20,
                                                 backgroundColor: active ? palette.ivory : 'rgba(255,255,255,0.1)',
-                                                borderWidth: 1, borderColor: active ? palette.ivory : 'rgba(255,255,255,0.2)'
+                                                borderWidth: 1.5, borderColor: active ? palette.ivory : 'rgba(255,255,255,0.2)',
+                                                marginBottom: 8
                                             }}
                                             onPress={() => setTier(tierId)}
                                         >
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                                                 <View style={{
-                                                    width: 20, height: 20, borderRadius: 10,
+                                                    width: 24, height: 24, borderRadius: 12,
                                                     borderWidth: 2, borderColor: active ? theme.colors.text : 'rgba(255,255,255,0.5)',
                                                     alignItems: 'center', justifyContent: 'center'
                                                 }}>
-                                                    {active && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.text }} />}
+                                                    {active && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: theme.colors.text }} />}
                                                 </View>
-                                                <View>
-                                                    <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 16, color: active ? theme.colors.text : palette.ivory }}>{product.title}</Text>
-                                                    <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 10, color: active ? palette.softGold : palette.softGold }}>{product.description}</Text>
+                                                <View style={{ flex: 1 }}>
+                                                    <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 18, color: active ? theme.colors.text : palette.ivory }}>{product.title}</Text>
+                                                    <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 12, color: active ? palette.softGold : palette.softGold, marginTop: 2 }}>{product.description}</Text>
                                                 </View>
                                             </View>
-                                            <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 18, color: active ? theme.colors.text : palette.ivory }}>
-                                                {product.priceString}
-                                            </Text>
+                                            <View style={{ alignItems: 'flex-end' }}>
+                                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 20, color: active ? theme.colors.text : palette.ivory }}>
+                                                    {product.priceString}
+                                                </Text>
+                                            </View>
                                         </TouchableOpacity>
                                     );
                                 })
@@ -939,28 +942,31 @@ export const OnboardingScreen = () => {
                                             key={t.id}
                                             style={{
                                                 flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                                                padding: 16, borderRadius: 16,
+                                                padding: 20, borderRadius: 20,
                                                 backgroundColor: active ? palette.ivory : 'rgba(255,255,255,0.1)',
-                                                borderWidth: 1, borderColor: active ? palette.ivory : 'rgba(255,255,255,0.2)'
+                                                borderWidth: 1.5, borderColor: active ? palette.ivory : 'rgba(255,255,255,0.2)',
+                                                marginBottom: 4
                                             }}
                                             onPress={() => setTier(t.id as any)}
                                         >
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                                                 <View style={{
-                                                    width: 20, height: 20, borderRadius: 10,
+                                                    width: 24, height: 24, borderRadius: 12,
                                                     borderWidth: 2, borderColor: active ? theme.colors.text : 'rgba(255,255,255,0.5)',
                                                     alignItems: 'center', justifyContent: 'center'
                                                 }}>
-                                                    {active && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.text }} />}
+                                                    {active && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: theme.colors.text }} />}
                                                 </View>
-                                                <View>
-                                                    <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 16, color: active ? theme.colors.text : palette.ivory }}>{t.label}</Text>
-                                                    {t.save && <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 12, color: active ? palette.softGold : palette.softGold }}>{t.save}</Text>}
+                                                <View style={{ flex: 1 }}>
+                                                    <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 18, color: active ? theme.colors.text : palette.ivory }}>{t.label}</Text>
+                                                    {t.save && <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 12, color: active ? palette.softGold : palette.softGold, marginTop: 2 }}>{t.save}</Text>}
                                                 </View>
                                             </View>
-                                            <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 18, color: active ? theme.colors.text : palette.ivory }}>
-                                                {t.price} <Text style={{ fontSize: 14, fontFamily: theme.typography.sans, opacity: 0.7 }}>{t.sub}</Text>
-                                            </Text>
+                                            <View style={{ alignItems: 'flex-end' }}>
+                                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 20, color: active ? theme.colors.text : palette.ivory }}>
+                                                    {t.price} <Text style={{ fontSize: 14, fontFamily: theme.typography.sans, opacity: 0.7 }}>{t.sub}</Text>
+                                                </Text>
+                                            </View>
                                         </TouchableOpacity>
                                     );
                                 })

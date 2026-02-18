@@ -71,6 +71,7 @@ interface UserState {
     email: string | null;
     profilePicture: string | null;
     role: UserRole;
+    userId: string | null;
     isLoggedIn: boolean;
     biometricsEnabled: boolean;
     securityPin: string | null;
@@ -100,6 +101,7 @@ interface UserState {
     setEmail: (email: string | null) => void;
     setProfilePicture: (uri: string | null) => void;
     setRole: (role: UserRole) => void;
+    setUserId: (userId: string | null) => void;
     setLoggedIn: (value: boolean) => void;
     setBiometricsEnabled: (value: boolean) => void;
     setSecurityPin: (pin: string | null) => void;
@@ -139,6 +141,7 @@ export const useStore = create<UserState>()(
             email: null,
             profilePicture: null,
             role: 'member',
+            userId: null,
             isLoggedIn: true, // Default to true for demo flow
             biometricsEnabled: false,
             securityPin: null,
@@ -222,6 +225,7 @@ export const useStore = create<UserState>()(
                     blockedCircleIds: [],
                 });
             },
+            setUserId: (userId) => set({ userId }),
             setLoggedIn: (isLoggedIn) => set({ isLoggedIn }),
             setBiometricsEnabled: (biometricsEnabled) => set({ biometricsEnabled }),
             setSecurityPin: (securityPin) => set({ securityPin }),
@@ -308,7 +312,7 @@ export const useStore = create<UserState>()(
             unblockCircle: (circleId) => set((state) => ({
                 blockedCircleIds: state.blockedCircleIds.filter(id => id !== circleId)
             })),
-            logout: () => set({ isLoggedIn: false, subscriptionTier: 'free', username: '', profilePicture: null, dateOfBirth: null, astrologyEnabled: false }),
+            logout: () => set({ isLoggedIn: false, userId: null, subscriptionTier: 'free', username: '', profilePicture: null, dateOfBirth: null, astrologyEnabled: false }),
         }),
         {
             name: 'true-north-storage',

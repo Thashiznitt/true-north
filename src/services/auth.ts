@@ -259,6 +259,47 @@ class AuthService {
 
         reset();
     }
+
+    /**
+     * Deletes the current user's account and all associated data.
+     */
+    async deleteAccount(): Promise<boolean> {
+        if (env.useMockServices) {
+            console.log('[MockAuth] Deleting account...');
+            const { reset } = useStore.getState();
+            reset();
+            return true;
+        }
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return false;
+
+            console.log(`[Auth] Deleting account for user ${user.id}...`);
+
+            // 1. Delete user from public.users table
+            // Due to ON DELETE CASCADE, this will delete:
+            // - user_preferences
+            // - user_goals
+            // - journal_entries
+            // - circle_members
+            const { error } = await supabase
+                .from('users')
+                .delete()
+                .eq('id', user.id);
+
+            if (error) throw error;
+
+            // 2. Clear local storage and state
+            await this.logout();
+
+            return true;
+        } catch (error) {
+            console.error('[Auth] Error deleting account:', error);
+            return false;
+        }
+    }
 }
 
 export const authService = new AuthService();
+

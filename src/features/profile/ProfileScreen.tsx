@@ -263,10 +263,16 @@ export const ProfileScreen = () => {
                     />
                     <MenuItem
                         icon={Shield}
+                        label="Privacy Policy"
+                        onPress={() => navigation.navigate('PrivacyPolicy')}
+                    />
+                    <MenuItem
+                        icon={Shield}
                         label="Terms of Service"
                         onPress={() => navigation.navigate('TermsOfService')}
                         isLast
                     />
+
                 </Section>
             </FadeIn>
 

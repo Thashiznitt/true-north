@@ -154,7 +154,7 @@ export const SubscriptionScreen = () => {
                             name="Compass"
                             price="$5.99"
                             period="/ month"
-                            subtext="Billed Annually ($69.99/yr)"
+                            subtext="Paid Annually ($69.99/yr)"
                             benefits={TIER_METADATA.compass.benefits}
                             icon={CompassIcon}
                             isSelected={selectedTier === 'compass'}
@@ -298,42 +298,42 @@ const styles = StyleSheet.create({
     content: { padding: theme.spacing.xl, paddingBottom: 100 },
     tierContainer: { gap: theme.spacing.lg, marginBottom: theme.spacing.xxl },
     tierCard: {
-        padding: theme.spacing.xl, borderRadius: theme.borderRadius.lg,
-        backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border,
-        marginBottom: 8
+        padding: 20, borderRadius: 20,
+        backgroundColor: theme.colors.surface, borderWidth: 1.5, borderColor: theme.colors.border,
+        marginBottom: 12, overflow: 'hidden'
     },
     tierCardSelected: {
-        borderColor: palette.softGold, backgroundColor: '#FFFDF9',
+        borderColor: palette.softGold, backgroundColor: palette.softGold + '08',
         shadowColor: palette.softGold, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 4
     },
     popularBadge: {
-        position: 'absolute', top: -10, right: 20, backgroundColor: palette.softGold,
-        paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, zIndex: 1
+        position: 'absolute', top: 0, right: 0, backgroundColor: palette.softGold,
+        paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 1
     },
     popularText: { fontFamily: theme.typography.sansBold, fontSize: 10, color: palette.ivory, letterSpacing: 0.5 },
-    tierHeader: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
+    tierHeader: { flexDirection: 'row', alignItems: 'center', gap: 16 },
     flex1: { flex: 1 },
     tierIcon: {
-        width: 48, height: 48, borderRadius: 14, backgroundColor: theme.colors.background,
+        width: 52, height: 52, borderRadius: 14, backgroundColor: theme.colors.background,
         alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border
     },
     tierIconSelected: { backgroundColor: palette.softGold, borderColor: palette.softGold },
-    tierName: { fontFamily: theme.typography.serifBold, fontSize: 20, color: theme.colors.text },
+    tierName: { fontFamily: theme.typography.serifBold, fontSize: 22, color: theme.colors.text },
     tierNameTextSelected: { color: palette.softGold },
-    tierSubtext: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText },
+    tierSubtext: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText },
     priceContainer: { alignItems: 'flex-end' },
-    tierPrice: { fontFamily: theme.typography.serifBold, fontSize: 22, color: theme.colors.text, textAlign: 'right' },
+    tierPrice: { fontFamily: theme.typography.serifBold, fontSize: 24, color: theme.colors.text, textAlign: 'right' },
     tierPriceSelected: { color: palette.softGold },
-    tierPeriod: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText, textAlign: 'right' },
-    benefitContainer: { marginTop: theme.spacing.lg, overflow: 'hidden' },
-    divider: { height: 1, backgroundColor: theme.colors.border, marginBottom: theme.spacing.lg, opacity: 0.5 },
-    benefitRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, marginBottom: theme.spacing.sm },
-    benefitText: { fontFamily: theme.typography.sans, fontSize: 14, color: theme.colors.text, opacity: 0.8 },
+    tierPeriod: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText, textAlign: 'right' },
+    benefitContainer: { marginTop: 20, overflow: 'hidden' },
+    divider: { height: 1, backgroundColor: theme.colors.border, marginBottom: 16, opacity: 0.5 },
+    benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
+    benefitText: { fontFamily: theme.typography.sans, fontSize: 14, color: theme.colors.text, opacity: 0.9, flex: 1 },
     ctaButton: {
-        backgroundColor: theme.colors.text, paddingVertical: 16, borderRadius: theme.borderRadius.full,
+        backgroundColor: theme.colors.text, paddingVertical: 18, borderRadius: theme.borderRadius.full,
         alignItems: 'center', justifyContent: 'center', marginBottom: theme.spacing.lg
     },
     ctaButtonText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 18, marginBottom: 2 },
-    ctaButtonSub: { color: 'rgba(255,255,255,0.6)', fontFamily: theme.typography.sans, fontSize: 12 },
-    footerNote: { textAlign: 'center', fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText }
+    ctaButtonSub: { color: 'rgba(255,255,255,0.6)', fontFamily: theme.typography.sans, fontSize: 13 },
+    footerNote: { textAlign: 'center', fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText }
 });

@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { theme, palette } from '../../theme';
 import { Search, Plus, X, Bell, Calendar, Sparkles, Fingerprint, Lock as LucideLock, Heart } from 'lucide-react-native';
 import { useStore } from '../../store';
-import { FaithAd } from '../../components/FaithAd';
+import { FaithNews } from '../../components/FaithNews';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { SanctuaryLock } from '../../components/SanctuaryLock';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
@@ -266,7 +266,7 @@ export const JournalScreen = () => {
                         </Text>
                     </View>
                 }
-                ListFooterComponent={!isSubscribed ? <FaithAd type="product" /> : null}
+                ListFooterComponent={!isSubscribed ? <FaithNews type="product" /> : null}
             />
 
             <TouchableOpacity
