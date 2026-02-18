@@ -3,7 +3,9 @@ import { useStore } from '../store';
 import { supabase } from './supabase';
 import { subscriptionService } from './subscription';
 
+import { Platform, Alert } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
+
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 export type AuthProvider = 'Apple' | 'Google' | 'Email';
@@ -96,7 +98,9 @@ class AuthService {
 
     private async signInWithGoogle(): Promise<boolean> {
         try {
-            await GoogleSignin.hasPlayServices();
+            if (Platform.OS === 'android') {
+                await GoogleSignin.hasPlayServices();
+            }
             const userInfo = await GoogleSignin.signIn();
 
             if (userInfo.data?.idToken) {
@@ -124,10 +128,19 @@ class AuthService {
             }
             return false;
         } catch (error: unknown) {
-            console.error('Google Sign-In Error:', error);
+            const err = error as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+            if (err.code === 'SIGN_IN_CANCELLED') return false;
+            console.error('Google Sign-In Error Details:', {
+                code: err.code,
+                message: err.message,
+                details: err
+            });
+
+            Alert.alert("Sign In Error", "Could not complete Google Sign-In at this time. Please ensure you have a stable connection.");
             return false;
         }
     }
+
 
     /**
      * Signs up a new user with email and password
