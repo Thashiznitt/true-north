@@ -135,20 +135,17 @@ export const OnboardingScreen = () => {
             }
             setStep(2);
         } else if (step === 2) {
-            // Validate goals - find first empty field
+            // Find first empty field and focus it, or proceed if all filled
             const emptyFieldIndex = GOAL_KEYS.findIndex(key => !goals[key as keyof typeof goals]?.trim());
 
             if (emptyFieldIndex !== -1) {
-                Alert.alert(
-                    "Share Your Goals",
-                    "Please fill in all fields so we can personalize your daily affirmations and guidance."
-                );
-                // Focus the empty input
+                // Simply focus the empty input for a smoother experience
                 inputRefs.current[emptyFieldIndex]?.focus();
                 return;
             }
 
             setStep(3);
+
         } else if (step === 3) {
             if (!beliefType) {
                 Alert.alert("Please select a path", "Choose the spiritual path that resonates with you most.");
