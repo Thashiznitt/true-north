@@ -25,15 +25,7 @@
         ],
         "NSFaceIDUsageDescription": "Allow True North to use Face ID for secure access to your sanctuary.",
         "NSPhotoLibraryUsageDescription": "Allow True North to access your photos to set your profile picture.",
-        "NSCameraUsageDescription": "Allow True North to access your camera to take a profile picture.",
-        "CFBundleURLTypes": [
-          {
-            "CFBundleURLSchemes": [
-              "truenorth",
-              "com.googleusercontent.apps.862052704275-64h0rdf93c0futbap8h4r70klf0ql233"
-            ]
-          }
-        ]
+        "NSCameraUsageDescription": "Allow True North to access your camera to take a profile picture."
       }
     },
     "android": {
@@ -65,7 +57,8 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosClientId": "862052704275-64h0rdf93c0futbap8h4r70klf0ql233.apps.googleusercontent.com"
+          "iosClientId": "862052704275-64h0rdf93c0futbap8h4r70klf0ql233.apps.googleusercontent.com",
+          "iosUrlScheme": "com.googleusercontent.apps.862052704275-64h0rdf93c0futbap8h4r70klf0ql233"
         }
       ],
       "expo-apple-authentication",
