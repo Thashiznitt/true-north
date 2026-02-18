@@ -24,6 +24,7 @@ module.exports = {
         'truenorth-performance/no-rn-image': 'error',
         'truenorth-performance/enforce-estimated-item-size': 'error',
         'truenorth-performance/no-inline-renderitem': 'error',
+        'react-native/no-raw-text': ['error', { skip: ['Typography'] }],
         'react-native/no-inline-styles': 'warn',
         'react-native/no-color-literals': 'off',
         'react-native/sort-styles': 'off',

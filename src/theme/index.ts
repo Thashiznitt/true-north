@@ -26,6 +26,32 @@ export const theme = {
     sans: 'Inter_400Regular',
     sansMedium: 'Inter_500Medium',
     sansBold: 'Inter_700Bold',
+    // Design Language Scale
+    header: {
+      fontFamily: 'PlayfairDisplay_700Bold',
+      fontSize: 32,
+      lineHeight: 40,
+    },
+    title: {
+      fontFamily: 'PlayfairDisplay_700Bold',
+      fontSize: 20,
+      lineHeight: 28,
+    },
+    subtitle: {
+      fontFamily: 'Inter_500Medium',
+      fontSize: 16,
+      lineHeight: 24,
+    },
+    body: {
+      fontFamily: 'Inter_400Regular',
+      fontSize: 16,
+      lineHeight: 24,
+    },
+    caption: {
+      fontFamily: 'Inter_500Medium',
+      fontSize: 12,
+      lineHeight: 18,
+    },
   },
   spacing: {
     xs: 8, // Apple-style 8pt grid

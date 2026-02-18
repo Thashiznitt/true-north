@@ -7,6 +7,7 @@ import { authService, AuthProvider } from '../../services/auth';
 import { ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { FadeIn } from '../../components/FadeIn';
+import { Typography } from '../../components/Typography';
 
 export const LoginScreen = () => {
     const insets = useSafeAreaInsets();
@@ -74,8 +75,8 @@ export const LoginScreen = () => {
                         <View style={styles.logoContainer}>
                             <ShieldCheck size={40} color={palette.softGold} />
                         </View>
-                        <Text style={styles.title}>Welcome Back</Text>
-                        <Text style={styles.subtitle}>Enter your sanctuary to continue your journey of reflection.</Text>
+                        <Typography variant="header" align="center" style={{ marginBottom: 12 }}>Welcome Back</Typography>
+                        <Typography variant="body" align="center" color={theme.colors.secondaryText}>Enter your sanctuary to continue your journey of reflection.</Typography>
                     </View>
                 </FadeIn>
 
@@ -165,8 +166,6 @@ const styles = StyleSheet.create({
         alignItems: 'center', justifyContent: 'center', marginBottom: 24,
         borderWidth: 1, borderColor: theme.colors.border
     },
-    title: { fontFamily: theme.typography.serifBold, fontSize: 32, color: theme.colors.text, marginBottom: 12 },
-    subtitle: { fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.secondaryText, textAlign: 'center', lineHeight: 24 },
     loadingContainer: { alignItems: 'center', gap: 20 },
     loadingText: { fontFamily: theme.typography.sansMedium, fontSize: 16, color: palette.softGold },
     optionsContainer: { gap: 16 },
