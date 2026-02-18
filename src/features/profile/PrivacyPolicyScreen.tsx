@@ -49,15 +49,15 @@ export const PrivacyPolicyScreen = () => {
                             <Text style={styles.sectionTitle}>2. Information We Collect</Text>
                             <Text style={styles.text}>
                                 • <Text style={styles.bold}>Account Data</Text>: Email and name when you sign up.{"\n"}
-                                • <Text style={styles.bold}>Reflections</Text>: Your journal entries are encrypted and used only to provide AI spiritual guidance at your request.{"\n"}
+                                • <Text style={styles.bold}>Reflections</Text>: Your journal entries are encrypted and used only to provide Spiritual Intelligence guidance at your request.{"\n"}
                                 • <Text style={styles.bold}>Preferences</Text>: Your selected belief system and themes to personalize your experience.
                             </Text>
                         </View>
 
                         <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>3. AI & Spiritual Analysis</Text>
+                            <Text style={styles.sectionTitle}>3. Spiritual Intelligence & Spiritual Analysis</Text>
                             <Text style={styles.text}>
-                                When you use the AI Spiritual Analysis feature, your journal entry is processed by our secure AI partner (Google Gemini) to generate guidance. This data is not used for training models or shared for advertising.
+                                When you use the Spiritual Intelligence Spiritual Analysis feature, your journal entry is processed by our secure spiritual intelligence partner (Google Gemini) to generate guidance. This data is not used for training models or shared for advertising.
                             </Text>
                         </View>
 

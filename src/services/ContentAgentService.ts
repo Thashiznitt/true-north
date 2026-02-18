@@ -420,7 +420,7 @@ ${context}${specialContext}
 Always call the user a 'Seeker' and this platform a 'Sanctuary'. Be concise, vulnerable, and deeply supportive.`;
 };
 
-import { AIService } from './AIService';
+import { SpiritualIntelligenceService } from './SpiritualIntelligenceService';
 import { useStore } from '../store';
 
 // ... (existing helper functions and constants)
@@ -434,7 +434,7 @@ export const contentAgentService = {
         const user = names[Math.floor(Math.random() * names.length)];
         const { subscriptionTier: tier, dateOfBirth, astrologyEnabled } = useStore.getState();
 
-        const provider = await AIService.getProvider();
+        const provider = await SpiritualIntelligenceService.getProvider();
 
         let content = '';
 
@@ -447,7 +447,7 @@ export const contentAgentService = {
             try {
                 const systemPrompt = await constructSystemPrompt(belief, `You are a member of a ${belief} circle focused on ${theme}. Write a short, personal reflection (max 2 sentences) to share. Be authentic and vulnerable.`, tier, undefined, undefined, dateOfBirth, astrologyEnabled);
                 const userPrompt = `Write a sanctuary reflection about ${theme}.`;
-                content = await AIService.generateText(systemPrompt, userPrompt);
+                content = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
             } catch (error) {
                 console.warn('AI Generation failed, falling back to templates', error);
                 const templates = GENERIC_TEMPLATES;
@@ -483,7 +483,7 @@ export const contentAgentService = {
 
     getDailyAdvice: async (username: string, belief: BeliefType, themes: string[], journalInput?: string): Promise<string> => {
         const theme = themes[0] || 'Wisdom';
-        const provider = await AIService.getProvider();
+        const provider = await SpiritualIntelligenceService.getProvider();
         const { subscriptionTier: tier, dateOfBirth, astrologyEnabled } = useStore.getState();
 
         if (provider === 'LocalMock') {
@@ -547,7 +547,7 @@ export const contentAgentService = {
                 if (journalInput) {
                     userPrompt += ` Recent insights: "${journalInput}".`;
                 }
-                return await AIService.generateText(systemPrompt, userPrompt);
+                return await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
             } catch {
                 console.warn('AI daily advice failed');
                 return "Take a moment to breathe. Your answers are within.";
@@ -557,7 +557,7 @@ export const contentAgentService = {
 
     getDailyPrayerOrQuote: async (username: string, belief: BeliefType): Promise<{ content: string, title: string, buttonLabel: string }> => {
         const isReligious = belief === 'Christian' || belief === 'Muslim';
-        const provider = await AIService.getProvider();
+        const provider = await SpiritualIntelligenceService.getProvider();
         const { subscriptionTier: tier, dateOfBirth, astrologyEnabled } = useStore.getState();
 
         if (provider === 'LocalMock') {
@@ -601,7 +601,7 @@ export const contentAgentService = {
                 const type = isReligious ? (belief === 'Christian' ? 'Prayer' : 'Dua') : 'Quote/Wisdom';
                 const systemPrompt = await constructSystemPrompt(belief, `Write a short, powerful ${type} for the seeker. Ensure it is deeply resonant with their path and current life goals.`, tier, username, userGoals, dateOfBirth, astrologyEnabled);
                 const userPrompt = `Seeker: ${username}. Belief Path: ${belief}. Task: Generate a daily ${type}.`;
-                const content = await AIService.generateText(systemPrompt, userPrompt);
+                const content = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
 
                 return {
                     title: isReligious ? (belief === 'Christian' ? "Daily Prayer" : "Daily Du'a") : "Daily Wisdom",
@@ -615,7 +615,7 @@ export const contentAgentService = {
     },
 
     getSpiritualAnalysis: async (content: string, belief: BeliefType): Promise<{ title: string, message: string, action: string }> => {
-        const provider = await AIService.getProvider();
+        const provider = await SpiritualIntelligenceService.getProvider();
         const { subscriptionTier: tier, dateOfBirth, astrologyEnabled } = useStore.getState();
 
         if (provider === 'LocalMock') {
@@ -696,7 +696,7 @@ export const contentAgentService = {
                 const username = useStore.getState().username;
                 const systemPrompt = await constructSystemPrompt(belief, `Analyze the seeker's recent journey. Provide a compassionate insight and a simple action step. Output strictly in JSON with keys: title, message, action.`, tier, username, userGoals, dateOfBirth, astrologyEnabled);
                 const userPrompt = `Seeker Journey: "${content}"`;
-                const jsonStr = await AIService.generateText(systemPrompt, userPrompt);
+                const jsonStr = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
 
                 // Try to parse JSON, if fails, fallback
                 try {
@@ -718,7 +718,7 @@ export const contentAgentService = {
 
     getDailyAffirmation: async (belief: BeliefType, themes: string[]): Promise<{ text: string, verse?: string }> => {
         const theme = themes[0] || 'Wisdom';
-        const provider = await AIService.getProvider();
+        const provider = await SpiritualIntelligenceService.getProvider();
         const { subscriptionTier: tier, dateOfBirth, astrologyEnabled } = useStore.getState();
 
         if (provider === 'LocalMock') {
@@ -775,7 +775,7 @@ export const contentAgentService = {
                 const username = useStore.getState().username;
                 const systemPrompt = await constructSystemPrompt(belief, `Generate a short, powerful, and poetic daily affirmation for a seeker. Ensure it is resonant with their path (${belief}) and profoundly targets their listed life goals. Focus: ${theme}. Return JSON with "text" and "verse" (optional).`, tier, username, userGoals, dateOfBirth, astrologyEnabled);
                 const userPrompt = `Generate a daily sanctuary affirmation for a ${belief} seeker focusing on ${theme}.`;
-                const jsonStr = await AIService.generateText(systemPrompt, userPrompt);
+                const jsonStr = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
                 try {
                     const parsed = JSON.parse(jsonStr);
                     return { text: parsed.text, verse: parsed.verse };

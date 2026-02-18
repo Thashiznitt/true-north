@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type UserRole = 'member' | 'moderator' | 'admin' | 'platform_admin';
+export type UserRole = 'member' | 'moderator' | 'admin' | 'platform_admin' | 'validator';
 import { BeliefType } from '../types';
 export type { BeliefType };
 
@@ -46,6 +46,21 @@ export interface UserTicket {
     qrCodeData: string;
     status: 'valid' | 'used';
     purchaseDate: number;
+    userName: string;
+}
+
+
+
+export interface Reflection {
+    id: string;
+    content: string;
+    user?: string;
+    userName: string;
+    userId?: string;
+    blessings: number;
+    time: string;
+    image?: string | null;
+    createdAt: number;
 }
 
 export interface CreatedCircle {
@@ -58,13 +73,13 @@ export interface CreatedCircle {
     country: string;
     description: string;
     lastActivity: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    reflections: any[];
+    reflections: Reflection[];
 
     createdAt: number;
     theme?: string;
     adminIds: string[];
     moderatorIds: string[];
+    validatorIds?: string[];
     joinRequests?: { userId: string, username: string, status: 'pending' | 'accepted' | 'rejected' }[];
     events?: CircleEvent[];
 }
@@ -149,6 +164,7 @@ interface UserState {
     toggleBookmark: (circleId: string) => void;
     setLastAdviceTimestamp: (timestamp: number) => void;
     addNotification: (notification: NotificationItem) => void;
+    deleteNotification: (id: string) => void;
     cleanupOldNotifications: () => void;
     toggleDailyGoal: (key: keyof DailyGoals) => void;
     addJournalEntry: (entry: Omit<JournalEntry, 'id'>) => void;
@@ -160,10 +176,14 @@ interface UserState {
     unblockCircle: (circleId: string) => void;
     joinCircle: (circleId: string) => void;
     handleJoinRequest: (circleId: string, userId: string, action: 'accept' | 'reject') => void;
-    setCircleRole: (circleId: string, userId: string, role: 'admin' | 'moderator' | 'member') => void;
+    setCircleRole: (circleId: string, userId: string, role: 'admin' | 'moderator' | 'member' | 'validator') => void;
     addCircleEvent: (circleId: string, event: Omit<CircleEvent, 'id' | 'ticketsSold'>) => void;
+    updateCircleEvent: (circleId: string, eventId: string, event: Partial<Omit<CircleEvent, 'id' | 'ticketsSold'>>) => void;
+    deleteCircleEvent: (circleId: string, eventId: string) => void;
     purchaseTicket: (circleId: string, eventId: string, quantity?: number) => void;
     validateTicket: (ticketId: string) => { success: boolean, message: string };
+    findUserByUsername: (username: string) => { userId: string, username: string } | null;
+    addCircleReflection: (circleId: string, reflection: Reflection) => void;
     reset: () => void;
     logout: () => void;
 }
@@ -180,7 +200,7 @@ export const useStore = create<UserState>()(
             email: null,
             profilePicture: null,
             role: 'member',
-            userId: null,
+            userId: 'user-123',
             isLoggedIn: true, // Default to true for demo flow
             biometricsEnabled: false,
             securityPin: null,
@@ -232,6 +252,7 @@ export const useStore = create<UserState>()(
                     createdAt: Date.now() - 10000000,
                     adminIds: ['user-123'], // Assuming current user for demo
                     moderatorIds: [],
+                    validatorIds: ['user-123'],
                     events: [
                         {
                             id: 'mock-event-1',
@@ -367,6 +388,9 @@ export const useStore = create<UserState>()(
             addNotification: (notification) => set((state) => ({
                 notificationsList: [{ ...notification, id: Math.random().toString(36).substr(2, 9), createdAt: Date.now() }, ...state.notificationsList]
             })),
+            deleteNotification: (id) => set((state) => ({
+                notificationsList: state.notificationsList.filter(n => n.id !== id)
+            })),
             cleanupOldNotifications: () => set((state) => {
                 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
                 const now = Date.now();
@@ -438,31 +462,27 @@ export const useStore = create<UserState>()(
                 })
             })),
 
-            setCircleRole: (circleId, userId, role) => set((state) => {
+            setCircleRole: (circleId: string, userId: string, role: 'admin' | 'moderator' | 'member' | 'validator') => set((state) => {
                 let circleName = '';
                 const newCircles = state.createdCircles.map(c => {
                     if (c.id !== circleId) return c;
                     circleName = c.name;
-                    let admins = [...c.adminIds];
-                    let mods = [...c.moderatorIds];
-                    if (role === 'admin') {
-                        if (!admins.includes(userId)) admins.push(userId);
-                        mods = mods.filter(id => id !== userId);
-                    } else if (role === 'moderator') {
-                        if (!mods.includes(userId)) mods.push(userId);
-                        admins = admins.filter(id => id !== userId);
-                    } else {
-                        admins = admins.filter(id => id !== userId);
-                        mods = mods.filter(id => id !== userId);
-                    }
-                    return { ...c, adminIds: admins, moderatorIds: mods };
+                    const admins = c.adminIds.filter(id => id !== userId);
+                    const mods = c.moderatorIds.filter(id => id !== userId);
+                    const validators = (c.validatorIds || []).filter(id => id !== userId);
+
+                    if (role === 'admin') admins.push(userId);
+                    else if (role === 'moderator') mods.push(userId);
+                    else if (role === 'validator') validators.push(userId);
+
+                    return { ...c, adminIds: admins, moderatorIds: mods, validatorIds: validators };
                 });
 
                 // Trigger Notification
                 const notification: NotificationItem = {
                     id: Math.random().toString(36).substr(2, 9),
                     title: 'Role Update',
-                    message: `You have been assigned the role of ${role} in ${circleName}.`,
+                    message: `You have been assigned the role of ${role} in ${circleName || 'the circle'}.`,
                     type: 'community',
                     createdAt: Date.now()
                 };
@@ -493,6 +513,34 @@ export const useStore = create<UserState>()(
                     notificationsList: [notification, ...state.notificationsList]
                 };
             }),
+            updateCircleEvent: (circleId, eventId, event) => set((state) => {
+                const circle = state.createdCircles.find(c => c.id === circleId);
+                const notification: NotificationItem = {
+                    id: Math.random().toString(34).substr(2, 9),
+                    title: 'Event details updated',
+                    message: `${circle?.name || 'A sanctuary'} has updated the event: ${event.title}`,
+                    type: 'event',
+                    createdAt: Date.now()
+                };
+
+                return {
+                    createdCircles: state.createdCircles.map(c =>
+                        c.id === circleId ? {
+                            ...c,
+                            events: c.events?.map(e => e.id === eventId ? { ...e, ...event } : e)
+                        } : c
+                    ),
+                    notificationsList: [notification, ...state.notificationsList]
+                };
+            }),
+            deleteCircleEvent: (circleId, eventId) => set((state) => ({
+                createdCircles: state.createdCircles.map(c =>
+                    c.id === circleId ? {
+                        ...c,
+                        events: c.events?.filter(e => e.id !== eventId)
+                    } : c
+                )
+            })),
 
             purchaseTicket: (circleId, eventId, quantity = 1) => set((state) => {
                 const circle = state.createdCircles.find(c => c.id === circleId);
@@ -501,15 +549,17 @@ export const useStore = create<UserState>()(
 
                 const newTickets: UserTicket[] = [];
                 for (let i = 0; i < quantity; i++) {
+                    const ticketId = Math.random().toString(36).substr(2, 9);
                     newTickets.push({
-                        id: Math.random().toString(36).substr(2, 9),
+                        id: ticketId,
                         eventId,
                         circleId,
                         eventTitle: event.title,
                         eventDate: event.date,
-                        qrCodeData: `tn-ticket-${circleId}-${eventId}-${Math.random().toString(36).substr(2, 9)}`,
+                        qrCodeData: `tn-ticket-${circleId}-${eventId}-${ticketId}`,
                         status: 'valid',
-                        purchaseDate: Date.now()
+                        purchaseDate: Date.now(),
+                        userName: state.username || 'Anonymous Seeker'
                     });
                 }
 
@@ -525,7 +575,7 @@ export const useStore = create<UserState>()(
                     )
                 };
             }),
-            validateTicket: (ticketId) => {
+            validateTicket: (ticketId: string) => {
                 let result = { success: false, message: 'Ticket not found' };
                 set((state) => {
                     const ticket = state.userTickets.find(t => t.id === ticketId);
@@ -535,7 +585,7 @@ export const useStore = create<UserState>()(
                         return state;
                     }
 
-                    result = { success: true, message: 'Ticket validated successfully' };
+                    result = { success: true, message: `Ticket validated for ${ticket.userName}` };
                     return {
                         userTickets: state.userTickets.map(t =>
                             t.id === ticketId ? { ...t, status: 'used' } : t
@@ -544,9 +594,21 @@ export const useStore = create<UserState>()(
                 });
                 return result;
             },
+            findUserByUsername: (username: string) => {
+                const mockUsers = [
+                    { userId: 'u1', username: 'Mary W.' }, { userId: 'u2', username: 'Peter J.' },
+                    { userId: 'u3', username: 'Sarah N.' }, { userId: 'u4', username: 'John D.' },
+                    { userId: 'u5', username: 'Amina Z.' }, { userId: 'u6', username: 'Omar H.' },
+                    { userId: 'u7', username: 'Alex R.' }, { userId: 'u8', username: 'Jamie L.' }
+                ];
+                return mockUsers.find(u => u.username.toLowerCase() === username.toLowerCase()) || null;
+            },
+            addCircleReflection: (circleId: string, reflection: Reflection) => set((state) => ({
+                createdCircles: state.createdCircles.map(c =>
+                    c.id === circleId ? { ...c, reflections: [reflection, ...(c.reflections || [])] } : c
+                )
+            })),
             logout: () => set({ isLoggedIn: false, userId: null, subscriptionTier: 'free', username: '', profilePicture: null, dateOfBirth: null, astrologyEnabled: false }),
-
-
         }),
         {
             name: 'true-north-storage',

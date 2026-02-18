@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { theme, palette } from '../../theme';
-import { Search, ChevronLeft, BookOpen, Users, Sparkles, User, Star, ChevronRight } from 'lucide-react-native';
+import { Search, ChevronLeft, BookOpen, Users, Sparkles, User, Star, ChevronRight, Check } from 'lucide-react-native';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { FadeIn } from '../../components/FadeIn';
 
@@ -28,9 +28,9 @@ export const UserGuideScreen = () => {
             id: 'journal',
             title: 'Sacred Journal',
             icon: BookOpen,
-            description: 'Reflect daily with AI spiritual guidance.',
+            description: 'Reflect daily with Spiritual Intelligence guidance.',
             link: 'Journal',
-            content: "Your private space for spiritual reflection. All entries are encrypted. Premium users receive AI-powered spiritual analysis on their entries."
+            content: "Your private space for spiritual reflection. All entries are encrypted. Premium users receive Spiritual Intelligence-powered spiritual analysis on their entries."
         },
         {
             id: 'circles',
@@ -54,7 +54,21 @@ export const UserGuideScreen = () => {
             icon: Star,
             description: 'Unlock the full power of True North.',
             link: 'Subscription',
-            content: "Upgrade to True North or Zenith tiers to unlock unlimited circles, advanced AI insights, and more."
+            content: "Upgrade to True North or Zenith tiers to unlock unlimited circles, advanced Spiritual Intelligence insights, and more."
+        },
+        {
+            id: 'events',
+            title: 'Sacred Events',
+            icon: Sparkles,
+            description: 'Create and manage sanctuary gatherings.',
+            content: "Community leaders can create events with ticketing. Admins can edit or delete events, and members are notified of updates automatically."
+        },
+        {
+            id: 'validation',
+            title: 'Ticket Validation',
+            icon: Check,
+            description: 'Designate validators to scan tickets.',
+            content: "Organizers and designated Validators can scan ticket QR codes to welcome seekers. Validated tickets automatically disappear from the seeker's profile."
         }
     ];
 
@@ -62,7 +76,7 @@ export const UserGuideScreen = () => {
         { feature: "Daily Affirmations", free: true, paid: true },
         { feature: "Basic Journaling", free: true, paid: true },
         { feature: "Community Access", free: true, paid: true },
-        { feature: "AI Spiritual Analysis", free: false, paid: true },
+        { feature: "Spiritual Intelligence Analysis", free: false, paid: true },
         { feature: "Unlimited Circles", free: false, paid: true },
         { feature: "Advanced Security", free: false, paid: true },
         { feature: "Priority Support", free: false, paid: true },

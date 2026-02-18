@@ -172,6 +172,7 @@ export const AffirmationScreen = () => {
                                 <View style={styles.content}>
                                     <FadeIn from="none" duration={1000}>
                                         <View>
+                                            <View style={{ height: 20 + theme.spacing.lg }} />
                                             <Text style={styles.quoteText}>&quot;{current.text}&quot;</Text>
                                         </View>
                                     </FadeIn>

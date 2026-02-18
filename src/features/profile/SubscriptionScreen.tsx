@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { ChevronLeft, Check, Compass as CompassIcon, Star, Zap, Heart } from 'lucide-react-native';
+import { ChevronLeft, Check, Compass as CompassIcon, Star, Zap, Heart, Sparkles } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { subscriptionService } from '../../services/subscription';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
@@ -47,6 +47,7 @@ export const SubscriptionScreen = () => {
     const [offering, setOffering] = useState<PurchasesOffering | null>(null);
     const [loading, setLoading] = useState(!env.useMockServices);
     const [purchasing, setPurchasing] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     React.useEffect(() => {
         if (!env.useMockServices) {
@@ -73,7 +74,7 @@ export const SubscriptionScreen = () => {
                 await subscriptionService.subscribe(selectedTier as any);
                 notificationService.scheduleDailyAffirmation(selectedTier);
                 notificationService.scheduleDailyJournaling(selectedTier);
-                navigation.goBack();
+                setShowSuccessModal(true);
             } else if (offering) {
                 // Find the package that matches the selected tier
                 const pkg = offering.availablePackages.find(p => p.packageType.toLowerCase().includes(selectedTier)) || offering.availablePackages[0];
@@ -81,7 +82,7 @@ export const SubscriptionScreen = () => {
                 if (success) {
                     notificationService.scheduleDailyAffirmation(selectedTier);
                     notificationService.scheduleDailyJournaling(selectedTier);
-                    navigation.goBack();
+                    setShowSuccessModal(true);
                 }
             }
         } catch (error) {
@@ -196,7 +197,6 @@ export const SubscriptionScreen = () => {
     return (
         <View style={styles.container}>
             {renderHeader()}
-
             <TrueNorthFlashList
                 data={[]}
                 renderItem={renderItem}
@@ -207,39 +207,64 @@ export const SubscriptionScreen = () => {
                 ListHeaderComponent={
                     <>
                         {renderTierList()}
-
-                        <FadeIn delay={600} from="bottom">
-                            <TouchableOpacity
-                                style={[styles.ctaButton, (loading || purchasing) && { opacity: 0.7 }]}
-                                onPress={handleSubscribe}
-                                disabled={loading || purchasing}
-                            >
-                                {purchasing ? (
-                                    <ActivityIndicator color={palette.ivory} />
-                                ) : (
-                                    <>
-                                        <Text style={styles.ctaButtonText}>
-                                            {selectedTier === 'free'
-                                                ? "Continue with Free"
-                                                : offering
-                                                    ? `Start Journey`
-                                                    : (selectedTier === 'compass' ? 'Start Annual Journey' : 'Begin Monthly Alignment')
-                                            }
-                                        </Text>
-                                        {!offering && selectedTier !== 'free' && (
-                                            <Text style={styles.ctaButtonSub}>
-                                                {selectedTier === 'compass' ? '$69.99 / year' : `${selectedTier === 'true_north' ? '$12.99' : '$19.99'} / month`}
-                                            </Text>
-                                        )}
-                                    </>
-                                )}
-                            </TouchableOpacity>
-                        </FadeIn>
-
                         <Text style={styles.footerNote}>Secured and encrypted. Cancel anytime.</Text>
                     </>
                 }
             />
+
+            <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
+                <FadeIn delay={600} from="bottom">
+                    <TouchableOpacity
+                        style={[styles.ctaButton, (loading || purchasing) && { opacity: 0.7 }]}
+                        onPress={handleSubscribe}
+                        disabled={loading || purchasing}
+                    >
+                        {purchasing ? (
+                            <ActivityIndicator color={palette.ivory} />
+                        ) : (
+                            <>
+                                <Text style={styles.ctaButtonText}>
+                                    {selectedTier === 'free'
+                                        ? "Continue with Free"
+                                        : offering
+                                            ? `Start Journey`
+                                            : (selectedTier === 'compass' ? 'Start Annual Journey' : 'Begin Monthly Alignment')
+                                    }
+                                </Text>
+                                {!offering && selectedTier !== 'free' && (
+                                    <Text style={styles.ctaButtonSub}>
+                                        {selectedTier === 'compass' ? '$69.99 / year' : `${selectedTier === 'true_north' ? '$12.99' : '$19.99'} / month`}
+                                    </Text>
+                                )}
+                            </>
+                        )}
+                    </TouchableOpacity>
+                </FadeIn>
+            </View>
+
+            <Modal visible={showSuccessModal} transparent animationType="fade">
+                <View style={styles.modalOverlay}>
+                    <View style={styles.successCard}>
+                        <View style={styles.successIconContainer}>
+                            <Sparkles size={48} color={palette.softGold} />
+                        </View>
+                        <Text style={styles.successTitle}>Vision Aligned</Text>
+                        <Text style={styles.successDesc}>
+                            Your path is now set to <Text style={{ fontFamily: theme.typography.sansBold, color: palette.softGold }}>{selectedTier.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</Text>.
+                            May your journey be filled with divine light and clarity.
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.praiseButton}
+                            onPress={() => {
+                                setShowSuccessModal(false);
+                                navigation.goBack();
+                            }}
+                        >
+                            <Text style={styles.praiseButtonText}>Praise</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -295,8 +320,8 @@ const styles = StyleSheet.create({
     backButton: { width: 40, height: 40, justifyContent: 'center' },
     spacer: { width: 40 },
     headerTitle: { fontFamily: theme.typography.serifBold, fontSize: 20, color: theme.colors.text },
-    content: { padding: theme.spacing.xl, paddingBottom: 100 },
-    tierContainer: { gap: theme.spacing.lg, marginBottom: theme.spacing.xxl },
+    content: { padding: theme.spacing.xl, paddingBottom: 160 },
+    tierContainer: { gap: theme.spacing.lg, marginBottom: theme.spacing.lg },
     tierCard: {
         padding: 20, borderRadius: 20,
         backgroundColor: theme.colors.surface, borderWidth: 1.5, borderColor: theme.colors.border,
@@ -331,9 +356,38 @@ const styles = StyleSheet.create({
     benefitText: { fontFamily: theme.typography.sans, fontSize: 14, color: theme.colors.text, opacity: 0.9, flex: 1 },
     ctaButton: {
         backgroundColor: theme.colors.text, paddingVertical: 18, borderRadius: theme.borderRadius.full,
-        alignItems: 'center', justifyContent: 'center', marginBottom: theme.spacing.lg
+        alignItems: 'center', justifyContent: 'center'
+    },
+    footer: {
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        backgroundColor: theme.colors.background,
+        paddingHorizontal: theme.spacing.xl,
+        paddingTop: theme.spacing.md,
+        borderTopWidth: 1, borderTopColor: theme.colors.border
     },
     ctaButtonText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 18, marginBottom: 2 },
     ctaButtonSub: { color: 'rgba(255,255,255,0.6)', fontFamily: theme.typography.sans, fontSize: 13 },
-    footerNote: { textAlign: 'center', fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText }
+    footerNote: { textAlign: 'center', fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
+    successCard: {
+        backgroundColor: theme.colors.surface, width: '85%', borderRadius: 32,
+        padding: 32, alignItems: 'center', shadowColor: '#000',
+        shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.2, shadowRadius: 30, elevation: 10,
+        borderWidth: 1, borderColor: palette.softGold + '30'
+    },
+    successIconContainer: {
+        width: 100, height: 100, borderRadius: 50, backgroundColor: palette.softGold + '15',
+        alignItems: 'center', justifyContent: 'center', marginBottom: 24
+    },
+    successTitle: { fontFamily: theme.typography.serifBold, fontSize: 28, color: theme.colors.text, marginBottom: 16 },
+    successDesc: {
+        fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.secondaryText,
+        textAlign: 'center', lineHeight: 24, marginBottom: 32
+    },
+    praiseButton: {
+        backgroundColor: theme.colors.text, paddingHorizontal: 48, height: 56,
+        borderRadius: 28, alignItems: 'center', justifyContent: 'center',
+        shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8
+    },
+    praiseButtonText: { fontFamily: theme.typography.sansBold, fontSize: 16, color: palette.ivory }
 });

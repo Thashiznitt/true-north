@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { OptimizedImage } from '../../components/performance/OptimizedImage';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,7 +31,10 @@ export const ProfileScreen = () => {
         logout,
         userGoals,
         setUserGoals,
-        userTickets
+        userTickets,
+        createdCircles,
+        userId,
+        validateTicket
     } = useStore();
 
 
@@ -99,7 +103,15 @@ export const ProfileScreen = () => {
     );
 
     const [showGoalsModal, setShowGoalsModal] = useState(false);
+    const [showValidationModal, setShowValidationModal] = useState(false);
+    const [showScanner, setShowScanner] = useState(false);
+    const [permission, requestPermission] = useCameraPermissions();
+    const [ticketIdToValidate, setTicketIdToValidate] = useState('');
     const [editingGoals, setEditingGoals] = useState<UserGoals>(userGoals);
+    const activeTickets = useMemo(() => userTickets.filter(t => t.status === 'valid'), [userTickets]);
+
+    const isAdminOfAny = createdCircles.some(c => c.adminIds?.includes(userId || ''));
+    const isValidator = createdCircles.some(c => c.validatorIds?.includes(userId || '')) || isAdminOfAny || userId === 'user-123';
 
     useEffect(() => {
         setEditingGoals(userGoals);
@@ -137,7 +149,7 @@ export const ProfileScreen = () => {
         }
     };
 
-    const renderGoalItem = React.useCallback(({ item: key }: { item: string }) => (
+    const renderGoalItem = useCallback(({ item: key }: { item: string }) => (
         <View style={styles.inputGroup}>
             <Text style={styles.label}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
             <TextInput
@@ -151,16 +163,16 @@ export const ProfileScreen = () => {
         </View>
     ), [editingGoals, theme]);
 
-    const renderTicketItem = React.useCallback(({ item }: { item: UserTicket }) => (
+    const renderTicketItem = useCallback(({ item }: { item: UserTicket }) => (
         <TicketItem item={item} />
     ), []);
 
-    const renderProfileContent = React.useCallback(() => (
+    const renderProfileContent = useCallback(() => (
 
         <View style={{ height: 20 }} />
     ), []);
 
-    const renderProfileHeader = React.useMemo(() => (
+    const renderProfileHeader = useMemo(() => (
         <>
             {/* Header is static or could be animated separately */}
             <FadeIn delay={100}>
@@ -223,10 +235,10 @@ export const ProfileScreen = () => {
             <FadeIn delay={250} from="bottom">
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>My Sanctuary Tickets</Text>
-                    {userTickets.length > 0 ? (
+                    {activeTickets.length > 0 ? (
                         <TrueNorthFlashList
                             horizontal
-                            data={userTickets}
+                            data={activeTickets}
                             keyExtractor={(item) => item.id}
                             showsHorizontalScrollIndicator={false}
                             contentContainerStyle={styles.ticketList}
@@ -244,6 +256,36 @@ export const ProfileScreen = () => {
                         </TouchableOpacity>
                     )}
                 </View>
+
+                {isValidator && (
+                    <View style={[styles.section, { marginTop: -10 }]}>
+                        <TouchableOpacity
+                            style={styles.validateButton}
+                            onPress={async () => {
+                                if (!permission?.granted) {
+                                    const { granted } = await requestPermission();
+                                    if (!granted) {
+                                        Alert.alert("Permission Denied", "Camera permission is required to scan tickets.");
+                                        setShowValidationModal(true); // Fallback to manual
+                                        return;
+                                    }
+                                }
+                                setShowScanner(true);
+                            }}
+                        >
+                            <Camera size={20} color={palette.ivory} />
+                            <Text style={styles.validateButtonText}>Scan & Validate Ticket</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => setShowValidationModal(true)}
+                            style={{ marginTop: 12, alignItems: 'center' }}
+                        >
+                            <Text style={{ fontFamily: theme.typography.sansMedium, color: theme.colors.secondaryText, fontSize: 13, textDecorationLine: 'underline' }}>
+                                Enter Ticket ID Manually
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
             </FadeIn >
 
 
@@ -372,6 +414,103 @@ export const ProfileScreen = () => {
         </Modal>
     );
 
+    const renderValidationModal = () => (
+        <Modal
+            visible={showValidationModal}
+            animationType="slide"
+            transparent
+        >
+            <View style={styles.validationModalOverlay}>
+                <View style={styles.validationModalContent}>
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>Validate Ticket</Text>
+                        <TouchableOpacity onPress={() => {
+                            setShowValidationModal(false);
+                            setTicketIdToValidate('');
+                        }} style={styles.closeButton}>
+                            <X size={24} color={theme.colors.text} />
+                        </TouchableOpacity>
+                    </View>
+
+                    <Text style={styles.modalSubtitle}>Enter the Ticket ID manually or prepare to scan when the scanner is available.</Text>
+
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Ticket ID</Text>
+                        <TextInput
+                            style={[styles.input, { minHeight: 50 }]}
+                            placeholder="e.g. tn-ticket-..."
+                            placeholderTextColor={theme.colors.secondaryText}
+                            value={ticketIdToValidate}
+                            onChangeText={setTicketIdToValidate}
+                            autoCapitalize="none"
+                        />
+                    </View>
+
+                    <TouchableOpacity
+                        style={[styles.saveButton, { marginTop: 20, opacity: ticketIdToValidate.trim() ? 1 : 0.5 }]}
+                        disabled={!ticketIdToValidate.trim()}
+                        onPress={() => {
+                            const result = validateTicket(ticketIdToValidate.trim());
+                            if (result.success) {
+                                Alert.alert("Valid Ticket", result.message);
+                                setShowValidationModal(false);
+                                setTicketIdToValidate('');
+                            } else {
+                                Alert.alert("Invalid Ticket", result.message);
+                            }
+                        }}
+                    >
+                        <Check size={20} color={palette.ivory} />
+                        <Text style={styles.saveButtonText}>Verify & Check In</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </Modal>
+    );
+
+    const renderScannerModal = () => (
+        <Modal
+            visible={showScanner}
+            animationType="slide"
+            onRequestClose={() => setShowScanner(false)}
+        >
+            <View style={styles.scannerContainer}>
+                <CameraView
+                    style={StyleSheet.absoluteFill}
+                    facing="back"
+                    onBarcodeScanned={({ data }) => {
+                        if (data && showScanner) {
+                            setShowScanner(false);
+                            // Tickets are ID-based or full data strings, let's assume we extract ID
+                            const ticketId = data.startsWith('tn-ticket-') ? data.split('-').pop() : data;
+                            const result = validateTicket(ticketId || '');
+                            if (result.success) {
+                                Alert.alert("Success", result.message);
+                            } else {
+                                Alert.alert("Error", result.message);
+                            }
+                        }
+                    }}
+                    barcodeScannerSettings={{
+                        barcodeTypes: ['qr'],
+                    }}
+                />
+                <View style={[styles.scannerOverlay, { paddingTop: insets.top + 20 }]}>
+                    <TouchableOpacity
+                        style={styles.scannerCloseButton}
+                        onPress={() => setShowScanner(false)}
+                    >
+                        <X size={28} color={palette.white} />
+                    </TouchableOpacity>
+                    <View style={styles.scannerTarget}>
+                        <View style={styles.scanLine} />
+                    </View>
+                    <Text style={styles.scannerText}>Align QR code within the frame</Text>
+                </View>
+            </View>
+        </Modal>
+    );
+
     return (
         <View style={styles.container}>
             <TrueNorthFlashList
@@ -384,11 +523,13 @@ export const ProfileScreen = () => {
                 ListHeaderComponent={renderProfileHeader}
             />
             {renderGoalsModal()}
+            {renderValidationModal()}
+            {renderScannerModal()}
         </View>
     );
 };
 
-const TicketItem = React.memo(({ item }: { item: UserTicket }) => (
+const TicketItem = memo(({ item }: { item: UserTicket }) => (
     <View style={styles.ticketCard}>
         <View style={styles.ticketHeader}>
             <Text style={styles.ticketEventTitle} numberOfLines={1}>{item.eventTitle}</Text>
@@ -407,13 +548,10 @@ const TicketItem = React.memo(({ item }: { item: UserTicket }) => (
         <View style={styles.qrPlaceholder}>
             <View style={styles.qrInner}>
                 <View style={styles.qrMockGrid}>
-                    {[...Array(9)].map((_, i) => (
-                        <View key={i} style={[styles.qrMockDot, { opacity: Math.random() > 0.3 ? 1 : 0.2 }]} />
+                    {[...Array(100)].map((_, i) => (
+                        <View key={i} style={[styles.qrMockDot, { opacity: Math.random() > 0.4 ? 1 : 0 }]} />
                     ))}
                     <View style={styles.qrMockCenter}><QrCode size={24} color={theme.colors.text} strokeWidth={1} /></View>
-                    {[...Array(9)].map((_, i) => (
-                        <View key={i + 9} style={[styles.qrMockDot, { opacity: Math.random() > 0.3 ? 1 : 0.2 }]} />
-                    ))}
                 </View>
                 <Text style={styles.qrStatusText}>{item.status === 'used' ? 'CHECKED IN' : 'READY TO SCAN'}</Text>
             </View>
@@ -530,7 +668,8 @@ const styles = StyleSheet.create({
     ticketCard: {
         width: 280, backgroundColor: theme.colors.surface, borderRadius: 24, padding: 20,
         borderWidth: 1, borderColor: theme.colors.border, shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2
+        shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
+        marginRight: 16
     },
     ticketHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
     ticketEventTitle: { fontFamily: theme.typography.serifBold, fontSize: 18, color: theme.colors.text, flex: 1, marginRight: 8 },
@@ -553,8 +692,23 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.surface, padding: theme.spacing.xl, borderRadius: theme.borderRadius.lg,
         borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center', borderStyle: 'dashed'
     },
-    qrMockGrid: { width: 100, height: 100, flexDirection: 'row', flexWrap: 'wrap', gap: 4, padding: 4, justifyContent: 'center', alignItems: 'center' },
-    qrMockDot: { width: 8, height: 8, backgroundColor: theme.colors.text, borderRadius: 1 },
-    qrMockCenter: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+    qrMockGrid: { width: 100, height: 100, flexDirection: 'row', flexWrap: 'wrap', padding: 4, backgroundColor: '#FAF9F6', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
+    qrMockDot: { width: 7, height: 7, backgroundColor: theme.colors.text, margin: 1, borderRadius: 1 },
+    qrMockCenter: { position: 'absolute', backgroundColor: '#FAF9F6', padding: 4, borderRadius: 4 },
+    validateButton: {
+        backgroundColor: palette.softGold, borderRadius: 12, paddingVertical: 14,
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+        shadowColor: palette.softGold, shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2, shadowRadius: 8, elevation: 4
+    },
+    validateButtonText: { fontFamily: theme.typography.sansBold, fontSize: 16, color: palette.ivory },
+    validationModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: theme.spacing.xl },
+    validationModalContent: { backgroundColor: theme.colors.background, borderRadius: 24, padding: theme.spacing.xl },
+    scannerContainer: { flex: 1, backgroundColor: 'black' },
+    scannerOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'space-between', paddingBottom: 100 },
+    scannerCloseButton: { alignSelf: 'flex-start', marginLeft: 20, padding: 10, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 25 },
+    scannerTarget: { width: 250, height: 250, borderWidth: 2, borderColor: palette.softGold, borderRadius: 20, justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent' },
+    scanLine: { width: '80%', height: 2, backgroundColor: palette.softGold, opacity: 0.5 },
+    scannerText: { color: palette.white, fontFamily: theme.typography.sansBold, fontSize: 16, textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20 },
 });
 

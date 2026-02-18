@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { ChevronLeft, Shield, Users, Flag, Cpu, Search, MoreVertical, DollarSign, TrendingUp, Megaphone, Plus, ExternalLink, Newspaper } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { AIService, AIProvider } from '../../services/AIService';
+import { SpiritualIntelligenceService, AIProvider } from '../../services/SpiritualIntelligenceService';
 
 type Tab = 'content' | 'users' | 'spirit' | 'sales' | 'news';
 
@@ -64,31 +64,31 @@ export const SuperAdminScreen = () => {
     );
 
     const loadSettings = async () => {
-        const provider = await AIService.getProvider();
+        const provider = await SpiritualIntelligenceService.getProvider();
         setAiProvider(provider as AIProvider);
 
-        const ok = await AIService.getApiKey('OpenAI');
+        const ok = await SpiritualIntelligenceService.getApiKey('OpenAI');
         setOpenaiKey(ok || '');
-        const gk = await AIService.getApiKey('Groq');
+        const gk = await SpiritualIntelligenceService.getApiKey('Groq');
         setGroqKey(gk || '');
-        const ck = await AIService.getApiKey('Custom');
+        const ck = await SpiritualIntelligenceService.getApiKey('Custom');
         setApiKey(ck || '');
 
-        const endpoint = await AIService.getCustomEndpoint();
+        const endpoint = await SpiritualIntelligenceService.getCustomEndpoint();
         setCustomEndpoint(endpoint || '');
-        const model = await AIService.getModel();
+        const model = await SpiritualIntelligenceService.getModel();
         setAiModel(model);
     };
 
     const saveAISettings = async () => {
         try {
-            await AIService.setProvider(aiProvider);
-            if (openaiKey) await AIService.setApiKey('OpenAI', openaiKey);
-            if (groqKey) await AIService.setApiKey('Groq', groqKey);
-            if (apiKey) await AIService.setApiKey('Custom', apiKey);
+            await SpiritualIntelligenceService.setProvider(aiProvider);
+            if (openaiKey) await SpiritualIntelligenceService.setApiKey('OpenAI', openaiKey);
+            if (groqKey) await SpiritualIntelligenceService.setApiKey('Groq', groqKey);
+            if (apiKey) await SpiritualIntelligenceService.setApiKey('Custom', apiKey);
 
-            if (customEndpoint) await AIService.setCustomEndpoint(customEndpoint);
-            if (aiModel) await AIService.setModel(aiModel);
+            if (customEndpoint) await SpiritualIntelligenceService.setCustomEndpoint(customEndpoint);
+            if (aiModel) await SpiritualIntelligenceService.setModel(aiModel);
             Alert.alert("Success", "Guidance Configuration saved successfully.");
         } catch {
             Alert.alert("Error", "Failed to save settings.");
@@ -184,12 +184,12 @@ export const SuperAdminScreen = () => {
             <View style={styles.aiCard}>
                 <View style={styles.aiHeader}>
                     <Cpu size={24} color={palette.softGold} />
-                    <Text style={styles.aiTitle}>Guidance Core Configuration</Text>
+                    <Text style={styles.aiTitle}>Spiritual Intelligence Core Configuration</Text>
                 </View>
 
                 {/* Provider Selection */}
                 <View style={styles.settingRow}>
-                    <Text style={styles.settingLabel}>Guidance Provider</Text>
+                    <Text style={styles.settingLabel}>Spiritual Intelligence Provider</Text>
                     <View style={styles.providerRow}>
                         {(['LocalMock', 'OpenAI', 'Groq', 'Custom'] as AIProvider[]).map((p) => (
                             <TouchableOpacity
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
     statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
     statusText: { fontFamily: theme.typography.sansBold, fontSize: 10, textTransform: 'uppercase' },
 
-    // AI Tab Styles
+    // Spiritual Intelligence Tab Styles
     aiCard: {
         backgroundColor: theme.colors.surface, padding: theme.spacing.lg, borderRadius: theme.borderRadius.lg,
         borderWidth: 1, borderColor: theme.colors.border, marginBottom: theme.spacing.lg

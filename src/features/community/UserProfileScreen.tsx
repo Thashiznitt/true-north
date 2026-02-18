@@ -207,7 +207,7 @@ export const UserProfileScreen = () => {
             "Account Options",
             "Keep the community sacred.",
             [
-                { text: "Report Seeker", onPress: () => Alert.alert("Reported", "Thank you. Our moderation AI will assess this seeker's activities.") },
+                { text: "Report Seeker", onPress: () => Alert.alert("Reported", "Thank you. Our moderation Spiritual Intelligence will assess this seeker's activities.") },
                 {
                     text: "Block Seeker",
                     style: 'destructive',
@@ -274,7 +274,7 @@ export const UserProfileScreen = () => {
                     <TouchableOpacity onPress={handleShare} style={styles.headerIconBtn}>
                         <Link size={18} color={theme.colors.text} />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => Alert.alert("Report", "Reporting seeker to moderation AI...")} style={styles.headerIconBtn}>
+                    <TouchableOpacity onPress={() => Alert.alert("Report", "Reporting seeker to moderation Spiritual Intelligence...")} style={styles.headerIconBtn}>
                         <Flag size={18} color={theme.colors.text} />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={handleMoreAction} style={styles.headerIconBtn}>

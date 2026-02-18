@@ -10,24 +10,24 @@ Users can join existing "Ghost Circles" or create their own.
 A sacred space for users to record their daily reflections.
 - **Premium Feature**: Journaling requires a subscription.
 - **Search**: Users can search through their past entries.
-- **AI Spiritual Analysis**: Get personalized spiritual guidance, scripture, and action steps based on your journal entry and belief system.
+- **Spiritual Intelligence Analysis**: Get personalized spiritual guidance, scripture, and action steps based on your journal entry and belief system.
 
 ## 3. Affirmations
 Daily inspiration based on the user's selected belief system and current theme.
 
 ## 4. Faith-Friendly Ads
 For non-subscribers, the app serves contextual, faith-friendly ads.
-- **Relatability**: Ads are targeted based on community interests and event participation.
 - **Upsell**: Each ad includes a "Remove Ads" option that leads to the subscription page.
 
 ## 5. Security & Fraud Protection
-The app uses automated checks to prevent sharing of sensitive information (like phone numbers or payment requests) in public circles, protecting the community from fraud.
+The app uses automated Spiritual Intelligence checks to prevent sharing of sensitive information (like phone numbers or payment requests) in public circles, protecting the community from fraud.
 
 ## 6. Event Management
 Community leaders can create events (online or in-person).
 -   **Ticketing**: Users can purchase tickets using Card (Stripe) or M-Pesa (STK Push).
--   **Validation**: Event organizers can scan ticket QR codes to validate attendees.
--   **Redemption**: Successful scans trigger a "Welcome" pop-up and notification for the attendee.
+-   **Validation**: Event organizers and designated **Validators** can scan ticket QR codes to validate attendees.
+- **Sacred Lifecycle**: Validated tickets automatically disappear from the user's profile to maintain a clean workspace.
+- **User Roles**: The app supports granular roles including Admin, Moderator, and **Validator**, each with specific permissions for community and event management.
 
 ## 9. User Guide & Support
 A comprehensive Help Center to guide users through the app.
@@ -40,7 +40,7 @@ A comprehensive Help Center to guide users through the app.
 A hidden administrative portal for managing the platform.
 - **Content Moderation**: Review and dismiss/remove flagged content.
 - **User Management**: View user statuses and suspend/ban bad actors.
-- **AI Configuration**: Adjust safety strictness and switch between AI models.
+- **Spiritual Intelligence Configuration**: Adjust safety strictness and switch between spiritual intelligence models.
 - **Sales Statistics**: Visualize revenue, subscription tiers, and recent transactions.
 
 ## 8. User Experience & Visuals

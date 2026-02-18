@@ -16,7 +16,7 @@ const STORAGE_KEY_CUSTOM_ENDPOINT = 'ai_custom_endpoint';
 const STORAGE_KEY_MODEL = 'ai_selected_model';
 const SECURE_KEY_PREFIX = 'ai_api_key_';
 
-export const AIService = {
+export const SpiritualIntelligenceService = {
     // --- Configuration Management ---
 
     getProvider: async (): Promise<AIProvider> => {
@@ -58,7 +58,7 @@ export const AIService = {
     // --- Inference ---
 
     generateText: async (systemPrompt: string, userPrompt: string): Promise<string> => {
-        const provider = await AIService.getProvider();
+        const provider = await SpiritualIntelligenceService.getProvider();
 
         // Check if using default/system provider (Gemini via Env) or local mock
         if (provider === 'LocalMock') {
@@ -70,14 +70,14 @@ export const AIService = {
             throw new Error('LocalMock provider does not support dynamic generation. Use static templates.');
         }
 
-        let apiKey = await AIService.getApiKey(provider);
+        let apiKey = await SpiritualIntelligenceService.getApiKey(provider);
         let endpoint = '';
-        const model = await AIService.getModel();
+        const model = await SpiritualIntelligenceService.getModel();
 
         // Special handling for System Gemini
         if (provider === 'Gemini') {
             // Try to get from secure store first (if user overrode it), else use env
-            const storedKey = await AIService.getApiKey(provider);
+            const storedKey = await SpiritualIntelligenceService.getApiKey(provider);
             apiKey = storedKey || process.env.GEMINI_API_KEY || '';
 
             if (!apiKey) {
@@ -154,7 +154,7 @@ export const AIService = {
                     break;
                 }
                 case 'Custom': {
-                    const customUrl = await AIService.getCustomEndpoint();
+                    const customUrl = await SpiritualIntelligenceService.getCustomEndpoint();
                     if (!customUrl) throw new Error('Custom endpoint URL not configured');
                     endpoint = customUrl;
                     break;
@@ -176,7 +176,7 @@ export const AIService = {
             return data.choices[0].message.content.trim();
 
         } catch (error) {
-            console.error('AIService Generation Error:', error);
+            console.error('SpiritualIntelligenceService Generation Error:', error);
             throw error; // Re-throw for UI handling
         }
     }

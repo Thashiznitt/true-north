@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Alert, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { ChevronLeft, X, Check, Lock, Globe, Users, Search, MapPin, Sparkles } from 'lucide-react-native';
 
 import { useStore, BeliefType } from '../../store';
-import { Modal } from 'react-native';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { COUNTRIES, COUNTRIES_DATA } from '../../data/locations';
 
@@ -22,28 +21,25 @@ export const CreateCircleScreen = () => {
     const [country, setCountry] = useState('');
     const [city, setCity] = useState('');
     const [belief, setBelief] = useState<BeliefType>('Open');
+    const [selectedTopic, setSelectedTopic] = useState<string>('');
     const [isPrivate, setIsPrivate] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [pickerVisible, setPickerVisible] = useState(false);
     const [pickerType, setPickerType] = useState<'country' | 'city'>('country');
     const [searchQuery, setSearchQuery] = useState('');
-    const { addCreatedCircle } = useStore();
 
-    // Sample data for demo
-    // Sample data for demo
-    // const countries = ['Kenya', 'Nigeria', 'South Africa', 'USA', 'UK', 'Ghana', 'Tanzania', 'Uganda'];
-    // const citiesByCountry: Record<string, string[]> = { ... }; 
+    const { addCreatedCircle, userGoals } = useStore();
+    const allGoalCategories = ['spirituality', 'spouse', 'career', 'business', 'health', 'family', 'children', 'friends', 'finances'];
+    const displayTopics = allGoalCategories;
 
     const filteredItems = (pickerType === 'country' ? COUNTRIES : (COUNTRIES_DATA[country] || []))
         .filter(item => item.toLowerCase().includes(searchQuery.toLowerCase()));
-
 
     const handleCreate = () => {
         if (!name.trim() || !country.trim() || !city.trim()) {
             Alert.alert('Error', 'Please provide a name, country, and city for your circle.');
             return;
         }
-        // Persist to store
         const newCircle = {
             id: `user-${Date.now()}`,
             name,
@@ -63,7 +59,6 @@ export const CreateCircleScreen = () => {
         setShowSuccessModal(true);
     };
 
-
     const renderHeader = () => (
         <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
@@ -76,7 +71,7 @@ export const CreateCircleScreen = () => {
 
     const renderStep0 = () => (
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            <Text style={styles.label}>What is the name of this sanctuary?</Text>
+            <Text style={styles.label}>What is the name of thi circle?</Text>
             <TextInput
                 style={styles.input}
                 placeholder="e.g. Nairobi Morning Prayer"
@@ -98,7 +93,7 @@ export const CreateCircleScreen = () => {
                         }}
                     >
                         <Text style={[styles.inputText, !country && { color: theme.colors.secondaryText }]}>
-                            {country || 'Select Country'}
+                            {country || 'Country'}
                         </Text>
                         <ChevronLeft size={18} color={theme.colors.secondaryText} style={{ transform: [{ rotate: '-90deg' }] }} />
                     </TouchableOpacity>
@@ -115,13 +110,12 @@ export const CreateCircleScreen = () => {
                         }}
                     >
                         <Text style={[styles.inputText, !city && { color: theme.colors.secondaryText }]}>
-                            {city || 'Select City'}
+                            {city || 'City'}
                         </Text>
                         <ChevronLeft size={18} color={theme.colors.secondaryText} style={{ transform: [{ rotate: '-90deg' }] }} />
                     </TouchableOpacity>
                 </View>
             </View>
-
 
             <Text style={styles.label}>Tell us about the purpose</Text>
             <TextInput
@@ -148,6 +142,22 @@ export const CreateCircleScreen = () => {
                     </TouchableOpacity>
                 ))}
             </View>
+
+            <Text style={styles.label}>Circle Topic</Text>
+            <View style={styles.beliefGrid}>
+                {displayTopics.map(t => (
+                    <TouchableOpacity
+                        key={t}
+                        style={[styles.beliefCard, selectedTopic === t && styles.beliefCardActive]}
+                        onPress={() => setSelectedTopic(t)}
+                    >
+                        <Text style={[styles.beliefText, selectedTopic === t && styles.beliefTextActive]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
+                        {selectedTopic === t && <Check size={16} color={theme.colors.primary} />}
+                    </TouchableOpacity>
+                ))}
+            </View>
+
+            <View style={{ height: 40 }} />
         </ScrollView>
     );
 
@@ -187,60 +197,6 @@ export const CreateCircleScreen = () => {
                 <Users size={20} color={palette.softGold} />
                 <Text style={styles.infoText}>As the creator, you will be the Admin and can assign Moderator roles later.</Text>
             </View>
-
-            <Modal visible={pickerVisible} animationType="slide" transparent={true}>
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.pickerContainer, { paddingTop: insets.top }]}>
-                        <View style={styles.pickerHeader}>
-                            <TouchableOpacity onPress={() => setPickerVisible(false)}>
-                                <X size={24} color={theme.colors.text} />
-                            </TouchableOpacity>
-                            <Text style={styles.pickerTitle}>Select {pickerType === 'country' ? 'Country' : 'City'}</Text>
-                            <View style={{ width: 24 }} />
-                        </View>
-                        <View style={styles.searchBar}>
-                            <Search size={20} color={theme.colors.secondaryText} />
-                            <TextInput
-                                style={styles.searchInput}
-                                placeholder="Search..."
-                                value={searchQuery}
-                                onChangeText={setSearchQuery}
-                                autoFocus
-                            />
-                        </View>
-                        <TrueNorthFlashList
-                            data={filteredItems}
-                            keyExtractor={(item) => item}
-                            renderItem={renderPickerItem}
-
-                            estimatedItemSize={60}
-                        />
-                    </View>
-                </View>
-            </Modal>
-            <Modal visible={showSuccessModal} transparent={true} animationType="fade">
-                <View style={styles.modalOverlay}>
-                    <View style={styles.successCard}>
-                        <View style={styles.successIconContainer}>
-                            <Sparkles size={40} color={palette.softGold} />
-                        </View>
-                        <Text style={styles.successTitle}>Sanctuary Established</Text>
-                        <Text style={styles.successDesc}>
-                            Your sacred circle <Text style={{ fontFamily: theme.typography.sansBold }}>&quot;{name}&quot;</Text> in {city} has been created.
-                        </Text>
-
-                        <TouchableOpacity
-                            style={styles.praiseButton}
-                            onPress={() => {
-                                setShowSuccessModal(false);
-                                navigation.navigate('Circles');
-                            }}
-                        >
-                            <Text style={styles.praiseButtonText}>Praise</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
         </View>
     );
 
@@ -265,16 +221,72 @@ export const CreateCircleScreen = () => {
         </TouchableOpacity>
     ), [pickerType, country, city]);
 
+    const renderModals = () => (
+        <>
+            <Modal visible={pickerVisible} animationType="slide" transparent={true}>
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.pickerContainer, { paddingTop: insets.top }]}>
+                        <View style={styles.pickerHeader}>
+                            <TouchableOpacity onPress={() => setPickerVisible(false)}>
+                                <X size={24} color={theme.colors.text} />
+                            </TouchableOpacity>
+                            <Text style={styles.pickerTitle}>Select {pickerType === 'country' ? 'Country' : 'City'}</Text>
+                            <View style={{ width: 24 }} />
+                        </View>
+                        <View style={styles.searchBar}>
+                            <Search size={20} color={theme.colors.secondaryText} />
+                            <TextInput
+                                style={styles.searchInput}
+                                placeholder="Search..."
+                                value={searchQuery}
+                                onChangeText={setSearchQuery}
+                                autoFocus
+                            />
+                        </View>
+                        <TrueNorthFlashList
+                            data={filteredItems}
+                            keyExtractor={(item) => item}
+                            renderItem={renderPickerItem}
+                            estimatedItemSize={60}
+                        />
+                    </View>
+                </View>
+            </Modal>
+
+            <Modal visible={showSuccessModal} transparent={true} animationType="fade">
+                <View style={styles.modalOverlay}>
+                    <View style={styles.successCard}>
+                        <View style={styles.successIconContainer}>
+                            <Sparkles size={40} color={palette.softGold} />
+                        </View>
+                        <Text style={styles.successTitle}>Sanctuary Established</Text>
+                        <Text style={styles.successDesc}>
+                            Your sacred circle <Text style={{ fontFamily: theme.typography.sansBold }}>&quot;{name}&quot;</Text> in {city} has been created.
+                        </Text>
+
+                        <TouchableOpacity
+                            style={styles.praiseButton}
+                            onPress={() => {
+                                setShowSuccessModal(false);
+                                navigation.navigate('Main', { screen: 'Circles' });
+                            }}
+                        >
+                            <Text style={styles.praiseButtonText}>Praise</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+        </>
+    );
+
     return (
-
-
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.container}
         >
             {renderHeader()}
-
             {step === 0 ? renderStep0() : renderStep1()}
+            {renderModals()}
 
             <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
                 {step === 0 ? (
@@ -411,4 +423,3 @@ const styles = StyleSheet.create({
     },
     praiseButtonText: { fontFamily: theme.typography.sansBold, fontSize: 16, color: theme.colors.inverseText }
 });
-

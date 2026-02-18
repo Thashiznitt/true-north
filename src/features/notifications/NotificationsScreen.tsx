@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Animated } from 'react-native';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { Bell, LucideIcon, Heart, Sparkles, MessageCircle, ChevronLeft, X } from 'lucide-react-native';
+import { Bell, LucideIcon, Heart, Sparkles, MessageCircle, ChevronLeft, X, Trash2 } from 'lucide-react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import { FadeIn } from '../../components/FadeIn';
 
@@ -21,7 +22,7 @@ const getIcon = (type: string) => {
 export const NotificationsScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
-    const { notificationsList, cleanupOldNotifications } = useStore();
+    const { notificationsList, cleanupOldNotifications, deleteNotification } = useStore();
 
     useEffect(() => {
         cleanupOldNotifications();
@@ -39,20 +40,45 @@ export const NotificationsScreen = () => {
         return 'just now';
     };
 
+    const renderRightActions = (id: string, progress: Animated.AnimatedInterpolation<number>) => {
+        const trans = progress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [80, 0],
+        });
+        return (
+            <View style={styles.rightActionsContainer}>
+                <Animated.View style={{ flex: 1, transform: [{ translateX: trans }] }}>
+                    <TouchableOpacity
+                        style={styles.deleteAction}
+                        onPress={() => deleteNotification(id)}
+                    >
+                        <Trash2 size={24} color={palette.ivory} />
+                    </TouchableOpacity>
+                </Animated.View>
+            </View>
+        );
+    };
+
     const renderNotification = ({ item, index }: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         const Icon = getIcon(item.type);
         return (
             <FadeIn delay={Math.min(index * 100, 1000)} from="bottom">
-                <View style={styles.card}>
-                    <View style={styles.iconContainer}>
-                        <Icon size={20} color={theme.colors.primary} />
+                <Swipeable
+                    renderRightActions={(progress) => renderRightActions(item.id, progress)}
+                    friction={2}
+                    rightThreshold={40}
+                >
+                    <View style={styles.card}>
+                        <View style={styles.iconContainer}>
+                            <Icon size={20} color={theme.colors.primary} />
+                        </View>
+                        <View style={styles.content}>
+                            <Text style={styles.cardTitle}>{item.title}</Text>
+                            <Text style={styles.cardMessage}>{item.message}</Text>
+                            <Text style={styles.cardTime}>{formatTime(item.createdAt)}</Text>
+                        </View>
                     </View>
-                    <View style={styles.content}>
-                        <Text style={styles.cardTitle}>{item.title}</Text>
-                        <Text style={styles.cardMessage}>{item.message}</Text>
-                        <Text style={styles.cardTime}>{formatTime(item.createdAt)}</Text>
-                    </View>
-                </View>
+                </Swipeable>
             </FadeIn>
         );
     };
@@ -123,5 +149,17 @@ const styles = StyleSheet.create({
     emptyText: {
         fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.secondaryText,
         textAlign: 'center', marginTop: theme.spacing.lg, lineHeight: 24
+    },
+    rightActionsContainer: {
+        width: 80,
+        marginBottom: theme.spacing.md,
+    },
+    deleteAction: {
+        flex: 1,
+        backgroundColor: '#FF3B30',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderTopRightRadius: theme.borderRadius.lg,
+        borderBottomRightRadius: theme.borderRadius.lg,
     }
 });

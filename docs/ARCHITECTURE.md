@@ -38,5 +38,7 @@ The `ContentAgentService` simulates active communities and reflections for a "li
 ### Admin Module
 A dedicated `src/features/admin` module encapsulates the Superadmin logic, ensuring separation of concerns from the main user flow.
 
-### Environment Configuration
-The app exposes "Developer Options" (like resetting onboarding or accessing the admin portal) based on the `__DEV__` flag, ensuring a smooth developer experience without compromising production security.
+### Security Architecture
+- **Supabase RLS**: Granular Row Level Security policies are used to enforce access control based on user roles (Admin, Moderator, Validator).
+- **Fraud Prevention**: Content Agent service performs real-time analysis to block sensitive data sharing in public spaces.
+- **Biometric Security**: Optional device-level security for sensitive journal entries.

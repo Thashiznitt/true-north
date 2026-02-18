@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, Keyb
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { ChevronLeft, X, Check, Lock, Globe, Users, Search, MapPin, Sparkles, Plus, Minus, CreditCard, Heart, Share2, MoreVertical, Send, Clock, Image as ImageIcon, Flag, Link, QrCode, Smartphone } from 'lucide-react-native';
+import { ChevronLeft, X, Check, Lock, Globe, Users, Search, MapPin, Sparkles, Plus, Minus, CreditCard, Heart, Share2, MoreVertical, Send, Clock, Image as ImageIcon, Flag, Link, QrCode, Smartphone, Shield } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 
 
 
@@ -12,7 +13,7 @@ import * as Linking from 'expo-linking';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { FadeIn } from '../../components/FadeIn';
 import { contentAgentService, LIFE_CIRCLES, GhostReflection } from '../../services/ContentAgentService';
-import { useStore, BeliefType, CircleEvent } from '../../store';
+import { useStore, BeliefType, CircleEvent, Reflection } from '../../store';
 import { supabase } from '../../services/supabase';
 import { paymentService, PaymentMethod } from '../../services/PaymentService';
 
@@ -20,21 +21,12 @@ import { paymentService, PaymentMethod } from '../../services/PaymentService';
 import * as Haptics from 'expo-haptics';
 import { MotiView, AnimatePresence } from 'moti';
 
-interface Reflection {
-    id: string;
-    content: string;
-    user?: string;
-    userName?: string;
-    userId?: string;
-    blessings?: number;
-    time?: string;
-    image?: string;
-}
+
 
 
 const MOCK_EVENTS = [
-    { id: '1', title: 'Community Reflection', time: 'Tomorrow, 7:00 AM', location: 'Online Sanctuary', participants: 12 },
-    { id: '2', title: 'Open Hearts Session', time: 'Saturday, 10:00 AM', location: 'Shared Space', participants: 45 },
+    { id: '1', title: 'Community Reflection', time: 'Tomorrow, 7:00 AM', location: 'Online Sanctuary', participants: 12, price: 0, currency: 'KES' },
+    { id: '2', title: 'Open Hearts Session', time: 'Saturday, 10:00 AM', location: 'Shared Space', participants: 45, price: 0, currency: 'KES' },
 ];
 
 export const CircleDetailScreen = () => {
@@ -42,7 +34,7 @@ export const CircleDetailScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const isFocused = useIsFocused();
-    const { createdCircles, bookmarkedCircleIds, toggleBookmark, deleteCreatedCircle, blockedUserIds, blockUser, blockCircle, handleJoinRequest, userId, userTickets, purchaseTicket, addNotification } = useStore();
+    const { createdCircles, bookmarkedCircleIds, toggleBookmark, deleteCreatedCircle, blockedUserIds, blockUser, blockCircle, handleJoinRequest, userId, userTickets, purchaseTicket, addNotification, findUserByUsername, setCircleRole, addCircleReflection } = useStore();
 
 
     const { circleId, circleName: initialName } = (route.params as { circleId: string; circleName?: string }) || {};
@@ -51,7 +43,7 @@ export const CircleDetailScreen = () => {
     const ghostCircle = LIFE_CIRCLES.find(c => c.id === circleId);
     const circle = userCircle || ghostCircle || LIFE_CIRCLES[0];
 
-    const isAdmin = userCircle?.adminIds?.includes(userId || '') || false;
+    const isAdmin = userCircle?.adminIds?.includes(userId || 'creator') || false;
     const isModerator = userCircle?.moderatorIds?.includes(userId || '') || false;
     const isMember = bookmarkedCircleIds.includes(circleId);
     const isPrivate = circle.type === 'Private';
@@ -109,6 +101,11 @@ export const CircleDetailScreen = () => {
     const [isSharing, setIsSharing] = useState(false);
     const [isAddingEvent, setIsAddingEvent] = useState(false);
     const [showJoinRequests, setShowJoinRequests] = useState(false);
+    const [showRoleManagement, setShowRoleManagement] = useState(false);
+    const [roleSearchQuery, setRoleSearchQuery] = useState('');
+    const [foundUser, setFoundUser] = useState<{ userId: string, username: string } | null>(null);
+    const [selectedRole, setSelectedRole] = useState<'admin' | 'moderator' | 'member' | 'validator'>('moderator');
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [newPostContent, setNewPostContent] = useState('');
     const [newEvent, setNewEvent] = useState<Omit<CircleEvent, 'id' | 'ticketsSold'>>({
         title: '',
@@ -118,12 +115,13 @@ export const CircleDetailScreen = () => {
         currency: 'USD',
         capacity: 100
     });
+    const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
 
     // If you created it (ID starts with 'user-'), you are the admin.
 
     const handleShare = async () => {
-        // AI Fraud Detection logic
+        // Spiritual Intelligence Fraud Detection logic
         const phoneRegex = /(\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9})/g;
         const paymentKeywords = [/\$/g, /Ksh/gi, /payment/gi, /send money/gi, /donate/gi, /M-Pesa/gi];
 
@@ -157,22 +155,53 @@ export const CircleDetailScreen = () => {
             try {
                 const user = useStore.getState();
                 if (user.userId) {
+                    const newReflection: Reflection = {
+                        id: Math.random().toString(36).substr(2, 9),
+                        userId: user.userId || 'user-123',
+                        userName: user.username || 'Anonymous',
+                        content: newPostContent.trim(),
+                        time: 'Just now',
+                        blessings: 0,
+                        createdAt: Date.now(),
+                        image: selectedImage
+                    };
+
+                    addCircleReflection(circleId, newReflection);
+                    setReflections(prev => [newReflection, ...prev]);
+
                     await supabase.from('journal_entries').insert({
                         user_id: user.userId,
                         content: newPostContent.trim(),
                         is_private: false,
-                        shared_in_circle_id: circleId
+                        shared_in_circle_id: circleId,
+                        image: selectedImage
                     });
-                }
 
-                Alert.alert("Blessing Shared", "Your reflection has been shared with the circle.");
-                setNewPostContent('');
-                setIsSharing(false);
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    Alert.alert("Blessing Shared", "Your reflection has been shared with the circle.");
+                    setNewPostContent('');
+                    setSelectedImage(null);
+                    setIsSharing(false);
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                } else {
+                    Alert.alert("Error", "You must be logged in to share reflections.");
+                }
             } catch (error) {
                 console.error('Error sharing reflection:', error);
                 Alert.alert("Error", "Could not share your reflection at this time.");
             }
+        }
+    };
+
+    const handlePickImage = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.8,
+        });
+
+        if (!result.canceled) {
+            setSelectedImage(result.assets[0].uri);
         }
     };
 
@@ -186,15 +215,30 @@ export const CircleDetailScreen = () => {
 
     const renderEvent = useCallback(({ item }: { item: CircleEvent }) => {
         const hasTicket = userTickets.some(t => t.eventId === item.id);
-        const isOrganizer = userCircle?.adminIds?.includes(userId || '');
+        const isOrganizer = isAdmin || isModerator;
 
         return (
             <TouchableOpacity
                 style={styles.eventCard}
                 onPress={() => {
                     if (isOrganizer) {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        (navigation as any).navigate('TicketScanner', { circleId, eventId: item.id });
+                        Alert.alert(
+                            "Event Management",
+                            "What would you like to do?",
+                            [
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                { text: "Validate Tickets", onPress: () => (navigation as any).navigate('TicketScanner', { circleId, eventId: item.id }) },
+                                {
+                                    text: "Edit Event", onPress: () => {
+                                        setNewEvent({ ...item });
+                                        setEditingEventId(item.id);
+                                        setIsAddingEvent(true);
+                                    }
+                                },
+                                { text: "Delete Event", style: "destructive", onPress: () => handleDeleteEvent(item.id) },
+                                { text: "Cancel", style: "cancel" }
+                            ]
+                        );
                     } else if (hasTicket) {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (navigation as any).navigate('Profile');
@@ -207,34 +251,58 @@ export const CircleDetailScreen = () => {
                 <View style={styles.eventInfo}>
                     <Text style={styles.eventTitle}>{item.title}</Text>
                     <View style={styles.eventDetails}>
-                        <Clock size={14} color={theme.colors.secondaryText} />
-                        <Text style={styles.eventDetailText}>{item.date}</Text>
-                        <MapPin size={14} color={theme.colors.secondaryText} style={{ marginLeft: 8 }} />
-                        <Text style={styles.eventDetailText}>{item.location}</Text>
+                        <View style={styles.eventDetailRow}>
+                            <Clock size={12} color={palette.softGold} />
+                            <Text style={styles.eventDetailText}>{item.date}</Text>
+                        </View>
+                        <View style={styles.eventDetailRow}>
+                            <MapPin size={12} color={palette.softGold} />
+                            <Text style={styles.eventDetailText}>{item.location}</Text>
+                        </View>
                     </View>
                 </View>
-                <View style={[styles.eventStatus, (hasTicket || isOrganizer) && styles.eventStatusActive]}>
-                    {isOrganizer ? (
-                        <QrCode size={18} color={palette.white} />
-                    ) : hasTicket ? (
-                        <Check size={18} color={palette.white} />
-                    ) : (
-                        <Text style={styles.eventPrice}>{item.currency} {item.price}</Text>
-                    )}
-                </View>
+                {(hasTicket || isOrganizer) && (
+                    <View style={[styles.eventStatus, styles.eventStatusActive]}>
+                        {isOrganizer ? (
+                            <QrCode size={18} color={palette.white} />
+                        ) : (
+                            <Check size={18} color={palette.white} />
+                        )}
+                    </View>
+                )}
             </TouchableOpacity>
         );
-    }, [userTickets, userCircle, userId, navigation, setSelectedEventToPay, setShowPaymentModal, circleId]);
+    }, [userTickets, isAdmin, isModerator, navigation, setSelectedEventToPay, setShowPaymentModal, circleId]);
+
+    const handleDeleteEvent = (eventId: string) => {
+        Alert.alert(
+            "Delete Event",
+            "Are you sure you want to remove this event? This action cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => {
+                        useStore.getState().deleteCircleEvent(circleId, eventId);
+                        Alert.alert("Event Deleted", "The event has been removed from your sanctuary.");
+                    }
+                }
+            ]
+        );
+    };
 
     const handleCreateEvent = useCallback(() => {
         if (newEvent.title && newEvent.date && newEvent.location) {
-            useStore.getState().addCircleEvent(circleId, newEvent);
-            Alert.alert(
-                "Event Created",
-                "Members have been notified about your new event.",
-                [{ text: "Great" }]
-            );
+            if (editingEventId) {
+                useStore.getState().updateCircleEvent(circleId, editingEventId, newEvent);
+                Alert.alert("Event Updated", "Your event has been successfully updated.");
+            } else {
+                useStore.getState().addCircleEvent(circleId, newEvent);
+                Alert.alert("Event Created", "Members have been notified about your new event.");
+            }
             setIsAddingEvent(false);
+            setEditingEventId(null);
             setNewEvent({
                 title: '',
                 date: '',
@@ -246,7 +314,7 @@ export const CircleDetailScreen = () => {
         } else {
             Alert.alert("Error", "Please provide a title, date, and location.");
         }
-    }, [newEvent, circleId, setIsAddingEvent, setNewEvent]);
+    }, [newEvent, circleId, setIsAddingEvent, setNewEvent, editingEventId]);
 
     const handleBuyTicket = async (event: CircleEvent) => {
         const existingTickets = userTickets.filter(t => t.eventId === event.id);
@@ -300,11 +368,11 @@ export const CircleDetailScreen = () => {
                     destructiveButtonIndex: 2,
                     cancelButtonIndex: 0,
                     title: 'Community Safety',
-                    message: 'Report this reflection for AI assessment or block this user to hide their content.'
+                    message: 'Report this reflection for Spiritual Intelligence assessment or block this user to hide their content.'
                 },
                 (buttonIndex) => {
                     if (buttonIndex === 1) {
-                        Alert.alert("AI Assessment Started", "Our moderation AI is reviewing this post. It will be hidden if it violates our sacred space policies.");
+                        Alert.alert("Spiritual Intelligence Assessment Started", "Our moderation Spiritual Intelligence is reviewing this post. It will be hidden if it violates our sacred space policies.");
                     } else if (buttonIndex === 2) {
                         const post = MOCK_POSTS.find(p => p.id === postId);
                         if (post && post.userId) {
@@ -320,7 +388,7 @@ export const CircleDetailScreen = () => {
                 "How would you like to proceed?",
                 [
                     { text: "Cancel", style: "cancel" },
-                    { text: "Report", onPress: () => Alert.alert("AI Assessment Started", "Our moderation AI is reviewing this post.") },
+                    { text: "Report", onPress: () => Alert.alert("Spiritual Intelligence Assessment Started", "Our moderation Spiritual Intelligence is reviewing this post.") },
                     {
                         text: "Block User",
                         style: "destructive",
@@ -339,13 +407,17 @@ export const CircleDetailScreen = () => {
 
     const handleCircleMenu = () => {
         const options = ['Cancel', 'Flag Sanctuary', 'Block Sanctuary'];
-        if (isAdmin) options.push('Delete Sanctuary');
+        if (isAdmin) {
+            options.push('Create Event');
+            options.push('Manage Roles');
+            options.push('Delete Sanctuary');
+        }
 
         if (Platform.OS === 'ios') {
             ActionSheetIOS.showActionSheetWithOptions(
                 {
                     options,
-                    destructiveButtonIndex: isAdmin ? 2 : undefined,
+                    destructiveButtonIndex: isAdmin ? 5 : undefined,
                     cancelButtonIndex: 0,
                     title: circleName,
                     message: isAdmin ? 'Manage your sacred sanctuary.' : 'Help keep this space sacred.'
@@ -353,7 +425,11 @@ export const CircleDetailScreen = () => {
                 (buttonIndex) => {
                     if (buttonIndex === 1) handleFlagCircle();
                     if (buttonIndex === 2) handleBlockCircle();
-                    if (isAdmin && buttonIndex === 3) handleDeleteCircle();
+                    if (isAdmin) {
+                        if (buttonIndex === 3) setIsAddingEvent(true);
+                        if (buttonIndex === 4) setShowRoleManagement(true);
+                        if (buttonIndex === 5) handleDeleteCircle();
+                    }
                 }
             );
         } else {
@@ -363,6 +439,8 @@ export const CircleDetailScreen = () => {
                 { text: "Block Sanctuary", style: "destructive", onPress: handleBlockCircle }
             ];
             if (isAdmin) {
+                buttons.push({ text: "Create Event", onPress: () => setIsAddingEvent(true) });
+                buttons.push({ text: "Manage Roles", onPress: () => setShowRoleManagement(true) });
                 buttons.push({ text: "Delete Sanctuary", style: "destructive", onPress: handleDeleteCircle });
             }
             Alert.alert(circleName, "Sanctuary Management", buttons);
@@ -389,8 +467,8 @@ export const CircleDetailScreen = () => {
 
     const handleFlagCircle = () => {
         Alert.alert(
-            "AI Assessment Started",
-            "This sanctuary is now being assessed by our moderation AI. Thank you for keeping True North sacred.",
+            "Spiritual Intelligence Assessment Started",
+            "This sanctuary is now being assessed by our moderation Spiritual Intelligence. Thank you for keeping True North sacred.",
             [{ text: "Praise" }]
         );
     };
@@ -420,14 +498,20 @@ export const CircleDetailScreen = () => {
     };
 
     const renderPost = React.useCallback(({ item, index }: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+        const isCircleAdmin = userCircle?.adminIds?.includes(item.userId) || userCircle?.moderatorIds?.includes(item.userId);
         return (
             <FadeIn delay={Math.min(index * 100, 1000)} from="bottom">
-                <PostItem item={item} onBless={() => handleBless(item.id)} onReport={() => handleReport(item.id)} />
+                <PostItem
+                    item={item}
+                    onBless={() => handleBless(item.id)}
+                    onReport={() => handleReport(item.id)}
+                    isAdminPost={!!isCircleAdmin}
+                />
             </FadeIn>
         );
-    }, [blockedUserIds, handleBless]);
+    }, [blockedUserIds, handleBless, userCircle?.adminIds, userCircle?.moderatorIds]);
 
-    const PostItem = React.memo(({ item, onBless, onReport }: { item: any, onBless: () => void, onReport: () => void }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const PostItem = React.memo(({ item, onBless, onReport, isAdminPost }: { item: any, onBless: () => void, onReport: () => void, isAdminPost: boolean }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         const userName = item.userName || item.user || 'Anonymous';
         return (
             <View style={styles.postCard}>
@@ -442,11 +526,19 @@ export const CircleDetailScreen = () => {
                     >
                         <View style={styles.avatar}><Text style={styles.avatarText}>{userName[0]}</Text></View>
                         <View>
-                            <Text style={styles.userName}>{userName}</Text>
+                            <View style={styles.userNameContainer}>
+                                <Text style={styles.userName}>{userName}</Text>
+                                {isAdminPost && (
+                                    <View style={styles.adminBadge}>
+                                        <Shield size={10} color={palette.ivory} fill={palette.ivory} />
+                                        <Text style={styles.adminBadgeText}>Admin</Text>
+                                    </View>
+                                )}
+                            </View>
                             <Text style={styles.postType}>{item.type} • {item.time}</Text>
                         </View>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleReport(item.id)}>
+                    <TouchableOpacity onPress={() => onReport()}>
                         <MoreVertical size={18} color={theme.colors.secondaryText} />
                     </TouchableOpacity>
                 </View>
@@ -606,10 +698,19 @@ export const CircleDetailScreen = () => {
                             onChangeText={setNewPostContent}
                         />
 
+                        {selectedImage && (
+                            <View style={styles.selectedImageContainer}>
+                                <Image source={{ uri: selectedImage }} style={styles.selectedImagePreview} />
+                                <TouchableOpacity style={styles.removeImageBtn} onPress={() => setSelectedImage(null)}>
+                                    <X size={16} color={palette.white} />
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
                         <View style={styles.modalFooter}>
-                            <TouchableOpacity style={styles.modalIconButton}>
-                                <ImageIcon size={22} color={theme.colors.primary} />
-                                <Text style={styles.modalIconText}>Add Image</Text>
+                            <TouchableOpacity style={styles.modalIconButton} onPress={handlePickImage}>
+                                <ImageIcon size={22} color={palette.softGold} />
+                                <Text style={[styles.modalIconText, { color: palette.softGold }]}>Add Image</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -620,12 +721,12 @@ export const CircleDetailScreen = () => {
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { height: 'auto', paddingBottom: insets.bottom + 40 }]}>
                         <View style={styles.modalHeader}>
-                            <TouchableOpacity onPress={() => setIsAddingEvent(false)}>
+                            <TouchableOpacity onPress={() => { setIsAddingEvent(false); setEditingEventId(null); setNewEvent({ title: '', date: '', location: '', price: 0, currency: 'USD', capacity: 100 }); }}>
                                 <X size={24} color={theme.colors.text} />
                             </TouchableOpacity>
-                            <Text style={styles.modalTitle}>New Event</Text>
+                            <Text style={styles.modalTitle}>{editingEventId ? 'Edit Event' : 'New Event'}</Text>
                             <TouchableOpacity onPress={handleCreateEvent}>
-                                <Text style={styles.shareAction}>Create</Text>
+                                <Text style={styles.shareAction}>{editingEventId ? 'Update' : 'Create'}</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -831,7 +932,12 @@ export const CircleDetailScreen = () => {
 
 
                                         setShowPaymentModal(false);
-                                        Alert.alert("Success", "Ticket purchased successfully! Your spot is secured.");
+                                        Alert.alert(
+                                            "Success",
+                                            "Ticket purchased successfully! Your spot is secured.",
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                            [{ text: "OK", onPress: () => (navigation as any).navigate('Profile') }]
+                                        );
                                     } else {
                                         // Alert handled in service for mock
                                     }
@@ -847,6 +953,96 @@ export const CircleDetailScreen = () => {
                                 {isProcessingPayment ? "Processing..." : `Pay ${selectedEventToPay?.currency} ${(selectedEventToPay?.price * quantity).toLocaleString()}`}
                             </Text>
                         </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Role Management Modal */}
+            <Modal visible={showRoleManagement} animationType="slide" transparent>
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { height: '60%' }]}>
+                        <View style={styles.modalHeader}>
+                            <TouchableOpacity onPress={() => {
+                                setShowRoleManagement(false);
+                                setRoleSearchQuery('');
+                                setFoundUser(null);
+                            }}>
+                                <X size={24} color={theme.colors.text} />
+                            </TouchableOpacity>
+                            <Text style={styles.modalTitle}>Manage Circle Roles</Text>
+                            <View style={{ width: 24 }} />
+                        </View>
+
+                        <Text style={styles.inputLabel}>Search seeker by username</Text>
+                        <View style={styles.searchContainer}>
+                            <TextInput
+                                style={styles.searchInput}
+                                placeholder="Enter username..."
+                                placeholderTextColor={theme.colors.secondaryText}
+                                value={roleSearchQuery}
+                                onChangeText={setRoleSearchQuery}
+                            />
+                            <TouchableOpacity
+                                style={styles.searchButton}
+                                onPress={() => {
+                                    const user = findUserByUsername(roleSearchQuery);
+                                    if (user) {
+                                        setFoundUser(user);
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                    } else {
+                                        Alert.alert("Not Found", "We couldn't find a seeker with that username.");
+                                    }
+                                }}
+                            >
+                                <Search size={20} color={palette.ivory} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {foundUser && (
+                            <MotiView
+                                from={{ opacity: 0, translateY: 10 }}
+                                animate={{ opacity: 1, translateY: 0 }}
+                                style={styles.foundUserCard}
+                            >
+                                <View style={styles.userInfo}>
+                                    <View style={styles.avatar}><Text style={styles.avatarText}>{foundUser.username[0]}</Text></View>
+                                    <Text style={styles.userName}>{foundUser.username}</Text>
+                                </View>
+
+                                <View style={styles.rolePicker}>
+                                    {(['member', 'moderator', 'validator', 'admin'] as const).map((role) => (
+                                        <TouchableOpacity
+                                            key={role}
+                                            style={[
+                                                styles.roleOption,
+                                                selectedRole === role && styles.roleOptionSelected
+                                            ]}
+                                            onPress={() => setSelectedRole(role)}
+                                        >
+                                            <Text style={[
+                                                styles.roleOptionText,
+                                                selectedRole === role && styles.roleOptionTextSelected
+                                            ]}>
+                                                {role.charAt(0).toUpperCase() + role.slice(1)}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+
+                                <TouchableOpacity
+                                    style={styles.assignButton}
+                                    onPress={() => {
+                                        setCircleRole(circleId, foundUser.userId, selectedRole);
+                                        Alert.alert("Success", `${foundUser.username} is now a ${selectedRole} in this sanctuary.`);
+                                        setShowRoleManagement(false);
+                                        setRoleSearchQuery('');
+                                        setFoundUser(null);
+                                    }}
+                                >
+                                    <Text style={styles.assignButtonText}>Assign Role</Text>
+                                </TouchableOpacity>
+                            </MotiView>
+                        )}
                     </View>
                 </View>
             </Modal>
@@ -918,15 +1114,17 @@ const styles = StyleSheet.create({
     sectionContainer: { padding: theme.spacing.xl, paddingBottom: 0 },
     sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.md },
     sectionTitle: { fontFamily: theme.typography.sansBold, fontSize: 15, color: theme.colors.secondaryText, textTransform: 'uppercase', letterSpacing: 1 },
-    eventList: { gap: theme.spacing.lg, paddingBottom: theme.spacing.lg, paddingHorizontal: theme.spacing.xl },
+    eventList: { paddingBottom: theme.spacing.lg, paddingLeft: theme.spacing.xxl, paddingRight: theme.spacing.xxl },
 
     eventCard: {
-        width: 240, backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.md,
-        padding: theme.spacing.lg, borderWidth: 1, borderColor: theme.colors.border,
-        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
+        width: 280, backgroundColor: theme.colors.surface, borderRadius: 20,
+        padding: 20, borderWidth: 1, borderColor: theme.colors.border,
+        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+        shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 2,
+        marginRight: theme.spacing.lg
     },
     eventInfo: { flex: 1 },
-    eventTitle: { fontFamily: theme.typography.sansBold, fontSize: 16, color: theme.colors.text, marginBottom: 4 },
+    eventTitle: { fontFamily: theme.typography.sansBold, fontSize: 17, color: theme.colors.text, marginBottom: 8 },
     sectionDivider: { height: 1, backgroundColor: theme.colors.border, marginVertical: theme.spacing.xl },
     postCard: {
         backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.lg,
@@ -972,7 +1170,7 @@ const styles = StyleSheet.create({
         paddingVertical: theme.spacing.lg, flexDirection: 'row', gap: theme.spacing.xl
     },
     modalIconButton: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
-    modalIconText: { fontFamily: theme.typography.sansMedium, fontSize: 15, color: theme.colors.primary },
+    modalIconText: { fontFamily: theme.typography.sansMedium, fontSize: 15 },
     inputGroup: { marginBottom: theme.spacing.lg },
     inputLabel: { fontFamily: theme.typography.sansBold, fontSize: 13, color: theme.colors.secondaryText, marginBottom: 8, textTransform: 'uppercase' },
     input: {
@@ -981,7 +1179,8 @@ const styles = StyleSheet.create({
     },
     priceInputContainer: { flexDirection: 'row', alignItems: 'center' },
     eventPrice: { fontFamily: theme.typography.sansBold, fontSize: 13, color: palette.softGold, marginTop: 4 },
-    eventDetails: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 },
+    eventDetails: { gap: 6 },
+    eventDetailRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     eventDetailText: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText },
     eventStatus: { width: 50, height: 50, borderRadius: 25, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border },
     eventStatusActive: { backgroundColor: palette.success, borderColor: palette.success },
@@ -1008,6 +1207,46 @@ const styles = StyleSheet.create({
     requestItem: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         padding: theme.spacing.lg, borderBottomWidth: 1, borderBottomColor: theme.colors.border
+    },
+    userNameContainer: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    adminBadge: {
+        flexDirection: 'row', alignItems: 'center', gap: 4,
+        backgroundColor: palette.softGold, paddingHorizontal: 6, paddingVertical: 2,
+        borderRadius: 4
+    },
+    adminBadgeText: { fontFamily: theme.typography.sansBold, fontSize: 10, color: palette.ivory, textTransform: 'uppercase' },
+    searchContainer: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
+    searchInput: {
+        flex: 1, backgroundColor: theme.colors.surface, borderRadius: 12,
+        padding: 12, fontFamily: theme.typography.sans, fontSize: 16,
+        color: theme.colors.text, borderWidth: 1, borderColor: theme.colors.border
+    },
+    searchButton: {
+        width: 48, height: 48, borderRadius: 12, backgroundColor: palette.softGold,
+        alignItems: 'center', justifyContent: 'center'
+    },
+    foundUserCard: {
+        backgroundColor: theme.colors.surface, borderRadius: 16, padding: 16,
+        borderWidth: 1, borderColor: theme.colors.border
+    },
+    rolePicker: { flexDirection: 'row', gap: 10, marginVertical: 20 },
+    roleOption: {
+        flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1,
+        borderColor: theme.colors.border, alignItems: 'center'
+    },
+    roleOptionSelected: { borderColor: palette.softGold, backgroundColor: 'rgba(212, 175, 55, 0.1)' },
+    roleOptionText: { fontFamily: theme.typography.sansMedium, fontSize: 14, color: theme.colors.secondaryText },
+    roleOptionTextSelected: { color: palette.softGold, fontFamily: theme.typography.sansBold },
+    assignButton: {
+        backgroundColor: palette.softGold, borderRadius: 12, paddingVertical: 14,
+        alignItems: 'center'
+    },
+    assignButtonText: { fontFamily: theme.typography.sansBold, fontSize: 16, color: palette.ivory },
+    selectedImageContainer: { position: 'relative', marginVertical: 10, width: 100, height: 100 },
+    selectedImagePreview: { width: '100%', height: '100%', borderRadius: 10 },
+    removeImageBtn: {
+        position: 'absolute', top: -5, right: -5, backgroundColor: 'rgba(0,0,0,0.5)',
+        width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center'
     },
     requestUserInfo: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md, flex: 1 },
     requestUsername: { fontFamily: theme.typography.sansMedium, fontSize: 16, color: theme.colors.text },
