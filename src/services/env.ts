@@ -10,8 +10,11 @@ export const env = {
         ? 'http://localhost:3000' // Local backend (if you have one)
         : 'https://api.truenorth.app', // Production backend
     // RevenueCat
-    revenueCatIosKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY,
+    revenueCatIosKey: (__DEV__
+        ? process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY
+        : process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD) || process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD,
     revenueCatIosKeyProd: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD,
+
     revenueCatAndroidKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY,
 
     // AI
