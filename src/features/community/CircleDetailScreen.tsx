@@ -13,9 +13,11 @@ import * as Linking from 'expo-linking';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { FadeIn } from '../../components/FadeIn';
 import { contentAgentService, LIFE_CIRCLES, GhostReflection } from '../../services/ContentAgentService';
-import { useStore, BeliefType, CircleEvent, Reflection } from '../../store';
+import { useStore, BeliefType, CircleEvent, Reflection, TicketTier } from '../../store';
 import { supabase } from '../../services/supabase';
 import { paymentService, PaymentMethod } from '../../services/PaymentService';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import ChoiceModal, { ChoiceOption } from '../../components/ChoiceModal';
 
 
 import * as Haptics from 'expo-haptics';
@@ -25,8 +27,8 @@ import { MotiView, AnimatePresence } from 'moti';
 
 
 const MOCK_EVENTS = [
-    { id: '1', title: 'Community Reflection', time: 'Tomorrow, 7:00 AM', location: 'Online Sanctuary', participants: 12, price: 0, currency: 'KES' },
-    { id: '2', title: 'Open Hearts Session', time: 'Saturday, 10:00 AM', location: 'Shared Space', participants: 45, price: 0, currency: 'KES' },
+    { id: '1', title: 'Community Reflection', date: 'Tomorrow, 7:00 AM', location: 'Online Sanctuary', participants: 12, price: 0, currency: 'KES' },
+    { id: '2', title: 'Open Hearts Session', date: 'Saturday, 10:00 AM', location: 'Shared Space', participants: 45, price: 0, currency: 'KES' },
 ];
 
 export const CircleDetailScreen = () => {
@@ -94,6 +96,7 @@ export const CircleDetailScreen = () => {
 
             type: 'Reflection',
             content: r.content,
+            image: r.image,
             blessings: r.blessings,
             time: r.time
         }));
@@ -107,15 +110,25 @@ export const CircleDetailScreen = () => {
     const [selectedRole, setSelectedRole] = useState<'admin' | 'moderator' | 'member' | 'validator'>('moderator');
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [newPostContent, setNewPostContent] = useState('');
-    const [newEvent, setNewEvent] = useState<Omit<CircleEvent, 'id' | 'ticketsSold'>>({
+    const [newEvent, setNewEvent] = useState<any>({ // eslint-disable-line @typescript-eslint/no-explicit-any
         title: '',
         date: '',
         location: '',
-        price: 0,
+        price: '',
         currency: 'USD',
-        capacity: 100
+        capacity: '',
+        tiers: []
     });
+    const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
     const [editingEventId, setEditingEventId] = useState<string | null>(null);
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [eventDate, setEventDate] = useState(new Date());
+    const [showChoiceModal, setShowChoiceModal] = useState(false);
+    const [choiceModalConfig, setChoiceModalConfig] = useState<{
+        title: string;
+        message?: string;
+        options: ChoiceOption[];
+    }>({ title: '', options: [] });
 
 
     // If you created it (ID starts with 'user-'), you are the admin.
@@ -127,8 +140,10 @@ export const CircleDetailScreen = () => {
 
         const subscriptionTier = useStore.getState().subscriptionTier;
         const canPostInCircles = subscriptionTier === 'true_north' || subscriptionTier === 'zenith';
+        const isOrganizer = isAdmin || isModerator;
+        const isCircleMember = isMember || isOrganizer;
 
-        if (!canPostInCircles) {
+        if (!canPostInCircles && !isCircleMember) {
             Alert.alert(
                 "Community Reflection",
                 "Sharing reflections in public circles is a True North feature. Upgrade to join the conversation.",
@@ -154,10 +169,12 @@ export const CircleDetailScreen = () => {
         if (newPostContent.trim()) {
             try {
                 const user = useStore.getState();
-                if (user.userId) {
+                const effectiveUserId = user.userId || (user.isLoggedIn ? 'user-123' : null);
+
+                if (effectiveUserId) {
                     const newReflection: Reflection = {
                         id: Math.random().toString(36).substr(2, 9),
-                        userId: user.userId || 'user-123',
+                        userId: effectiveUserId,
                         userName: user.username || 'Anonymous',
                         content: newPostContent.trim(),
                         time: 'Just now',
@@ -170,7 +187,7 @@ export const CircleDetailScreen = () => {
                     setReflections(prev => [newReflection, ...prev]);
 
                     await supabase.from('journal_entries').insert({
-                        user_id: user.userId,
+                        user_id: effectiveUserId,
                         content: newPostContent.trim(),
                         is_private: false,
                         shared_in_circle_id: circleId,
@@ -222,12 +239,11 @@ export const CircleDetailScreen = () => {
                 style={styles.eventCard}
                 onPress={() => {
                     if (isOrganizer) {
-                        Alert.alert(
-                            "Event Management",
-                            "What would you like to do?",
-                            [
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                { text: "Validate Tickets", onPress: () => (navigation as any).navigate('TicketScanner', { circleId, eventId: item.id }) },
+                        setChoiceModalConfig({
+                            title: 'Event Management',
+                            message: 'What would you like to do?',
+                            options: [
+                                { text: "Validate Tickets", onPress: () => (navigation as any).navigate('TicketScanner', { circleId, eventId: item.id }) }, // eslint-disable-line @typescript-eslint/no-explicit-any
                                 {
                                     text: "Edit Event", onPress: () => {
                                         setNewEvent({ ...item });
@@ -235,10 +251,11 @@ export const CircleDetailScreen = () => {
                                         setIsAddingEvent(true);
                                     }
                                 },
-                                { text: "Delete Event", style: "destructive", onPress: () => handleDeleteEvent(item.id) },
-                                { text: "Cancel", style: "cancel" }
+                                { text: "Delete Event", style: 'destructive', onPress: () => handleDeleteEvent(item.id) },
+                                { text: "Cancel", style: 'cancel', onPress: () => { } }
                             ]
-                        );
+                        });
+                        setShowChoiceModal(true);
                     } else if (hasTicket) {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (navigation as any).navigate('Profile');
@@ -253,18 +270,27 @@ export const CircleDetailScreen = () => {
                     <View style={styles.eventDetails}>
                         <View style={styles.eventDetailRow}>
                             <Clock size={12} color={palette.softGold} />
-                            <Text style={styles.eventDetailText}>{item.date}</Text>
+                            <Text style={styles.eventDetailText}>{item.date || (item as any).time}</Text>{/* eslint-disable-line @typescript-eslint/no-explicit-any */}
                         </View>
                         <View style={styles.eventDetailRow}>
                             <MapPin size={12} color={palette.softGold} />
                             <Text style={styles.eventDetailText}>{item.location}</Text>
                         </View>
                     </View>
+                    <Text style={styles.eventPrice}>
+                        {item.tiers && item.tiers.length > 0
+                            ? `From ${item.currency} ${Math.min(...item.tiers.map(t => t.price))}`
+                            : `${item.currency} ${item.price}`}
+                    </Text>
                 </View>
                 {(hasTicket || isOrganizer) && (
-                    <View style={[styles.eventStatus, styles.eventStatusActive]}>
+                    <View style={[
+                        styles.eventStatus,
+                        hasTicket && styles.eventStatusActive,
+                        isOrganizer && styles.eventStatusAdmin
+                    ]}>
                         {isOrganizer ? (
-                            <QrCode size={18} color={palette.white} />
+                            <Shield size={18} color={palette.softGold} fill="rgba(200, 169, 90, 0.1)" />
                         ) : (
                             <Check size={18} color={palette.white} />
                         )}
@@ -294,11 +320,22 @@ export const CircleDetailScreen = () => {
 
     const handleCreateEvent = useCallback(() => {
         if (newEvent.title && newEvent.date && newEvent.location) {
+            const eventToSave = {
+                ...newEvent,
+                price: Number(newEvent.price) || 0,
+                capacity: Number(newEvent.capacity) || 0,
+                tiers: (newEvent.tiers || []).map((t: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+                    ...t,
+                    price: Number(t.price) || 0,
+                    capacity: Number(t.capacity) || 0
+                }))
+            };
+
             if (editingEventId) {
-                useStore.getState().updateCircleEvent(circleId, editingEventId, newEvent);
+                useStore.getState().updateCircleEvent(circleId, editingEventId, eventToSave);
                 Alert.alert("Event Updated", "Your event has been successfully updated.");
             } else {
-                useStore.getState().addCircleEvent(circleId, newEvent);
+                useStore.getState().addCircleEvent(circleId, eventToSave);
                 Alert.alert("Event Created", "Members have been notified about your new event.");
             }
             setIsAddingEvent(false);
@@ -307,9 +344,10 @@ export const CircleDetailScreen = () => {
                 title: '',
                 date: '',
                 location: '',
-                price: 0,
+                price: '',
                 currency: 'USD',
-                capacity: 100
+                capacity: '',
+                tiers: []
             });
         } else {
             Alert.alert("Error", "Please provide a title, date, and location.");
@@ -361,90 +399,52 @@ export const CircleDetailScreen = () => {
     };
 
     const handleReport = (postId: string) => {
-        if (Platform.OS === 'ios') {
-            ActionSheetIOS.showActionSheetWithOptions(
+        setChoiceModalConfig({
+            title: 'Community Safety',
+            message: 'Report this reflection for Spiritual Intelligence assessment or block this user to hide their content.',
+            options: [
                 {
-                    options: ['Cancel', 'Report Reflection', 'Block User'],
-                    destructiveButtonIndex: 2,
-                    cancelButtonIndex: 0,
-                    title: 'Community Safety',
-                    message: 'Report this reflection for Spiritual Intelligence assessment or block this user to hide their content.'
+                    text: 'Report Reflection',
+                    onPress: () => Alert.alert("Spiritual Intelligence Assessment Started", "Our moderation Spiritual Intelligence is reviewing this post. It will be hidden if it violates our sacred space policies.")
                 },
-                (buttonIndex) => {
-                    if (buttonIndex === 1) {
-                        Alert.alert("Spiritual Intelligence Assessment Started", "Our moderation Spiritual Intelligence is reviewing this post. It will be hidden if it violates our sacred space policies.");
-                    } else if (buttonIndex === 2) {
-                        const post = MOCK_POSTS.find(p => p.id === postId);
+                {
+                    text: 'Block User',
+                    style: 'destructive',
+                    onPress: () => {
+                        const post = reflections.find(p => p.id === postId);
                         if (post && post.userId) {
                             blockUser(post.userId);
                             Alert.alert("User Blocked", "You will no longer see reflections from this seeker.");
                         }
                     }
-                }
-            );
-        } else {
-            Alert.alert(
-                "Community Safety",
-                "How would you like to proceed?",
-                [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Report", onPress: () => Alert.alert("Spiritual Intelligence Assessment Started", "Our moderation Spiritual Intelligence is reviewing this post.") },
-                    {
-                        text: "Block User",
-                        style: "destructive",
-                        onPress: () => {
-                            const post = MOCK_POSTS.find(p => p.id === postId);
-                            if (post && post.userId) {
-                                blockUser(post.userId);
-                                Alert.alert("User Blocked", "You will no longer see reflections from this seeker.");
-                            }
-                        }
-                    }
-                ]
-            );
-        }
+                },
+                { text: 'Cancel', style: 'cancel', onPress: () => { } }
+            ]
+        });
+        setShowChoiceModal(true);
     };
 
     const handleCircleMenu = () => {
-        const options = ['Cancel', 'Flag Sanctuary', 'Block Sanctuary'];
+        const options: ChoiceOption[] = [
+            { text: 'Flag Sanctuary', onPress: handleFlagCircle },
+            { text: 'Block Sanctuary', onPress: handleBlockCircle },
+            { text: 'Cancel', style: 'cancel', onPress: () => { } }
+        ];
+
         if (isAdmin) {
-            options.push('Create Event');
-            options.push('Manage Roles');
-            options.push('Delete Sanctuary');
+            options.splice(2, 0,
+                { text: 'Create Event', onPress: () => setIsAddingEvent(true) },
+                { text: 'Manage Roles', onPress: () => setShowRoleManagement(true) },
+                { text: 'Delete Sanctuary', style: 'destructive', onPress: handleDeleteCircle }
+            );
         }
 
-        if (Platform.OS === 'ios') {
-            ActionSheetIOS.showActionSheetWithOptions(
-                {
-                    options,
-                    destructiveButtonIndex: isAdmin ? 5 : undefined,
-                    cancelButtonIndex: 0,
-                    title: circleName,
-                    message: isAdmin ? 'Manage your sacred sanctuary.' : 'Help keep this space sacred.'
-                },
-                (buttonIndex) => {
-                    if (buttonIndex === 1) handleFlagCircle();
-                    if (buttonIndex === 2) handleBlockCircle();
-                    if (isAdmin) {
-                        if (buttonIndex === 3) setIsAddingEvent(true);
-                        if (buttonIndex === 4) setShowRoleManagement(true);
-                        if (buttonIndex === 5) handleDeleteCircle();
-                    }
-                }
-            );
-        } else {
-            const buttons: any[] = [ // eslint-disable-line @typescript-eslint/no-explicit-any
-                { text: "Cancel", style: "cancel" },
-                { text: "Flag Sanctuary", onPress: handleFlagCircle },
-                { text: "Block Sanctuary", style: "destructive", onPress: handleBlockCircle }
-            ];
-            if (isAdmin) {
-                buttons.push({ text: "Create Event", onPress: () => setIsAddingEvent(true) });
-                buttons.push({ text: "Manage Roles", onPress: () => setShowRoleManagement(true) });
-                buttons.push({ text: "Delete Sanctuary", style: "destructive", onPress: handleDeleteCircle });
-            }
-            Alert.alert(circleName, "Sanctuary Management", buttons);
-        }
+        setChoiceModalConfig({
+            title: circleName,
+            message: isAdmin ? 'Manage your sacred sanctuary.' : 'Help keep this space sacred.',
+            options
+        });
+        setShowChoiceModal(true);
     };
 
     const handleBlockCircle = () => {
@@ -558,9 +558,6 @@ export const CircleDetailScreen = () => {
                             <Text style={styles.blessCount}>{item.blessings} Blessings</Text>
                         </MotiView>
                     </TouchableOpacity>
-                    <View style={styles.footerActions}>
-                        <TouchableOpacity style={styles.actionIcon}><Share2 size={18} color={theme.colors.secondaryText} /></TouchableOpacity>
-                    </View>
                 </View>
             </View>
         );
@@ -636,11 +633,6 @@ export const CircleDetailScreen = () => {
                             <>
                                 <View style={styles.sectionHeader}>
                                     <Text style={styles.sectionTitle}>Upcoming Events</Text>
-                                    {(isAdmin || isModerator) && (
-                                        <TouchableOpacity onPress={() => setIsAddingEvent(true)}>
-                                            <Plus size={20} color={palette.softGold} />
-                                        </TouchableOpacity>
-                                    )}
                                 </View>
                                 <TrueNorthFlashList
                                     horizontal
@@ -659,7 +651,7 @@ export const CircleDetailScreen = () => {
                                 <View style={styles.sectionDivider} />
                             </>
                         )}
-                        <Text style={[styles.sectionTitle, { marginBottom: theme.spacing.lg }]}>Reflections</Text>
+                        <Text style={[styles.sectionTitle, { marginBottom: theme.spacing.xl }]}>Reflections</Text>
                     </View>
 
                 }
@@ -721,7 +713,7 @@ export const CircleDetailScreen = () => {
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { height: 'auto', paddingBottom: insets.bottom + 40 }]}>
                         <View style={styles.modalHeader}>
-                            <TouchableOpacity onPress={() => { setIsAddingEvent(false); setEditingEventId(null); setNewEvent({ title: '', date: '', location: '', price: 0, currency: 'USD', capacity: 100 }); }}>
+                            <TouchableOpacity onPress={() => { setIsAddingEvent(false); setEditingEventId(null); setNewEvent({ title: '', date: '', location: '', price: '', currency: 'USD', capacity: '', tiers: [] }); setShowDatePicker(false); }}>
                                 <X size={24} color={theme.colors.text} />
                             </TouchableOpacity>
                             <Text style={styles.modalTitle}>{editingEventId ? 'Edit Event' : 'New Event'}</Text>
@@ -742,12 +734,33 @@ export const CircleDetailScreen = () => {
 
                         <View style={styles.inputGroup}>
                             <Text style={styles.inputLabel}>Date & Time</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="e.g. Friday, 6:00 PM"
-                                value={newEvent.date}
-                                onChangeText={t => setNewEvent({ ...newEvent, date: t })}
-                            />
+                            <View style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Platform.OS === 'ios' ? 8 : 12 }]}>
+                                <Text style={{ color: newEvent.date ? theme.colors.text : theme.colors.secondaryText, flex: 1 }}>
+                                    {newEvent.date || 'Date & Time'}
+                                </Text>
+                                <DateTimePicker
+                                    value={eventDate}
+                                    mode="datetime"
+                                    display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                                    style={{ width: 180, height: 36 }}
+                                    onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
+                                        if (selectedDate) {
+                                            setEventDate(selectedDate);
+                                            setNewEvent({
+                                                ...newEvent,
+                                                date: selectedDate.toLocaleString('en-US', {
+                                                    weekday: 'short',
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    hour: 'numeric',
+                                                    minute: '2-digit',
+                                                    hour12: true
+                                                })
+                                            });
+                                        }
+                                    }}
+                                />
+                            </View>
                         </View>
 
                         <View style={styles.inputGroup}>
@@ -761,22 +774,71 @@ export const CircleDetailScreen = () => {
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Ticket Price (0 for Free)</Text>
-                            <View style={styles.priceInputContainer}>
-                                <TextInput
-                                    style={[styles.input, { flex: 1, marginRight: 8 }]}
-                                    placeholder="0"
-                                    keyboardType="numeric"
-                                    value={newEvent.price.toString()}
-                                    onChangeText={t => setNewEvent({ ...newEvent, price: Number(t) || 0 })}
-                                />
-                                <TextInput
-                                    style={[styles.input, { width: 80 }]}
-                                    placeholder="USD"
-                                    value={newEvent.currency}
-                                    onChangeText={t => setNewEvent({ ...newEvent, currency: t })}
-                                />
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                <Text style={styles.inputLabel}>Ticket Tiers</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <Text style={[styles.inputLabel, { marginRight: 8, marginBottom: 0 }]}>Currency:</Text>
+                                    <TextInput
+                                        style={[styles.input, { width: 60, height: 32, paddingVertical: 0, fontSize: 13 }]}
+                                        placeholder="USD"
+                                        value={newEvent.currency}
+                                        onChangeText={t => setNewEvent({ ...newEvent, currency: t.toUpperCase() })}
+                                        autoCapitalize="characters"
+                                    />
+                                    <TouchableOpacity
+                                        style={styles.addTierButton}
+                                        onPress={() => {
+                                            const newTier = { id: Math.random().toString(36).substr(2, 9), name: '', price: '', capacity: '', ticketsSold: 0 };
+                                            setNewEvent({ ...newEvent, tiers: [...(newEvent.tiers || []), newTier] });
+                                        }}
+                                    >
+                                        <Plus size={16} color={palette.softGold} />
+                                        <Text style={styles.addTierText}>Add Tier</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
+                            {(newEvent.tiers || []).map((tier: any, idx: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                                <View key={tier.id} style={styles.tierRow}>
+                                    <TextInput
+                                        style={[styles.input, { flex: 2, marginRight: 4 }]}
+                                        placeholder="Tier Name (e.g. VIP)"
+                                        value={tier.name}
+                                        onChangeText={t => {
+                                            const updated = [...(newEvent.tiers || [])];
+                                            updated[idx] = { ...tier, name: t };
+                                            setNewEvent({ ...newEvent, tiers: updated });
+                                        }}
+                                    />
+                                    <TextInput
+                                        style={[styles.input, { flex: 1, marginRight: 4 }]}
+                                        placeholder="Price"
+                                        keyboardType="numeric"
+                                        value={tier.price?.toString() || ''}
+                                        onChangeText={t => {
+                                            const updated = [...(newEvent.tiers || [])];
+                                            updated[idx] = { ...tier, price: t };
+                                            setNewEvent({ ...newEvent, tiers: updated });
+                                        }}
+                                    />
+                                    <TextInput
+                                        style={[styles.input, { flex: 1, marginRight: 4 }]}
+                                        placeholder="Cap"
+                                        keyboardType="numeric"
+                                        value={tier.capacity?.toString() || ''}
+                                        onChangeText={t => {
+                                            const updated = [...(newEvent.tiers || [])];
+                                            updated[idx] = { ...tier, capacity: t };
+                                            setNewEvent({ ...newEvent, tiers: updated });
+                                        }}
+                                    />
+                                    <TouchableOpacity onPress={() => {
+                                        const updated = (newEvent.tiers || []).filter((_: any, i: number) => i !== idx); // eslint-disable-line @typescript-eslint/no-explicit-any
+                                        setNewEvent({ ...newEvent, tiers: updated });
+                                    }}>
+                                        <X size={18} color="#FF3B30" />
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
                         </View>
 
                     </View>
@@ -825,7 +887,31 @@ export const CircleDetailScreen = () => {
                         {selectedEventToPay && (
                             <View style={{ marginBottom: 20 }}>
                                 <Text style={styles.eventTitle}>{selectedEventToPay.title}</Text>
-                                <Text style={styles.eventPrice}>{selectedEventToPay.currency} {selectedEventToPay.price}</Text>
+                                {(selectedEventToPay.tiers && selectedEventToPay.tiers.length > 0) ? (
+                                    <View style={{ marginTop: 12 }}>
+                                        <Text style={styles.paymentSectionTitle}>Select Ticket Tier</Text>
+                                        <View style={styles.tierSelector}>
+                                            {selectedEventToPay.tiers.map((tier: TicketTier) => (
+                                                <TouchableOpacity
+                                                    key={tier.id}
+                                                    style={[
+                                                        styles.tierOption,
+                                                        selectedTierId === tier.id && styles.tierOptionSelected
+                                                    ]}
+                                                    onPress={() => setSelectedTierId(tier.id)}
+                                                >
+                                                    <View style={{ flex: 1 }}>
+                                                        <Text style={[styles.tierOptionName, selectedTierId === tier.id && styles.tierOptionTextSelected]}>{tier.name}</Text>
+                                                        <Text style={styles.tierOptionPrice}>{selectedEventToPay.currency} {tier.price}</Text>
+                                                    </View>
+                                                    {selectedTierId === tier.id && <Check size={18} color={palette.ivory} />}
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
+                                    </View>
+                                ) : (
+                                    <Text style={styles.eventPrice}>{selectedEventToPay.currency} {selectedEventToPay.price}</Text>
+                                )}
                             </View>
                         )}
 
@@ -891,7 +977,11 @@ export const CircleDetailScreen = () => {
                         )}
 
                         <TouchableOpacity
-                            style={[styles.payButton, isProcessingPayment && { opacity: 0.7 }]}
+                            style={[
+                                styles.payButton,
+                                isProcessingPayment && styles.payButtonDisabled,
+                                (!!selectedEventToPay?.tiers?.length && !selectedTierId) && styles.payButtonDisabled
+                            ]}
                             onPress={async () => {
                                 if (!selectedEventToPay) return;
 
@@ -900,27 +990,35 @@ export const CircleDetailScreen = () => {
                                     return;
                                 }
 
+                                if (selectedEventToPay?.tiers && selectedEventToPay.tiers.length > 0 && !selectedTierId) {
+                                    Alert.alert("Selection Required", "Please choose your desired ticket tier.");
+                                    return;
+                                }
+
                                 setIsProcessingPayment(true);
 
                                 try {
-                                    const totalAmount = selectedEventToPay.price * quantity;
+                                    const selectedTier = selectedEventToPay.tiers?.find((t: TicketTier) => t.id === selectedTierId);
+                                    const currentPrice = selectedTier ? selectedTier.price : selectedEventToPay.price;
+                                    const totalAmount = currentPrice * quantity;
 
                                     const result = await paymentService.initializePayment({
                                         amount: totalAmount,
                                         currency: selectedEventToPay.currency,
-                                        description: `Ticket for ${selectedEventToPay.title} (x${quantity})`,
+                                        description: `Ticket for ${selectedEventToPay.title} ${selectedTier ? `(${selectedTier.name})` : ''} (x${quantity})`,
                                         provider: paymentProvider,
                                         phoneNumber: paymentProvider === 'MPESA' ? paymentPhone : undefined,
                                         metadata: {
                                             eventId: selectedEventToPay.id,
                                             circleId: circleId,
                                             userId: userId,
+                                            tierId: selectedTierId,
                                             quantity: quantity
                                         }
                                     });
 
                                     if (result.success) {
-                                        await purchaseTicket(circleId, selectedEventToPay.id, quantity);
+                                        await purchaseTicket(circleId, selectedEventToPay.id, selectedTierId || undefined, quantity);
 
                                         addNotification({
                                             id: Math.random().toString(36).substr(2, 9),
@@ -947,10 +1045,10 @@ export const CircleDetailScreen = () => {
                                     setIsProcessingPayment(false);
                                 }
                             }}
-                            disabled={isProcessingPayment}
+                            disabled={isProcessingPayment || (!!selectedEventToPay?.tiers?.length && !selectedTierId)}
                         >
                             <Text style={styles.payButtonText}>
-                                {isProcessingPayment ? "Processing..." : `Pay ${selectedEventToPay?.currency} ${(selectedEventToPay?.price * quantity).toLocaleString()}`}
+                                {isProcessingPayment ? "Processing..." : `Pay ${selectedEventToPay?.currency} ${((selectedEventToPay?.tiers?.find((t: TicketTier) => t.id === selectedTierId)?.price || selectedEventToPay?.price || 0) * quantity).toLocaleString()}`}
                             </Text>
                         </TouchableOpacity>
                     </View>
@@ -1046,6 +1144,14 @@ export const CircleDetailScreen = () => {
                     </View>
                 </View>
             </Modal>
+
+            <ChoiceModal
+                visible={showChoiceModal}
+                onClose={() => setShowChoiceModal(false)}
+                title={choiceModalConfig.title}
+                message={choiceModalConfig.message}
+                options={choiceModalConfig.options}
+            />
         </View>
 
     );
@@ -1144,8 +1250,6 @@ const styles = StyleSheet.create({
     postFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: theme.colors.border, paddingTop: theme.spacing.lg },
     blessButton: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
     blessCount: { fontFamily: theme.typography.sansBold, fontSize: 13, color: palette.softGold },
-    footerActions: { flexDirection: 'row', gap: theme.spacing.xl },
-    actionIcon: { padding: 4 },
     fab: {
         position: 'absolute', left: theme.spacing.xxl, right: theme.spacing.xxl,
         height: 56, borderRadius: theme.borderRadius.full, backgroundColor: theme.colors.text,
@@ -1177,13 +1281,13 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.md, padding: theme.spacing.md,
         fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.text, borderWidth: 1, borderColor: theme.colors.border
     },
-    priceInputContainer: { flexDirection: 'row', alignItems: 'center' },
     eventPrice: { fontFamily: theme.typography.sansBold, fontSize: 13, color: palette.softGold, marginTop: 4 },
     eventDetails: { gap: 6 },
     eventDetailRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     eventDetailText: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText },
-    eventStatus: { width: 50, height: 50, borderRadius: 25, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border },
+    eventStatus: { width: 44, height: 44, borderRadius: 22, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border },
     eventStatusActive: { backgroundColor: palette.success, borderColor: palette.success },
+    eventStatusAdmin: { borderColor: palette.softGold, backgroundColor: 'rgba(200, 169, 90, 0.05)' },
     requestBanner: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         backgroundColor: 'rgba(212, 175, 55, 0.1)', paddingVertical: 12, paddingHorizontal: 16,
@@ -1256,5 +1360,32 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: theme.colors.border
     },
     acceptBtn: { backgroundColor: palette.success, borderColor: palette.success },
-    rejectBtn: { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }
+    rejectBtn: { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+    tierRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 4 },
+    tierSelector: { gap: 10, marginTop: 10 },
+    tierOption: {
+        flexDirection: 'row', alignItems: 'center', padding: 16,
+        borderRadius: 12, backgroundColor: theme.colors.background,
+        borderWidth: 1, borderColor: theme.colors.border
+    },
+    tierOptionSelected: { borderColor: palette.softGold, backgroundColor: 'rgba(212, 175, 55, 0.05)' },
+    tierOptionName: { fontFamily: theme.typography.sansMedium, fontSize: 15, color: theme.colors.text },
+    tierOptionTextSelected: { color: palette.softGold, fontFamily: theme.typography.sansBold },
+    tierOptionPrice: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText },
+    payButtonDisabled: { opacity: 0.5 },
+    addTierButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(212, 175, 55, 0.1)',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: theme.borderRadius.full,
+        marginLeft: 12
+    },
+    addTierText: {
+        fontFamily: theme.typography.sansBold,
+        fontSize: 13,
+        color: palette.softGold,
+    }
 });

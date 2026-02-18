@@ -15,6 +15,8 @@ import { useNavigation } from '@react-navigation/native';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { supabase } from '../../services/supabase';
 import { FadeIn } from '../../components/FadeIn';
+import QRCode from 'react-native-qrcode-svg';
+const APP_ICON = require('../../../assets/icon.png'); // eslint-disable-line @typescript-eslint/no-require-imports
 
 export const ProfileScreen = () => {
     const insets = useSafeAreaInsets();
@@ -547,12 +549,16 @@ const TicketItem = memo(({ item }: { item: UserTicket }) => (
         </View>
         <View style={styles.qrPlaceholder}>
             <View style={styles.qrInner}>
-                <View style={styles.qrMockGrid}>
-                    {[...Array(100)].map((_, i) => (
-                        <View key={i} style={[styles.qrMockDot, { opacity: Math.random() > 0.4 ? 1 : 0 }]} />
-                    ))}
-                    <View style={styles.qrMockCenter}><QrCode size={24} color={theme.colors.text} strokeWidth={1} /></View>
-                </View>
+                <QRCode
+                    value={`tn-ticket-${item.id}`}
+                    size={110}
+                    color={theme.colors.text}
+                    backgroundColor="transparent"
+                    logo={APP_ICON}
+                    logoSize={30}
+                    logoBackgroundColor="#FAF9F6"
+                    logoBorderRadius={8}
+                />
                 <Text style={styles.qrStatusText}>{item.status === 'used' ? 'CHECKED IN' : 'READY TO SCAN'}</Text>
             </View>
             {item.status === 'used' && <View style={styles.usedOverlay}><Check size={40} color={palette.white} /></View>}
@@ -692,9 +698,6 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.surface, padding: theme.spacing.xl, borderRadius: theme.borderRadius.lg,
         borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center', borderStyle: 'dashed'
     },
-    qrMockGrid: { width: 100, height: 100, flexDirection: 'row', flexWrap: 'wrap', padding: 4, backgroundColor: '#FAF9F6', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
-    qrMockDot: { width: 7, height: 7, backgroundColor: theme.colors.text, margin: 1, borderRadius: 1 },
-    qrMockCenter: { position: 'absolute', backgroundColor: '#FAF9F6', padding: 4, borderRadius: 4 },
     validateButton: {
         backgroundColor: palette.softGold, borderRadius: 12, paddingVertical: 14,
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,

@@ -49,9 +49,10 @@ class AuthService {
 
         if (error) throw error;
 
-        const { setLoggedIn, setEmail } = useStore.getState();
+        const { setLoggedIn, setEmail, setUserId } = useStore.getState();
         setLoggedIn(true);
         setEmail(email);
+        setUserId('user-' + Math.random().toString(36).substr(2, 9)); // Simple mock ID for email login
         return true;
     }
 
@@ -73,8 +74,9 @@ class AuthService {
                 if (error) throw error;
 
                 if (data.session) {
-                    const { setLoggedIn, setEmail, setUsername } = useStore.getState();
+                    const { setLoggedIn, setEmail, setUsername, setUserId } = useStore.getState();
                     setLoggedIn(true);
+                    setUserId(data.user.id);
                     if (data.user.email) setEmail(data.user.email);
                     if (credential.fullName?.givenName) {
                         setUsername(credential.fullName.givenName);
@@ -112,8 +114,9 @@ class AuthService {
                 if (error) throw error;
 
                 if (data.session) {
-                    const { setLoggedIn, setEmail, setUsername } = useStore.getState();
+                    const { setLoggedIn, setEmail, setUsername, setUserId } = useStore.getState();
                     setLoggedIn(true);
+                    setUserId(data.user.id);
                     if (data.user.email) setEmail(data.user.email);
                     if (userInfo.data.user.name) setUsername(userInfo.data.user.name);
 
@@ -168,9 +171,10 @@ class AuthService {
             if (error) throw error;
 
             if (data.user) {
-                const { setLoggedIn, setEmail } = useStore.getState();
+                const { setLoggedIn, setEmail, setUserId } = useStore.getState();
                 setLoggedIn(true);
                 setEmail(email);
+                setUserId(data.user.id);
 
                 // Sync with RevenueCat
                 await subscriptionService.logIn(data.user.id);
@@ -193,10 +197,11 @@ class AuthService {
 
         return new Promise((resolve) => {
             setTimeout(() => {
-                const { setOnboarded, setLoggedIn, setUsername } = useStore.getState();
+                const { setOnboarded, setLoggedIn, setUsername, setUserId } = useStore.getState();
 
                 setOnboarded(true);
                 setLoggedIn(true);
+                setUserId('mock-user-' + Math.random().toString(36).substr(2, 5));
                 if (!useStore.getState().username) {
                     setUsername(`User_${Math.floor(Math.random() * 1000)}`);
                 }

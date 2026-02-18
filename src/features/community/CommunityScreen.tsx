@@ -286,7 +286,7 @@ export const CommunityScreen = () => {
                             <Text style={styles.subtitle}>Find your sacred sanctuary among fellow seekers.</Text>
                         </View>
 
-                        <View style={{ marginBottom: theme.spacing.lg }}>
+                        <View style={{ marginBottom: theme.spacing.xl }}>
                             <FaithNews type="community" />
                         </View>
 
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     },
     searchInput: { flex: 1, marginLeft: theme.spacing.sm, fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.text, letterSpacing: 0 },
     cardContainer: {
-        marginBottom: theme.spacing.md,
+        marginBottom: theme.spacing.xl,
     },
     card: {
         flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface,

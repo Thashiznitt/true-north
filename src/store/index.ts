@@ -26,15 +26,24 @@ export interface NotificationItem {
     createdAt: number;
 }
 
+export interface TicketTier {
+    id: string;
+    name: string;
+    price: number;
+    capacity: number;
+    ticketsSold: number;
+}
+
 export interface CircleEvent {
     id: string;
     title: string;
     date: string;
     location: string;
-    price: number;
+    price: number; // For backward compatibility / single tier
     currency: string;
-    capacity: number;
+    capacity: number; // For backward compatibility / single tier
     ticketsSold: number;
+    tiers?: TicketTier[];
 }
 
 export interface UserTicket {
@@ -47,6 +56,8 @@ export interface UserTicket {
     status: 'valid' | 'used';
     purchaseDate: number;
     userName: string;
+    tierId?: string;
+    tierName?: string;
 }
 
 
@@ -180,7 +191,7 @@ interface UserState {
     addCircleEvent: (circleId: string, event: Omit<CircleEvent, 'id' | 'ticketsSold'>) => void;
     updateCircleEvent: (circleId: string, eventId: string, event: Partial<Omit<CircleEvent, 'id' | 'ticketsSold'>>) => void;
     deleteCircleEvent: (circleId: string, eventId: string) => void;
-    purchaseTicket: (circleId: string, eventId: string, quantity?: number) => void;
+    purchaseTicket: (circleId: string, eventId: string, tierId?: string, quantity?: number) => void;
     validateTicket: (ticketId: string) => { success: boolean, message: string };
     findUserByUsername: (username: string) => { userId: string, username: string } | null;
     addCircleReflection: (circleId: string, reflection: Reflection) => void;
@@ -542,10 +553,14 @@ export const useStore = create<UserState>()(
                 )
             })),
 
-            purchaseTicket: (circleId, eventId, quantity = 1) => set((state) => {
+            purchaseTicket: (circleId: string, eventId: string, tierId?: string, quantity = 1) => set((state) => {
                 const circle = state.createdCircles.find(c => c.id === circleId);
                 const event = circle?.events?.find(e => e.id === eventId);
                 if (!circle || !event) return state;
+
+                const tier = tierId ? event.tiers?.find(t => t.id === tierId) : null;
+                const price = tier ? tier.price : event.price;
+                const tierName = tier ? tier.name : undefined;
 
                 const newTickets: UserTicket[] = [];
                 for (let i = 0; i < quantity; i++) {
@@ -559,7 +574,9 @@ export const useStore = create<UserState>()(
                         qrCodeData: `tn-ticket-${circleId}-${eventId}-${ticketId}`,
                         status: 'valid',
                         purchaseDate: Date.now(),
-                        userName: state.username || 'Anonymous Seeker'
+                        userName: state.username || 'Anonymous Seeker',
+                        tierId,
+                        tierName
                     });
                 }
 
@@ -569,7 +586,13 @@ export const useStore = create<UserState>()(
                         c.id === circleId ? {
                             ...c,
                             events: c.events?.map(e =>
-                                e.id === eventId ? { ...e, ticketsSold: e.ticketsSold + quantity } : e
+                                e.id === eventId ? {
+                                    ...e,
+                                    ticketsSold: e.ticketsSold + quantity,
+                                    tiers: e.tiers?.map(t =>
+                                        t.id === tierId ? { ...t, ticketsSold: t.ticketsSold + quantity } : t
+                                    )
+                                } : e
                             )
                         } : c
                     )

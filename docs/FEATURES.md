@@ -24,8 +24,8 @@ The app uses automated Spiritual Intelligence checks to prevent sharing of sensi
 
 ## 6. Event Management
 Community leaders can create events (online or in-person).
--   **Ticketing**: Users can purchase tickets using Card (Stripe) or M-Pesa (STK Push).
--   **Validation**: Event organizers and designated **Validators** can scan ticket QR codes to validate attendees.
+- **Multi-Tier Ticketing**: Admins can create sophisticated events with multiple tiers (e.g., Early Bird, General, VIP), each with distinct prices and capacities.
+- **Validation**: Event organizers and designated **Validators** can scan functional QR codes to validate attendees.
 - **Sacred Lifecycle**: Validated tickets automatically disappear from the user's profile to maintain a clean workspace.
 - **User Roles**: The app supports granular roles including Admin, Moderator, and **Validator**, each with specific permissions for community and event management.
 
@@ -43,6 +43,7 @@ A hidden administrative portal for managing the platform.
 - **Spiritual Intelligence Configuration**: Adjust safety strictness and switch between spiritual intelligence models.
 - **Sales Statistics**: Visualize revenue, subscription tiers, and recent transactions.
 
-## 8. User Experience & Visuals
 - **Global Animations**: Smooth, staggered entrance animations across Onboarding, Community, and Journal screens using `Moti`.
+- **Unified Design (ChoiceModal)**: Custom rounded capsule menus with optimized background dimming for all administrative and community actions.
+- **Uniform Spacing**: A consistent 32px vertical rhythm across Affirmation, Community, and sanctuary detail screens for a professional, balanced feel.
 - **Subscription Gating**: Transparent onboarding flow with clear "Free Trial" or "Limited Access" choices.

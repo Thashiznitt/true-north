@@ -27,12 +27,17 @@ True North is a React Native application built with the Expo SDK 52.
 ### Global Navigation Ref
 The app uses a `navigationRef` in `src/navigation/root.tsx` to enable navigation from outside of React components (e.g., from deep links or services).
 
+### Unified UI Patterns
+- **ChoiceModal**: Reusable alternative to native alerts/action sheets, providing consistent branding, capsule-style buttons, and immersive background dimming.
+- **Vertical Rhythm**: standardized 32px spacing established across all core sanctuary screens (Affirmation, Community, Detail).
+
 ### Ghost Communities & Content Agent
 The `ContentAgentService` simulates active communities and reflections for a "lived-in" feel, while allowing users to create their own real communities. It also handles the "Spiritual Analysis" logic for journal feedback.
 
 ### Persistence & Backend
 - **State**: Persisted using Zustand's `persist` middleware with `@react-native-async-storage/async-storage`.
-- **Database**: Planned integration with Supabase for user data, community posts, and events.
+- **Database**: Supabase integration for user data, community posts, and multi-tier events with relational ticket mapping.
+- **Ticketing**: Functional QR code generation using `react-native-qrcode-svg` for secure, verifiable community access.
 - **ORM**: Prisma schema is defined and ready for client generation.
 
 ### Admin Module

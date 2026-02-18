@@ -449,7 +449,7 @@ export const contentAgentService = {
                 const userPrompt = `Write a sanctuary reflection about ${theme}.`;
                 content = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
             } catch (error) {
-                console.warn('AI Generation failed, falling back to templates', error);
+                console.warn('Spiritual Intelligence Generation failed, falling back to templates', error);
                 const templates = GENERIC_TEMPLATES;
                 content = templates[Math.floor(Math.random() * templates.length)];
             }
@@ -477,7 +477,7 @@ export const contentAgentService = {
         // For performance, we might want to stick to templates for bulk/init
         return LIFE_CIRCLES.map(circle => ({
             ...circle,
-            reflections: [] // Start empty or use a separate "fill" function later to avoid massive AI calls on startup
+            reflections: [] // Start empty or use a separate "fill" function later to avoid massive Spiritual Intelligence calls on startup
         }));
     },
 
@@ -549,7 +549,7 @@ export const contentAgentService = {
                 }
                 return await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
             } catch {
-                console.warn('AI daily advice failed');
+                console.warn('Spiritual Intelligence daily advice failed');
                 return "Take a moment to breathe. Your answers are within.";
             }
         }

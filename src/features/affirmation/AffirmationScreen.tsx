@@ -20,6 +20,7 @@ import * as MediaLibrary from 'expo-media-library';
 import { contentAgentService } from '../../services/ContentAgentService';
 import { FaithNews } from '../../components/FaithNews';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
+import ChoiceModal, { ChoiceOption } from '../../components/ChoiceModal';
 
 // Define aliases for icons to avoid name conflicts with common words
 const HeartIcon = Heart;
@@ -62,6 +63,12 @@ export const AffirmationScreen = () => {
     const [loadingAdvice, setLoadingAdvice] = useState(false);
     const [isWallpaperMode, setIsWallpaperMode] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [showChoiceModal, setShowChoiceModal] = useState(false);
+    const [choiceModalConfig, setChoiceModalConfig] = useState<{
+        title: string;
+        message?: string;
+        options: ChoiceOption[];
+    }>({ title: '', options: [] });
 
     useEffect(() => {
         // Daily cycling based on date
@@ -84,13 +91,30 @@ export const AffirmationScreen = () => {
     };
 
     const handleShare = async () => {
-        try {
-            await Share.share({
-                message: `Today's True North Affirmation:\n\n"${current.text}"\n\nDownload True North for your daily spiritual alignment.`,
-            });
-        } catch (error) {
-            console.error(error);
-        }
+        setChoiceModalConfig({
+            title: 'Spread the Word',
+            message: 'Share this sacred affirmation with your community.',
+            options: [
+                {
+                    text: 'Share Text',
+                    onPress: async () => {
+                        try {
+                            await Share.share({
+                                message: `Today's True North Affirmation:\n\n"${current.text}"\n\nDownload True North for your daily spiritual alignment.`,
+                            });
+                        } catch (error) {
+                            console.error(error);
+                        }
+                    }
+                },
+                {
+                    text: 'Copy to Clipboard',
+                    onPress: copyToClipboard
+                },
+                { text: 'Cancel', style: 'cancel', onPress: () => { } }
+            ]
+        });
+        setShowChoiceModal(true);
     };
 
     const toggleFavorite = () => {
@@ -172,11 +196,9 @@ export const AffirmationScreen = () => {
                                 <View style={styles.content}>
                                     <FadeIn from="none" duration={1000}>
                                         <View>
-                                            <View style={{ height: 20 + theme.spacing.lg }} />
                                             <Text style={styles.quoteText}>&quot;{current.text}&quot;</Text>
                                         </View>
                                     </FadeIn>
-                                    <View style={{ height: 20 }} />
                                     <FadeIn delay={300} from="bottom">
                                         <View>
                                             <Text style={styles.authorText}>{current.author}</Text>
@@ -231,7 +253,7 @@ export const AffirmationScreen = () => {
                                 )}
 
                                 {!isWallpaperMode && (
-                                    <View style={{ marginTop: theme.spacing.md }}>
+                                    <View style={{ marginTop: theme.spacing.xl }}>
                                         <FaithNews type="community" />
                                     </View>
                                 )}
@@ -298,7 +320,15 @@ export const AffirmationScreen = () => {
                     </View>
                 </View>
             </Modal>
-        </View >
+
+            <ChoiceModal
+                visible={showChoiceModal}
+                onClose={() => setShowChoiceModal(false)}
+                title={choiceModalConfig.title}
+                message={choiceModalConfig.message}
+                options={choiceModalConfig.options}
+            />
+        </View>
     );
 };
 
@@ -306,20 +336,21 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#000' },
     background: { flex: 1, width: '100%', height: '100%' },
     overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
-    scrollContent: { flexGrow: 1, paddingHorizontal: theme.spacing.xl, paddingBottom: 60, paddingTop: 100 },
+    scrollContent: { flexGrow: 1, paddingHorizontal: theme.spacing.xl, paddingBottom: 60, paddingTop: 120 },
     scrollContentWallpaper: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: theme.spacing.xxl },
     content: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     quoteText: {
         fontFamily: theme.typography.serifBold, fontSize: 36, color: palette.ivory,
-        textAlign: 'center', lineHeight: 48, letterSpacing: -0.5
+        textAlign: 'center', lineHeight: 48, letterSpacing: -0.5,
+        marginTop: theme.spacing.xl
     },
     authorText: {
         fontFamily: theme.typography.sansBold, fontSize: 13, color: palette.softGold,
-        textTransform: 'uppercase', letterSpacing: 2, marginTop: theme.spacing.lg
+        textTransform: 'uppercase', letterSpacing: 2, marginTop: theme.spacing.xl
     },
-    actions: { flexDirection: 'row', marginTop: theme.spacing.xxl, gap: theme.spacing.xxl },
+    actions: { flexDirection: 'row', marginTop: theme.spacing.xl, gap: theme.spacing.xl },
     actionButton: { width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },
-    bottomActions: { marginTop: theme.spacing.xl, gap: theme.spacing.md },
+    bottomActions: { marginTop: theme.spacing.xl, gap: theme.spacing.xl },
     wallpaperButton: {
         paddingVertical: 14, paddingHorizontal: 24, borderRadius: 30,
         backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',

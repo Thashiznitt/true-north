@@ -21,7 +21,7 @@ export const SpiritualIntelligenceService = {
 
     getProvider: async (): Promise<AIProvider> => {
         const provider = await AsyncStorage.getItem(STORAGE_KEY_PROVIDER);
-        // Default to 'Gemini' if not set, so users get "live" AI out of the box with our system key
+        // Default to 'Gemini' if not set, so users get "live" Spiritual Intelligence out of the box with our system key
         return (provider as AIProvider) || 'Gemini';
     },
 
@@ -64,7 +64,7 @@ export const SpiritualIntelligenceService = {
         if (provider === 'LocalMock') {
             // If we have a system key, we can try to use it even if provider says 'LocalMock' 
             // (unless user explicitly wants offline mode, but for now we assume 'LocalMock' means 'Offline/Dev')
-            // However, to fix the user issue where AI should "just work", we will treat 'Gemini' as the default if 'LocalMock' is selected but we are in PROD.
+            // However, to fix the user issue where Spiritual Intelligence should "just work", we will treat 'Gemini' as the default if 'LocalMock' is selected but we are in PROD.
             // For safety, let's keep LocalMock strict for dev, but we expect the app to default to Gemini in prod if we change the default getProvider logic.
             // Actually, let's just add the Gemini logic.
             throw new Error('LocalMock provider does not support dynamic generation. Use static templates.');
@@ -84,7 +84,7 @@ export const SpiritualIntelligenceService = {
                 throw new Error("Missing Gemini API Key. Please check your configuration.");
             }
 
-            // Use Google Generative AI REST API
+            // Use Google Generative Spiritual Intelligence REST API
             // For simplicity, we'll use the v1beta/models/gemini-pro:generateContent endpoint
             // Note: 'model' from storage might be 'gpt-4o-mini', so we force a gemini model if it's mismatched
             const geminiModel = 'gemini-1.5-flash'; // Hardcoded for reliability or fetch from config
@@ -169,7 +169,7 @@ export const SpiritualIntelligenceService = {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(`AI Provider Error (${response.status}): ${errorText}`);
+                throw new Error(`Spiritual Intelligence Provider Error (${response.status}): ${errorText}`);
             }
 
             const data = await response.json();

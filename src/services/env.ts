@@ -17,6 +17,6 @@ export const env = {
 
     revenueCatAndroidKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY,
 
-    // AI
+    // Spiritual Intelligence
     geminiApiKey: process.env.GEMINI_API_KEY,
 };

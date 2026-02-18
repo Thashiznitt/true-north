@@ -29,7 +29,7 @@ export interface Affirmation {
 
 export const affirmationService = {
     getDaily: async (): Promise<Affirmation> => {
-        // Mocking API for now as per instructions "Do NOT embed AI logic inside mobile app"
+        // Mocking API for now as per instructions "Do NOT embed Spiritual Intelligence logic inside mobile app"
         // In production, this calls the backend API
         return request<Affirmation>('/affirmations/daily');
     },
