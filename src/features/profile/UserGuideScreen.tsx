@@ -79,7 +79,7 @@ export const UserGuideScreen = () => {
         { feature: "Spiritual Intelligence Analysis", free: false, paid: true },
         { feature: "Unlimited Circles", free: false, paid: true },
         { feature: "Advanced Security", free: false, paid: true },
-        { feature: "Ask Nur (AI Companion)", free: false, paid: true },
+        { feature: "Ask Nur Companion", free: false, paid: true },
         { feature: "Priority Support", free: false, paid: true },
     ];
 

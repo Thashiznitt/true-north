@@ -26,14 +26,14 @@ const TIER_METADATA: Record<string, any> = {
         benefits: ["1 Personal Daily Affirmation", "View Community Reflections", "Join up to 3 Local Circles", "Ad-supported experience"],
     },
     compass: {
-        benefits: ["Unlimited Private Reflections (Journal)", "Ask Nur AI Companion", "Join up to 5 Circles", "Standard Daily Guidance"],
+        benefits: ["Unlimited Private Reflections (Journal)", "Ask Nur Companion", "Join up to 5 Circles", "Standard Daily Guidance"],
     },
     true_north: {
-        benefits: ["Unlimited Community Reflections", "Ask Nur AI Companion", "Personalized Spiritual Guidance", "Join Unlimited Circles", "Create up to 2 Circles"],
+        benefits: ["Unlimited Community Reflections", "Ask Nur Companion", "Personalized Spiritual Guidance", "Join Unlimited Circles", "Create up to 2 Circles"],
         isPopular: true
     },
     zenith: {
-        benefits: ["Elite Spiritual Mentoring", "Ask Nur AI Companion", "Deep Community Analysis", "Unlimited Circle Creation", "Location Intelligence"],
+        benefits: ["Elite Spiritual Mentoring", "Ask Nur Companion", "Deep Community Analysis", "Unlimited Circle Creation", "Location Intelligence"],
     },
 };
 

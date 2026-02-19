@@ -285,7 +285,7 @@ export const AskNurScreen = () => {
                 </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
                     <Text style={styles.headerTitle}>Ask Nur</Text>
-                    <Text style={styles.headerSubtitle}>AI Companion</Text>
+                    <Text style={styles.headerSubtitle}>Companion</Text>
                 </View>
                 <TouchableOpacity onPress={clearNurChat}>
                     <Text style={styles.clearText}>Clear</Text>
