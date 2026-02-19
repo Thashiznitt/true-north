@@ -1145,49 +1145,49 @@ export const OnboardingScreen = () => {
         // Let's implement the UI structure first.
 
         return (
-            <StepContainer>
-                <FadeIn delay={100} from="bottom">
-                    {renderHeader("Your Location", "Connect with a sanctuary near you.")}
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+                <StepContainer>
+                    <FadeIn delay={100} from="bottom">
+                        {renderHeader("Your Location", "Connect with a sanctuary near you.")}
+                    </FadeIn>
 
+                    <FadeIn delay={300} from="bottom">
+                        <View style={{ gap: 20 }}>
+                            <View>
+                                <Text style={styles.label}>Country</Text>
+                                <TouchableOpacity
+                                    style={styles.inputDropdown}
+                                    onPress={() => {
+                                        setShowCountryPicker(true);
+                                    }}
+                                >
+                                    <Text style={[styles.inputText, !locationCountry && { color: theme.colors.secondaryText }]}>
+                                        {locationCountry || 'Select Country'}
+                                    </Text>
+                                    <ChevronLeft size={18} color={theme.colors.secondaryText} style={{ transform: [{ rotate: '-90deg' }] }} />
+                                </TouchableOpacity>
+                            </View>
 
-                </FadeIn>
+                            <View>
+                                <Text style={styles.label}>City</Text>
+                                <TouchableOpacity
+                                    style={[styles.inputDropdown, !locationCountry && { opacity: 0.5 }]}
+                                    onPress={() => {
+                                        if (!locationCountry) return;
+                                        setShowCityPicker(true);
+                                    }}
+                                >
+                                    <Text style={[styles.inputText, !locationCity && { color: theme.colors.secondaryText }]}>
+                                        {locationCity || 'Select City'}
+                                    </Text>
+                                    <ChevronLeft size={18} color={theme.colors.secondaryText} style={{ transform: [{ rotate: '-90deg' }] }} />
+                                </TouchableOpacity>
+                            </View>
 
-                <FadeIn delay={300} from="bottom">
-                    <View style={{ gap: 20 }}>
-                        <View>
-                            <Text style={styles.label}>Country</Text>
-                            <TouchableOpacity
-                                style={styles.inputDropdown}
-                                onPress={() => {
-                                    setShowCountryPicker(true);
-                                }}
-                            >
-                                <Text style={[styles.inputText, !locationCountry && { color: theme.colors.secondaryText }]}>
-                                    {locationCountry || 'Select Country'}
-                                </Text>
-                                <ChevronLeft size={18} color={theme.colors.secondaryText} style={{ transform: [{ rotate: '-90deg' }] }} />
-                            </TouchableOpacity>
                         </View>
-
-                        <View>
-                            <Text style={styles.label}>City</Text>
-                            <TouchableOpacity
-                                style={[styles.inputDropdown, !locationCountry && { opacity: 0.5 }]}
-                                onPress={() => {
-                                    if (!locationCountry) return;
-                                    setShowCityPicker(true);
-                                }}
-                            >
-                                <Text style={[styles.inputText, !locationCity && { color: theme.colors.secondaryText }]}>
-                                    {locationCity || 'Select City'}
-                                </Text>
-                                <ChevronLeft size={18} color={theme.colors.secondaryText} style={{ transform: [{ rotate: '-90deg' }] }} />
-                            </TouchableOpacity>
-                        </View>
-
-                    </View>
-                </FadeIn>
-            </StepContainer>
+                    </FadeIn>
+                </StepContainer>
+            </ScrollView>
         );
     };
 
@@ -1588,7 +1588,7 @@ const styles = StyleSheet.create({
         borderRadius: 12, paddingHorizontal: 12, height: 48, marginBottom: 16,
         borderWidth: 1, borderColor: theme.colors.border
     },
-    searchInput: { flex: 1, marginLeft: 8, fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.text },
+    searchInput: { flex: 1, marginLeft: 8, fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.text, letterSpacing: 0 },
     pickerItem: {
         flexDirection: 'row', alignItems: 'center', paddingVertical: 16,
         borderBottomWidth: 1, borderBottomColor: theme.colors.border
