@@ -78,7 +78,7 @@ export const SpiritualIntelligenceService = {
         if (provider === 'Gemini') {
             // Try to get from secure store first (if user overrode it), else use env
             const storedKey = await SpiritualIntelligenceService.getApiKey(provider);
-            apiKey = storedKey || process.env.GEMINI_API_KEY || '';
+            apiKey = storedKey || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 
             if (!apiKey) {
                 throw new Error("Missing Gemini API Key. Please check your configuration.");
@@ -87,7 +87,7 @@ export const SpiritualIntelligenceService = {
             // Use Google Generative Spiritual Intelligence REST API
             // For simplicity, we'll use the v1beta/models/gemini-pro:generateContent endpoint
             // Note: 'model' from storage might be 'gpt-4o-mini', so we force a gemini model if it's mismatched
-            const geminiModel = 'gemini-1.5-flash'; // Hardcoded for reliability or fetch from config
+            const geminiModel = 'gemini-flash-latest'; // Verified working identifier
             endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`;
 
             try {
@@ -104,7 +104,7 @@ export const SpiritualIntelligenceService = {
 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    throw new Error(`Gemini API Error (${response.status}): ${errorText}`);
+                    throw new Error(`Gemini API Error (${response.status}) for ${geminiModel}: ${errorText}`);
                 }
 
                 const data = await response.json();

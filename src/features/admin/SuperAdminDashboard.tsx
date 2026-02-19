@@ -25,10 +25,23 @@ export const SuperAdminDashboard = () => {
         blockUser,
         unblockUser,
         deleteCreatedCircle,
-        userId
+        userId,
+        email
     } = useStore();
 
+    const { SUPER_ADMIN_EMAILS } = require('../../store'); // eslint-disable-line @typescript-eslint/no-var-requires
+    const isSuperAdmin = email && SUPER_ADMIN_EMAILS.includes(email);
+
+    React.useEffect(() => {
+        if (!isSuperAdmin) {
+            Alert.alert("Access Denied", "You do not have permission to view this sacred sanctuary.");
+            navigation.goBack();
+        }
+    }, [isSuperAdmin]);
+
     const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+
+    if (!isSuperAdmin) return null;
 
     // News Management State
     const [newsSheetVisible, setNewsSheetVisible] = useState(false);

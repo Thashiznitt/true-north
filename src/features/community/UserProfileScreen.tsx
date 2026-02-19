@@ -31,6 +31,8 @@ interface Reflection {
     id: string;
     content: string;
     created_at: string;
+    image?: string;
+    blessings?: number;
     circles?: {
         name: string;
     } | null;
@@ -253,9 +255,11 @@ export const UserProfileScreen = () => {
                 circleName={item.circles?.name}
                 userName={profile?.username || userName}
                 userAvatar={profile?.avatar_url}
-                blessings={(index * 7) + 3} // Mock blessing count for now as it's not in the fetched reflection type yet
+                image={item.image}
+                blessings={item.blessings || (index * 7) + 3}
                 onBless={() => { }}
                 onReport={() => Alert.alert("Report", "Flagged for moderation.")}
+                style={styles.reflectionCardMargin}
             />
         </MotiView>
     );
@@ -274,12 +278,6 @@ export const UserProfileScreen = () => {
             </View>
 
             <View style={styles.headerActions}>
-                <TouchableOpacity onPress={handleShare} style={styles.headerIconBtn}>
-                    <Link size={18} color={theme.colors.text} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => Alert.alert("Report", "Reporting seeker to moderation Spiritual Intelligence...")} style={styles.headerIconBtn}>
-                    <Flag size={18} color={theme.colors.text} />
-                </TouchableOpacity>
                 <TouchableOpacity onPress={handleMoreAction} style={styles.headerIconBtn}>
                     <MoreVertical size={18} color={theme.colors.text} />
                 </TouchableOpacity>
@@ -384,7 +382,7 @@ export const UserProfileScreen = () => {
                             from={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: 200 + i * 50 }}
-                            style={{ marginBottom: 10, width: '48%' }}
+                            style={{ marginBottom: 12, width: '100%' }}
                         >
                             <CircleCard
                                 id={c.circle_id}
@@ -416,10 +414,10 @@ export const UserProfileScreen = () => {
     return (
         <View style={styles.container}>
             <FixedHeader />
-            <TrueNorthFlashList
+            <TrueNorthFlashList<Reflection>
                 data={showReflections ? reflections : []}
                 renderItem={renderReflectionItem}
-                keyExtractor={(item: Reflection) => item.id}
+                keyExtractor={(item) => item.id}
                 estimatedItemSize={120}
                 ListHeaderComponent={<ProfileHero />}
                 ListFooterComponent={<ProfileFooter />}
@@ -494,12 +492,13 @@ const styles = StyleSheet.create({
     circleTagName: { fontFamily: theme.typography.sansBold, fontSize: 11, color: palette.softGold },
     timeTag: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText, opacity: 0.6 },
     reflectionBody: { fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.text, lineHeight: 24 },
-    circleList: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    circleList: { gap: 4 },
     circleChip: { backgroundColor: theme.colors.surface, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border },
     circleChipText: { fontFamily: theme.typography.sansMedium, fontSize: 14, color: theme.colors.text },
     privateLock: { alignItems: 'center', paddingVertical: 60, gap: 15 },
     privateTitle: { fontFamily: theme.typography.serifBold, fontSize: 22, color: theme.colors.text },
     privateDesc: { fontFamily: theme.typography.sans, fontSize: 15, color: theme.colors.secondaryText, textAlign: 'center', paddingHorizontal: 40, lineHeight: 22 },
     emptyState: { paddingVertical: 30, alignItems: 'center' },
-    emptyText: { fontFamily: theme.typography.sans, fontSize: 14, color: theme.colors.secondaryText, fontStyle: 'italic', textAlign: 'center' }
+    emptyText: { fontFamily: theme.typography.sans, fontSize: 14, color: theme.colors.secondaryText, fontStyle: 'italic', textAlign: 'center' },
+    reflectionCardMargin: { marginHorizontal: 20, marginBottom: 16 }
 });

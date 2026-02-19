@@ -109,8 +109,14 @@ class AuthService {
             const rawNonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
             const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
 
+            console.log('[Auth] Google Sign-In Nonce Debug:', {
+                rawNonce,
+                hashedNonce,
+                hashedNonceLower: hashedNonce.toLowerCase()
+            });
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const userInfo = await GoogleSignin.signIn({ nonce: hashedNonce } as any);
+            const userInfo = await GoogleSignin.signIn({ nonce: hashedNonce.toLowerCase() } as any);
 
             if (userInfo.data?.idToken) {
                 const { data, error } = await supabase.auth.signInWithIdToken({

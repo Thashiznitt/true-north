@@ -21,6 +21,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import ChoiceModal, { ChoiceOption } from '../../components/ChoiceModal';
 import { BottomSheet } from '../../components/BottomSheet';
 import { Typography } from '../../components/Typography';
+import { ReflectionCard } from '../../components/ReflectionCard';
 
 
 import * as Haptics from 'expo-haptics';
@@ -626,79 +627,28 @@ export const CircleDetailScreen = () => {
 
     const renderPost = React.useCallback(({ item, index }: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         const isCircleAdmin = (userCircle?.adminIds?.includes(item.userId) || userCircle?.moderatorIds?.includes(item.userId)) ?? false;
+        const userName = item.userName || item.user || 'Anonymous';
+
         return (
             <FadeIn delay={Math.min(index * 100, 1000)} from="bottom">
-                <PostItem
-                    item={item}
+                <ReflectionCard
+                    id={item.id}
+                    content={item.content}
+                    createdAt={item.time}
+                    userName={userName}
+                    userAvatar={undefined} // If we had avatars in reflections, we'd pass them here
+                    image={item.image}
+                    blessings={item.blessings}
                     onBless={() => handleBless(item.id)}
                     onReport={() => handlePostOptions(item)}
                     isAdminPost={isCircleAdmin}
+                    isFlagged={item.isFlagged}
+                    flagReason={item.flagReason}
+                    style={styles.reflectionCardOverride}
                 />
             </FadeIn>
         );
     }, [userCircle, isAdmin, isModerator]);
-
-    const PostItem = React.memo(({ item, onBless, onReport, isAdminPost }: { item: any, onBless: () => void, onReport: () => void, isAdminPost: boolean }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-        const userName = item.userName || item.user || 'Anonymous';
-        const isFlagged = item.isFlagged;
-
-        return (
-            <View style={[styles.postCard, isFlagged && styles.flaggedPost]}>
-                {isFlagged && (
-                    <View style={styles.flaggedHeader}>
-                        <Flag size={14} color={palette.error} />
-                        <Text style={styles.flaggedText}>This content is under review</Text>
-                    </View>
-                )}
-                <View style={styles.postHeader}>
-                    <TouchableOpacity
-                        style={styles.userInfo}
-                        onPress={() => (navigation as { navigate: (s: string, p: object) => void }).navigate('UserProfile', {
-                            userId: item.userId,
-                            userName: userName
-                        })}
-                    >
-                        <View style={styles.avatar}><Text style={styles.avatarText}>{userName[0]}</Text></View>
-                        <View>
-                            <View style={styles.userNameContainer}>
-                                <Text style={styles.userName}>{userName}</Text>
-                                {isAdminPost && (
-                                    <View style={styles.adminBadge}>
-                                        <Shield size={10} color={palette.ivory} fill={palette.ivory} />
-                                        <Text style={styles.adminBadgeText}>Admin</Text>
-                                    </View>
-                                )}
-                            </View>
-                            <Text style={styles.postType}>{item.type} • {item.time}</Text>
-                        </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => onReport()}>
-                        <MoreVertical size={18} color={theme.colors.secondaryText} />
-                    </TouchableOpacity>
-                </View>
-                <Text style={[styles.postContent, isFlagged && styles.flaggedContent]}>
-                    {isFlagged ? "Harmful content detected and hidden from view." : item.content}
-                </Text>
-                {item.image && !isFlagged && (
-                    <Image source={{ uri: item.image }} style={styles.postImage} resizeMode="cover" />
-                )}
-                <View style={styles.postFooter}>
-                    <TouchableOpacity style={styles.blessButton} onPress={onBless} disabled={isFlagged}>
-                        <Heart size={18} color={isFlagged ? theme.colors.border : palette.softGold} fill={isFlagged ? 'transparent' : palette.softGold} />
-                        <MotiView
-                            key={item.blessings}
-                            from={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ type: 'spring', damping: 10 }}
-                        >
-                            <Text style={[styles.blessCount, isFlagged && { color: theme.colors.border }]}>{item.blessings} Blessings</Text>
-                        </MotiView>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        );
-    });
-    PostItem.displayName = 'PostItem';
 
     return (
         <View style={styles.container}>
@@ -1335,24 +1285,10 @@ const styles = StyleSheet.create({
     eventInfo: { flex: 1 },
     eventTitle: { fontFamily: theme.typography.sansBold, fontSize: 17, color: theme.colors.text, marginBottom: 8 },
     sectionDivider: { height: 1, backgroundColor: theme.colors.border, marginVertical: theme.spacing.xl },
-    postCard: {
-        backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.lg,
-        padding: theme.spacing.xl, marginBottom: theme.spacing.xl,
-        marginHorizontal: theme.spacing.xl,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 10, elevation: 1,
-        borderWidth: 1, borderColor: theme.colors.border
+    reflectionCardOverride: {
+        marginHorizontal: 20,
+        marginBottom: theme.spacing.xl
     },
-    postHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: theme.spacing.md },
-    userInfo: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
-    avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#FAF9F6', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border },
-    avatarText: { fontFamily: theme.typography.sansBold, fontSize: 14, color: theme.colors.text },
-    userName: { fontFamily: theme.typography.sansBold, fontSize: 15, color: theme.colors.text },
-    postType: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText },
-    postContent: { fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.text, lineHeight: 24, marginBottom: theme.spacing.lg },
-    postImage: { width: '100%', height: 200, borderRadius: theme.borderRadius.md, marginBottom: theme.spacing.xl },
-    postFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: theme.colors.border, paddingTop: theme.spacing.lg },
-    blessButton: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
-    blessCount: { fontFamily: theme.typography.sansBold, fontSize: 13, color: palette.softGold },
     fab: {
         position: 'absolute', left: theme.spacing.xxl, right: theme.spacing.xxl,
         height: 56, borderRadius: theme.borderRadius.full, backgroundColor: theme.colors.text,

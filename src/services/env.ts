@@ -3,20 +3,18 @@ export const env = {
     isDev: __DEV__,
 
     // Toggle this to force mock services even in production builds (useful for testing)
-    useMockServices: __DEV__ || false, // Defaults to true in dev, false in prod
+    useMockServices: false,
 
     // API Base URL (can be switched based on env)
     apiBaseUrl: __DEV__
         ? 'http://localhost:3000' // Local backend (if you have one)
         : 'https://api.truenorth.app', // Production backend
     // RevenueCat
-    revenueCatIosKey: (__DEV__
-        ? process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY
-        : process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD) || process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD,
+    revenueCatIosKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD,
     revenueCatIosKeyProd: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD,
 
     revenueCatAndroidKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY,
 
     // Spiritual Intelligence
-    geminiApiKey: process.env.GEMINI_API_KEY,
+    geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY,
 };

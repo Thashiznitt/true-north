@@ -29,21 +29,7 @@ export const AskNurScreen = () => {
     const isSubscriber = subscriptionTier === 'true_north' || subscriptionTier === 'zenith';
 
     if (!isSubscriber) {
-        return (
-            <View style={styles.container}>
-                <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <ChevronLeft size={28} color={theme.colors.text} />
-                    </TouchableOpacity>
-                    <View style={styles.headerTitleContainer}>
-                        <Text style={styles.headerTitle}>Ask Nur</Text>
-                        <Lock size={16} color={theme.colors.secondaryText} style={{ marginTop: 4 }} />
-                    </View>
-                    <View style={{ width: 28 }} />
-                </View>
-                <SubscriptionScreen />
-            </View>
-        );
+        return <SubscriptionScreen />;
     }
 
     // Daily Reset & Greeting Logic

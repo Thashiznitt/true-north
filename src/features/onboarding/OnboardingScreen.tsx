@@ -24,7 +24,7 @@ import { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 import { env } from '../../services/env';
 import { COUNTRIES, COUNTRIES_DATA } from '../../data/locations';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
-import { Search, MapPin, X } from 'lucide-react-native';
+import { Search, MapPin, X, Globe } from 'lucide-react-native';
 import { BottomSheet } from '../../components/BottomSheet';
 import { APP_THEMES, THEME_ICONS_MAP, AppTheme } from '../../types/themes';
 
@@ -198,7 +198,7 @@ export const OnboardingScreen = () => {
                 <TrueNorthFlashList
                     data={type === 'country' ? filteredCountries : filteredCities}
                     keyExtractor={memoizedLocationKeyExtractor}
-                    renderItem={memoizedLocationRenderItem}
+                    renderItem={type === 'country' ? renderCountryItem : renderCityItem}
                     estimatedItemSize={60}
                     keyboardShouldPersistTaps="handled"
                 />
@@ -1153,19 +1153,6 @@ export const OnboardingScreen = () => {
     );
 
     const renderStep9 = () => {
-        // We'll use local state for the picker (similar to CreateCircle, but maybe simpler here)
-        // Since we are inside a component, we can add state or just use a simple modal approach
-        // Re-using the logic from CreateCircle for consistency.
-
-        // We need to import COUNTRIES and COUNTRIES_DATA but they are not imported yet.
-        // We will add the import at the top of the file in a separate edit, or just hardcode/copy for NOW to ensure it works,
-        // but best practice is to import. 
-        // For this edit, I will assume I can't easily add the import without a huge replacement.
-        // So I will use the fully qualified name if possible, or just re-define the data access here if I can't add imports easily.
-        // Actually, I should add the import first. 
-        // BUT, I can use a require or just simple logic if I don't want to touch imports.
-        // Let's implement the UI structure first.
-
         return (
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
                 <StepContainer>
@@ -1174,37 +1161,44 @@ export const OnboardingScreen = () => {
                     </FadeIn>
 
                     <FadeIn delay={300} from="bottom">
-                        <View style={{ gap: 20 }}>
-                            <View>
-                                <Text style={styles.label}>Country</Text>
-                                <TouchableOpacity
-                                    style={styles.inputDropdown}
-                                    onPress={() => {
-                                        setShowCountryPicker(true);
-                                    }}
-                                >
-                                    <Text style={[styles.inputText, !locationCountry && { color: theme.colors.secondaryText }]}>
+                        <View style={{ gap: 16 }}>
+                            <TouchableOpacity
+                                style={[styles.locationCard, !!locationCountry && styles.locationCardActive]}
+                                onPress={() => setShowCountryPicker(true)}
+                                activeOpacity={0.9}
+                            >
+                                <View style={[styles.locationIconContainer, !!locationCountry && styles.locationIconContainerActive]}>
+                                    <Globe size={24} color={!!locationCountry ? palette.softGold : theme.colors.text} />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.locationLabel, !!locationCountry && styles.locationLabelActive]}>Country</Text>
+                                    <Text style={[styles.locationValue, !!locationCountry && styles.locationValueActive, !locationCountry && { color: theme.colors.secondaryText }]}>
                                         {locationCountry || 'Select Country'}
                                     </Text>
-                                    <ChevronLeft size={18} color={theme.colors.secondaryText} style={{ transform: [{ rotate: '-90deg' }] }} />
-                                </TouchableOpacity>
-                            </View>
+                                </View>
+                                <ChevronLeft size={20} color={!!locationCountry ? palette.softGold : theme.colors.secondaryText} style={{ transform: [{ rotate: '-90deg' }] }} />
+                            </TouchableOpacity>
 
-                            <View>
-                                <Text style={styles.label}>City</Text>
-                                <TouchableOpacity
-                                    style={[styles.inputDropdown, !locationCountry && { opacity: 0.5 }]}
-                                    onPress={() => {
-                                        if (!locationCountry) return;
-                                        setShowCityPicker(true);
-                                    }}
-                                >
-                                    <Text style={[styles.inputText, !locationCity && { color: theme.colors.secondaryText }]}>
+                            <TouchableOpacity
+                                style={[styles.locationCard, !!locationCity && styles.locationCardActive, !locationCountry && { opacity: 0.5 }]}
+                                onPress={() => {
+                                    if (!locationCountry) return;
+                                    setShowCityPicker(true);
+                                }}
+                                disabled={!locationCountry}
+                                activeOpacity={0.9}
+                            >
+                                <View style={[styles.locationIconContainer, !!locationCity && styles.locationIconContainerActive]}>
+                                    <MapPin size={24} color={!!locationCity ? palette.softGold : theme.colors.text} />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.locationLabel, !!locationCity && styles.locationLabelActive]}>City</Text>
+                                    <Text style={[styles.locationValue, !!locationCity && styles.locationValueActive, !locationCity && { color: theme.colors.secondaryText }]}>
                                         {locationCity || 'Select City'}
                                     </Text>
-                                    <ChevronLeft size={18} color={theme.colors.secondaryText} style={{ transform: [{ rotate: '-90deg' }] }} />
-                                </TouchableOpacity>
-                            </View>
+                                </View>
+                                <ChevronLeft size={20} color={!!locationCity ? palette.softGold : theme.colors.secondaryText} style={{ transform: [{ rotate: '-90deg' }] }} />
+                            </TouchableOpacity>
 
                         </View>
                     </FadeIn>
@@ -1399,9 +1393,9 @@ export const OnboardingScreen = () => {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={[styles.container, step !== 0 && step !== 4 && step !== 10 && step !== 11 && { paddingTop: insets.top + 20, paddingBottom: insets.bottom }]}
+            style={[styles.container, step !== 0 && step !== 4 && step !== 11 && { paddingTop: insets.top + 20, paddingBottom: insets.bottom }]}
         >
-            {step !== 0 && step !== 4 && step !== 10 && step !== 11 && (
+            {step !== 0 && step !== 4 && step !== 11 && (
                 <View style={styles.nav}>
                     {step > 0 && !loading && (
                         <TouchableOpacity onPress={prevStep}>
@@ -1597,6 +1591,37 @@ const styles = StyleSheet.create({
         height: 56
     },
     inputText: { fontFamily: theme.typography.sansMedium, fontSize: 16, color: theme.colors.text },
+    // New Location Card Styles
+    locationCard: {
+        flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface,
+        borderRadius: 16, padding: theme.spacing.lg, borderWidth: 1, borderColor: theme.colors.border,
+        gap: theme.spacing.md, height: 88,
+        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2
+    },
+    locationCardActive: {
+        backgroundColor: '#FAF9F6',
+        borderColor: palette.softGold
+    },
+    locationIconContainer: {
+        width: 48, height: 48, borderRadius: 12, backgroundColor: palette.softGold + '15',
+        alignItems: 'center', justifyContent: 'center'
+    },
+    locationIconContainerActive: {
+        backgroundColor: palette.softGold + '25'
+    },
+    locationLabel: {
+        fontFamily: theme.typography.sansMedium, fontSize: 13, color: theme.colors.secondaryText,
+        marginBottom: 2
+    },
+    locationLabelActive: {
+        color: palette.softGold
+    },
+    locationValue: {
+        fontFamily: theme.typography.serifBold, fontSize: 18, color: theme.colors.text
+    },
+    locationValueActive: {
+        color: theme.colors.text
+    },
     searchBar: {
         flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface,
         borderRadius: 12, paddingHorizontal: 12, height: 48, marginBottom: 16,

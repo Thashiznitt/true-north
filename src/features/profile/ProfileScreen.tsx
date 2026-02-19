@@ -29,6 +29,7 @@ export const ProfileScreen = () => {
         username,
         beliefType,
         subscriptionTier,
+        email,
         themes,
         journalEntries,
         notificationsList,
@@ -118,6 +119,9 @@ export const ProfileScreen = () => {
 
     const isAdminOfAny = createdCircles.some(c => c.adminIds?.includes(userId || ''));
     const isValidator = createdCircles.some(c => c.validatorIds?.includes(userId || '')) || isAdminOfAny || userId === 'user-123';
+
+    const { SUPER_ADMIN_EMAILS } = require('../../store'); // eslint-disable-line @typescript-eslint/no-var-requires
+    const isSuperAdmin = email && SUPER_ADMIN_EMAILS.includes(email);
 
     useEffect(() => {
         setEditingGoals(userGoals);
@@ -353,6 +357,20 @@ export const ProfileScreen = () => {
 
                 </Section>
             </FadeIn>
+
+            {isSuperAdmin && (
+                <FadeIn delay={550} from="bottom">
+                    <Section title="Administration">
+                        <MenuItem
+                            icon={Shield}
+                            label="Super Admin Dashboard"
+                            onPress={() => navigation.navigate('SuperAdmin')}
+                            isLast
+                            color={palette.softGold}
+                        />
+                    </Section>
+                </FadeIn>
+            )}
 
             <FadeIn delay={600} from="bottom">
                 <Section title="Account">

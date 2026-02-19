@@ -38,34 +38,33 @@ export const JournalScreen = () => {
     const beliefType = useStore(state => state.beliefType);
     const biometricsEnabled = useStore(state => state.biometricsEnabled);
     const securityPin = useStore(state => state.securityPin);
+    const isSessionUnlocked = useStore(state => state.isSessionUnlocked);
+    const setSessionUnlocked = useStore(state => state.setSessionUnlocked);
 
     const journalEntries = useStore(state => state.journalEntries);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
-    const [isLocked, setIsLocked] = useState(biometricsEnabled || !!securityPin);
     const [bioError, setBioError] = useState(false);
 
     const navigation = useNavigation<any>(); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     React.useEffect(() => {
-        if (isSubscribed && (biometricsEnabled || securityPin)) {
+        if (isSubscribed && (biometricsEnabled || securityPin) && !isSessionUnlocked) {
             authenticate();
-        } else {
-            setIsLocked(false);
         }
-    }, []);
+    }, [isSessionUnlocked]);
 
     const authenticate = async () => {
         if (!biometricsEnabled) {
-            if (securityPin) {
-                setIsLocked(false);
+            if (!securityPin) {
+                setSessionUnlocked(true);
             }
             return;
         }
 
         // Handle Simulator Mock Success
         if (Platform.OS === 'ios' && !LocalAuthentication.hasHardwareAsync()) {
-            setIsLocked(false);
+            setSessionUnlocked(true);
             setBioError(false);
             return;
         }
@@ -80,7 +79,7 @@ export const JournalScreen = () => {
             });
 
             if (result.success) {
-                setIsLocked(false);
+                setSessionUnlocked(true);
                 setBioError(false);
             } else {
                 setBioError(true);
@@ -89,7 +88,7 @@ export const JournalScreen = () => {
         } else if (securityPin) {
             promptPin();
         } else {
-            setIsLocked(false);
+            setSessionUnlocked(true);
         }
     };
 
@@ -103,7 +102,7 @@ export const JournalScreen = () => {
                     text: "Unlock",
                     onPress: (enteredPin?: string) => {
                         if (enteredPin === securityPin) {
-                            setIsLocked(false);
+                            setSessionUnlocked(true);
                             setBioError(false);
                         } else {
                             Alert.alert("Incorrect PIN", "Please try again.");
@@ -208,7 +207,7 @@ export const JournalScreen = () => {
         );
     }
 
-    if (isLocked) {
+    if (!isSessionUnlocked && (biometricsEnabled || securityPin)) {
         return (
             <SanctuaryLock
                 onUnlock={authenticate}

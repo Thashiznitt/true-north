@@ -37,27 +37,21 @@ export const CommunityScreen = () => {
     const [circles, setCircles] = useState<any[]>([]);
     const circlesRef = useRef<any[]>([]);
     const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
-    const { createdCircles, bookmarkedCircleIds, subscriptionTier, dailyGoals, beliefType, biometricsEnabled, securityPin, blockedCircleIds } = useStore();
+    const { createdCircles, bookmarkedCircleIds, subscriptionTier, dailyGoals, beliefType, biometricsEnabled, securityPin, blockedCircleIds, isSessionUnlocked, setSessionUnlocked } = useStore();
     const isSubscribed = subscriptionTier !== 'free';
 
-    const [isLocked, setIsLocked] = useState(biometricsEnabled || !!securityPin);
     const [bioError, setBioError] = useState(false);
 
     useEffect(() => {
-        if (isFocused && (biometricsEnabled || securityPin)) {
+        if (isFocused && (biometricsEnabled || securityPin) && !isSessionUnlocked) {
             authenticate();
-        } else {
-            setIsLocked(false);
         }
-    }, [isFocused]);
+    }, [isFocused, isSessionUnlocked]);
 
     const authenticate = async () => {
         if (!biometricsEnabled) {
-            if (securityPin) {
-                // If only PIN, we show the lock screen still
-                setIsLocked(true);
-            } else {
-                setIsLocked(false);
+            if (!securityPin) {
+                setSessionUnlocked(true);
             }
             return;
         }
@@ -72,7 +66,7 @@ export const CommunityScreen = () => {
             });
 
             if (result.success) {
-                setIsLocked(false);
+                setSessionUnlocked(true);
                 setBioError(false);
             } else {
                 setBioError(true);
@@ -81,7 +75,7 @@ export const CommunityScreen = () => {
         } else if (securityPin) {
             promptPin();
         } else {
-            setIsLocked(false);
+            setSessionUnlocked(true);
         }
     };
 
@@ -95,7 +89,7 @@ export const CommunityScreen = () => {
                     text: "Unlock",
                     onPress: (enteredPin?: string) => {
                         if (enteredPin === securityPin) {
-                            setIsLocked(false);
+                            setSessionUnlocked(true);
                             setBioError(false);
                         } else {
                             Alert.alert("Incorrect PIN", "Please try again.");
@@ -255,7 +249,7 @@ export const CommunityScreen = () => {
         );
     }, [bookmarkedCircleIds, navigation, isSubscribed, filteredCircles]);
 
-    if (isLocked) {
+    if (!isSessionUnlocked && (biometricsEnabled || securityPin)) {
         return (
             <SanctuaryLock
                 onUnlock={authenticate}

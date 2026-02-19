@@ -35,7 +35,8 @@ export default function App() {
     let androidApiKey = '';
 
     if (__DEV__) {
-      iosApiKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE';
+      // Allow overriding with PROD key even in dev for simulator testing
+      iosApiKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD || process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE';
       androidApiKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE';
     } else {
       // Production / TestFlight / Release

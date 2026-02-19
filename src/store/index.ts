@@ -6,6 +6,11 @@ export type UserRole = 'member' | 'moderator' | 'admin' | 'platform_admin' | 'va
 import { BeliefType } from '../types';
 export type { BeliefType };
 
+export const SUPER_ADMIN_EMAILS = [
+    'remyngatia@gmail.com',
+    'remy_shiznitt@hotmail.com'
+];
+
 export interface DailyGoals {
     dailyReflection: boolean;
     morningDevotion: boolean;
@@ -187,6 +192,7 @@ interface UserState {
     platformFeatures: PlatformFeatures;
     communityNews: CommunityNews[];
     nurChats: ChatMessage[];
+    isSessionUnlocked: boolean;
 
     setOnboarded: (value: boolean) => Promise<void>;
     setOnboardingStep: (step: number) => void;
@@ -241,6 +247,7 @@ interface UserState {
     deleteCommunityNews: (id: string) => void;
     addNurMessage: (message: ChatMessage) => void;
     clearNurChat: () => void;
+    setSessionUnlocked: (unlocked: boolean) => void;
     reset: () => void;
     logout: () => void;
 }
@@ -304,6 +311,7 @@ export const useStore = create<UserState>()(
             },
             communityNews: [],
             nurChats: [],
+            isSessionUnlocked: false,
             setOnboarded: async (isOnboarded: boolean) => {
                 set({ isOnboarded });
                 if (isOnboarded) set({ onboardingStep: 0 }); // Reset on completion
@@ -678,12 +686,17 @@ export const useStore = create<UserState>()(
             addNurMessage: (message) => set((state) => ({
                 nurChats: [...state.nurChats, message]
             })),
+            setSessionUnlocked: (isSessionUnlocked) => set({ isSessionUnlocked }),
             clearNurChat: () => set({ nurChats: [] }),
-            logout: () => set({ isLoggedIn: false, userId: null, subscriptionTier: 'free', username: '', profilePicture: null, dateOfBirth: null, astrologyEnabled: false }),
+            logout: () => set({ isLoggedIn: false, userId: null, subscriptionTier: 'free', username: '', profilePicture: null, dateOfBirth: null, astrologyEnabled: false, isSessionUnlocked: false }),
         }),
         {
             name: 'true-north-storage',
             storage: createJSONStorage(() => AsyncStorage),
+            partialize: (state) => {
+                const { isSessionUnlocked, ...rest } = state;
+                return rest;
+            },
             onRehydrateStorage: () => (state) => {
                 if (state) {
                     // Force enable Ask Nur feature if it's missing or false in persisted state

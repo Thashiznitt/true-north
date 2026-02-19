@@ -44,24 +44,23 @@ export const JournalDetailScreen = () => {
     const isSubscribed = subscriptionTier !== 'free';
     const addJournalEntry = useStore((state) => state.addJournalEntry);
     const updateJournalEntry = useStore((state) => state.updateJournalEntry);
+    const isSessionUnlocked = useStore((state) => state.isSessionUnlocked);
+    const setSessionUnlocked = useStore((state) => state.setSessionUnlocked);
 
-    const [isLocked, setIsLocked] = useState(isSubscribed && (biometricsEnabled || !!securityPin));
     const [bioError, setBioError] = useState(false);
 
     React.useEffect(() => {
-        if (isSubscribed && (biometricsEnabled || securityPin)) {
+        if (isSubscribed && (biometricsEnabled || securityPin) && !isSessionUnlocked) {
             authenticate();
-        } else {
-            setIsLocked(false);
         }
-    }, []);
+    }, [isSessionUnlocked]);
 
     const authenticate = async () => {
         if (!biometricsEnabled) {
             if (securityPin) {
                 promptPin();
             } else {
-                setIsLocked(false);
+                setSessionUnlocked(true);
             }
             return;
         }
@@ -76,7 +75,7 @@ export const JournalDetailScreen = () => {
             });
 
             if (result.success) {
-                setIsLocked(false);
+                setSessionUnlocked(true);
                 setBioError(false);
             } else {
                 setBioError(true);
@@ -85,7 +84,7 @@ export const JournalDetailScreen = () => {
         } else if (securityPin) {
             promptPin();
         } else {
-            setIsLocked(false);
+            setSessionUnlocked(true);
         }
     };
 
@@ -99,7 +98,7 @@ export const JournalDetailScreen = () => {
                     text: "Unlock",
                     onPress: (enteredPin: string | undefined) => {
                         if (enteredPin === securityPin) {
-                            setIsLocked(false);
+                            setSessionUnlocked(true);
                             setBioError(false);
                         } else {
                             Alert.alert("Incorrect PIN", "The PIN you entered is incorrect. Please try again.");
@@ -128,7 +127,7 @@ export const JournalDetailScreen = () => {
         return 'Start typing your reflection...';
     };
 
-    if (isLocked) {
+    if (!isSessionUnlocked && (biometricsEnabled || securityPin)) {
         return (
             <SanctuaryLock
                 onUnlock={authenticate}
