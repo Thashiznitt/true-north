@@ -105,15 +105,12 @@ class AuthService {
                 await GoogleSignin.hasPlayServices();
             }
 
-            // Generate a random nonce for iOS to fix "No nonce" error
+            // Generate a random nonce for iOS to fix "Nonces mismatch" error
+            // Note: Google on iOS typically expects the raw string to match between the request and the ID token.
             const rawNonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-            const hashedNonce = await Crypto.digestStringAsync(
-                Crypto.CryptoDigestAlgorithm.SHA256,
-                rawNonce
-            );
 
             const userInfo = await GoogleSignin.signIn({
-                nonce: hashedNonce,
+                nonce: rawNonce,
             } as any);
 
             if (userInfo.data?.idToken) {
