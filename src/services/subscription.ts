@@ -99,28 +99,51 @@ export const subscriptionService = {
     purchasePackage: async (pkg: PurchasesPackage) => {
         const setSubscriptionTier = useStore.getState().setSubscriptionTier;
         try {
+            console.log("[Subscription] Attempting purchase for package:", pkg.identifier);
             const { customerInfo } = await Purchases.purchasePackage(pkg);
+
             // Check for 'premium' entitlement which covers all paid tiers
             const isPremium = customerInfo.entitlements.active['premium'] !== undefined;
+            console.log("[Subscription] Purchase result - isPremium:", isPremium);
 
             if (isPremium) {
                 // Map the package identifier or product ID to our internal tier
-                const productId = pkg.product.identifier;
+                // Handle storeProduct or product depending on version
+                const product = pkg.product || (pkg as unknown as { storeProduct: unknown }).storeProduct;
+                const productId = (product as { identifier?: string })?.identifier || "";
+
                 let newTier: 'compass' | 'true_north' | 'zenith' = 'true_north';
 
                 if (productId.includes('compass')) newTier = 'compass';
                 else if (productId.includes('zenith')) newTier = 'zenith';
 
+                console.log(`[Subscription] Mapping product ${productId} to tier ${newTier}`);
+
+                // Update Local State FIRST
                 await setSubscriptionTier(newTier);
+
+                // Then DB
                 await subscriptionService.syncSubscriptionToDb(newTier);
-                await notificationService.scheduleDailyAffirmation(newTier);
+
+                // Then Notifications
+                try {
+                    await notificationService.scheduleDailyAffirmation(newTier);
+                    await notificationService.scheduleDailyJournaling(newTier);
+                } catch (notiError) {
+                    console.error("[Subscription] Notification scheduling failed after purchase:", notiError);
+                }
+
                 return true;
             }
             return false;
         } catch (e) {
-            const error = e as Record<string, unknown>;
+            const error = e as { userCancelled?: boolean; message?: string; code?: string; underlyingError?: unknown };
             if (!error?.userCancelled) {
-                console.error("[Subscription] Purchase error:", e);
+                console.error("[Subscription] Purchase error details:", {
+                    message: error?.message,
+                    code: error?.code,
+                    underlyingError: error?.underlyingError
+                });
             }
             return false;
         }

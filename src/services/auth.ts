@@ -7,7 +7,6 @@ import { Platform, Alert } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import * as Crypto from 'expo-crypto';
 
 export type AuthProvider = 'Apple' | 'Google' | 'Email';
 
@@ -109,9 +108,8 @@ class AuthService {
             // Note: Google on iOS typically expects the raw string to match between the request and the ID token.
             const rawNonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
-            const userInfo = await GoogleSignin.signIn({
-                nonce: rawNonce,
-            } as any);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const userInfo = await GoogleSignin.signIn({ nonce: rawNonce } as any);
 
             if (userInfo.data?.idToken) {
                 const { data, error } = await supabase.auth.signInWithIdToken({

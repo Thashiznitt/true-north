@@ -197,14 +197,20 @@ export const OnboardingScreen = () => {
             <View style={{ flex: 1 }}>
                 <TrueNorthFlashList
                     data={type === 'country' ? filteredCountries : filteredCities}
-                    keyExtractor={(item: any) => item}
-                    renderItem={({ item }: { item: any }) => (type === 'country' ? renderCountryItem({ item }) : renderCityItem({ item }))}
+                    keyExtractor={memoizedLocationKeyExtractor}
+                    renderItem={memoizedLocationRenderItem}
                     estimatedItemSize={60}
                     keyboardShouldPersistTaps="handled"
                 />
             </View>
         </BottomSheet>
     );
+
+    const memoizedLocationKeyExtractor = React.useCallback((item: unknown) => item as string, []);
+    const memoizedLocationRenderItem = React.useCallback(({ item }: { item: unknown }) => {
+        const itemStr = item as string;
+        return step === 10 ? renderCountryItem({ item: itemStr }) : renderCityItem({ item: itemStr });
+    }, [step, renderCountryItem, renderCityItem]);
 
     React.useEffect(() => {
         if (!env.useMockServices) {
@@ -519,30 +525,46 @@ export const OnboardingScreen = () => {
                         setIsPurchasing(false);
                         return;
                     }
+                    console.log("[Onboarding] Signing up email user before purchase...");
                     const { success, error } = await authService.signUp(email, password);
                     if (!success) {
                         Alert.alert("Registration Failed", error || "Could not create account for subscription.");
                         setIsPurchasing(false);
                         return;
                     }
-                    // Profile creation will happen either here or in finishOnboarding
-                    // But authService.signUp now calls subscriptionService.logIn
                 }
 
+                console.log("[Onboarding] Proceeding to purchase with package for tier:", tier);
                 const pkg = offering.availablePackages.find(p => p.packageType.toLowerCase().includes(tier)) || offering.availablePackages[0];
+
+                if (!pkg) {
+                    console.error("[Onboarding] No package found for tier:", tier);
+                    setIsPurchasing(false);
+                    return;
+                }
+
                 const success = await subscriptionService.purchasePackage(pkg);
                 if (success) {
+                    console.log("[Onboarding] Purchase successful, setting onboarded state...");
+                    // Note: subscriptionService.purchasePackage already handles DB sync and notification scheduling
                     setLoggedIn(true);
-                    notificationService.scheduleDailyAffirmation(tier as any);
-                    notificationService.scheduleDailyJournaling(tier as any);
                     setOnboarded(true);
+                } else {
+                    console.log("[Onboarding] Purchase was not successful or was cancelled.");
                 }
-                setIsPurchasing(false);
+
+                // Only set state if we hasn't been redirected (onboarded)
+                if (!useStore.getState().isOnboarded) {
+                    setIsPurchasing(false);
+                }
             } else {
+                console.warn("[Onboarding] Offering is null, cannot proceed with purchase.");
                 setIsPurchasing(false);
             }
         } catch (error) {
+            console.error("[Onboarding] handleSubscribe unexpected error:", error);
             setIsPurchasing(false);
+            Alert.alert("Error", "An unexpected error occurred during the subscription process.");
         }
     };
 
@@ -1575,13 +1597,6 @@ const styles = StyleSheet.create({
         height: 56
     },
     inputText: { fontFamily: theme.typography.sansMedium, fontSize: 16, color: theme.colors.text },
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-    pickerContainer: {
-        backgroundColor: theme.colors.background, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-        height: '80%', padding: theme.spacing.xl
-    },
-    pickerHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.lg },
-    pickerTitle: { fontFamily: theme.typography.serifBold, fontSize: 20, color: theme.colors.text },
     searchBar: {
         flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface,
         borderRadius: 12, paddingHorizontal: 12, height: 48, marginBottom: 16,

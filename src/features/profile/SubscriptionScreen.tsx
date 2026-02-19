@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { ChevronLeft, Check, Compass as CompassIcon, Star, Zap, Heart, Sparkles } from 'lucide-react-native';
@@ -9,7 +9,6 @@ import { subscriptionService } from '../../services/subscription';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { PurchasesOffering } from 'react-native-purchases';
 import { env } from '../../services/env';
-import { notificationService } from '../../services/notifications';
 import { FadeIn } from '../../components/FadeIn';
 import { Popup } from '../../components/Popup';
 
@@ -38,10 +37,11 @@ const TIER_METADATA: Record<string, any> = {
     },
 };
 
-const renderItem = () => null;
-const keyExtractor = () => 'dummy';
+const DUMMY_DATA: any[] = [];
 
 export const SubscriptionScreen = () => {
+    const renderItem = React.useCallback(() => null, []);
+    const keyExtractor = React.useCallback(() => 'dummy', []);
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<any>();
     const [selectedTier, setSelectedTier] = useState<Tier>('true_north');
@@ -72,22 +72,34 @@ export const SubscriptionScreen = () => {
             }
 
             if (env.useMockServices) {
+                console.log("[Subscription] Using mock service for tier:", selectedTier);
                 await subscriptionService.subscribe(selectedTier as any);
-                notificationService.scheduleDailyAffirmation(selectedTier);
-                notificationService.scheduleDailyJournaling(selectedTier);
                 setShowSuccessModal(true);
             } else if (offering) {
+                console.log("[Subscription] Proceeding to purchase with package for tier:", selectedTier);
                 // Find the package that matches the selected tier
                 const pkg = offering.availablePackages.find(p => p.packageType.toLowerCase().includes(selectedTier)) || offering.availablePackages[0];
+
+                if (!pkg) {
+                    console.error("[Subscription] No package found for tier:", selectedTier);
+                    setPurchasing(false);
+                    return;
+                }
+
                 const success = await subscriptionService.purchasePackage(pkg);
                 if (success) {
-                    notificationService.scheduleDailyAffirmation(selectedTier);
-                    notificationService.scheduleDailyJournaling(selectedTier);
+                    console.log("[Subscription] Purchase successful, showing success modal...");
+                    // Note: subscriptionService.purchasePackage already handles DB sync and notification scheduling
                     setShowSuccessModal(true);
+                } else {
+                    console.log("[Subscription] Purchase was not successful or was cancelled.");
                 }
+            } else {
+                console.warn("[Subscription] Offering is null, cannot proceed with purchase.");
             }
         } catch (error) {
-            console.error("Subscription failed:", error);
+            console.error("[Subscription] handleSubscribe unexpected error:", error);
+            Alert.alert("Subscription Error", "An unexpected error occurred during the subscription process.");
         } finally {
             setPurchasing(false);
         }
@@ -200,7 +212,7 @@ export const SubscriptionScreen = () => {
         <View style={styles.container}>
             {renderHeader()}
             <TrueNorthFlashList
-                data={[]}
+                data={DUMMY_DATA}
                 renderItem={renderItem}
                 keyExtractor={keyExtractor}
                 estimatedItemSize={800}
@@ -374,13 +386,6 @@ const styles = StyleSheet.create({
     ctaButtonText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 18, marginBottom: 2 },
     ctaButtonSub: { color: 'rgba(255,255,255,0.6)', fontFamily: theme.typography.sans, fontSize: 13 },
     footerNote: { textAlign: 'center', fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText },
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
-    successCard: {
-        backgroundColor: theme.colors.surface, width: '85%', borderRadius: 32,
-        padding: 32, alignItems: 'center', shadowColor: '#000',
-        shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.2, shadowRadius: 30, elevation: 10,
-        borderWidth: 1, borderColor: palette.softGold + '30'
-    },
     successIconContainer: {
         width: 100, height: 100, borderRadius: 50, backgroundColor: palette.softGold + '15',
         alignItems: 'center', justifyContent: 'center', marginBottom: 24
