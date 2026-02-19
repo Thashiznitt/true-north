@@ -169,7 +169,7 @@ export const UserGuideScreen = () => {
             <TrueNorthFlashList
                 data={filteredGuides}
                 renderItem={({ item, index }: { item: any, index: number }) => renderGuideItem({ item, index })}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item: any) => item.id}
                 estimatedItemSize={120}
                 ListHeaderComponent={renderHeader}
                 contentContainerStyle={styles.listContent}
