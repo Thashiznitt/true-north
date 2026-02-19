@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback, Dimensions, Platform } from 'react-native';
 import { theme, palette } from '../theme';
+import { Popup } from './Popup';
 import { BlurView } from 'expo-blur';
 
 const { width } = Dimensions.get('window');
@@ -28,79 +29,41 @@ const ChoiceModal: React.FC<ChoiceModalProps> = ({ visible, onClose, title, mess
     });
 
     return (
-        <Modal
-            transparent
-            visible={visible}
-            animationType="fade"
-            onRequestClose={onClose}
-        >
-            <TouchableWithoutFeedback onPress={onClose}>
-                <View style={styles.overlay}>
-                    <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-                    <TouchableWithoutFeedback>
-                        <View style={styles.modalContainer}>
-                            <View style={styles.content}>
-                                <Text style={styles.title}>{title}</Text>
-                                {message ? <Text style={styles.message}>{message}</Text> : null}
+        <Popup visible={visible} onClose={onClose}>
+            <View style={styles.content}>
+                <Text style={styles.title}>{title}</Text>
+                {message ? <Text style={styles.message}>{message}</Text> : null}
 
-                                <View style={styles.optionsContainer}>
-                                    {sortedOptions.map((option, index) => (
-                                        <TouchableOpacity
-                                            key={`${option.text}-${index}`}
-                                            style={[
-                                                styles.optionButton,
-                                                index === sortedOptions.length - 1 && styles.lastOption
-                                            ]}
-                                            onPress={() => {
-                                                onClose();
-                                                // Small delay to let modal close before triggerring navigation/alerts
-                                                setTimeout(() => option.onPress(), 100);
-                                            }}
-                                        >
-                                            <Text style={[
-                                                styles.optionText,
-                                                option.style === 'destructive' && styles.destructiveText,
-                                                option.style === 'cancel' && styles.cancelText
-                                            ]}>
-                                                {option.text}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-                            </View>
-                        </View>
-                    </TouchableWithoutFeedback>
+                <View style={styles.optionsContainer}>
+                    {sortedOptions.map((option, index) => (
+                        <TouchableOpacity
+                            key={`${option.text}-${index}`}
+                            style={[
+                                styles.optionButton,
+                                index === sortedOptions.length - 1 && styles.lastOption
+                            ]}
+                            onPress={() => {
+                                onClose();
+                                // Small delay to let modal close before triggerring navigation/alerts
+                                setTimeout(() => option.onPress(), 100);
+                            }}
+                        >
+                            <Text style={[
+                                styles.optionText,
+                                option.style === 'destructive' && styles.destructiveText,
+                                option.style === 'cancel' && styles.cancelText
+                            ]}>
+                                {option.text}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
                 </View>
-            </TouchableWithoutFeedback>
-        </Modal>
+            </View>
+        </Popup>
     );
 };
 
 const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    modalContainer: {
-        width: Math.min(width * 0.85, 340),
-        backgroundColor: theme.colors.surface,
-        borderRadius: 24,
-        overflow: 'hidden',
-        paddingTop: 24,
-        ...Platform.select({
-            ios: {
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 15,
-            },
-            android: {
-                elevation: 10,
-            },
-        }),
-    },
     content: {
         alignItems: 'center',
     },

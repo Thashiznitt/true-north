@@ -79,6 +79,7 @@ export const UserGuideScreen = () => {
         { feature: "Spiritual Intelligence Analysis", free: false, paid: true },
         { feature: "Unlimited Circles", free: false, paid: true },
         { feature: "Advanced Security", free: false, paid: true },
+        { feature: "Ask Nur (AI Companion)", free: false, paid: true },
         { feature: "Priority Support", free: false, paid: true },
     ];
 
@@ -167,7 +168,7 @@ export const UserGuideScreen = () => {
 
             <TrueNorthFlashList
                 data={filteredGuides}
-                renderItem={renderGuideItem}
+                renderItem={({ item, index }: { item: any, index: number }) => renderGuideItem({ item, index })}
                 keyExtractor={(item) => item.id}
                 estimatedItemSize={120}
                 ListHeaderComponent={renderHeader}

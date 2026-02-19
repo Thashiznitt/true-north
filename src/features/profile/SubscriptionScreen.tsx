@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { ChevronLeft, Check, Compass as CompassIcon, Star, Zap, Heart, Sparkles } from 'lucide-react-native';
@@ -11,6 +11,7 @@ import { PurchasesOffering } from 'react-native-purchases';
 import { env } from '../../services/env';
 import { notificationService } from '../../services/notifications';
 import { FadeIn } from '../../components/FadeIn';
+import { Popup } from '../../components/Popup';
 
 type Tier = 'free' | 'compass' | 'true_north' | 'zenith';
 
@@ -26,14 +27,14 @@ const TIER_METADATA: Record<string, any> = {
         benefits: ["1 Personal Daily Affirmation", "View Community Reflections", "Join up to 3 Local Circles", "Ad-supported experience"],
     },
     compass: {
-        benefits: ["Unlimited Private Reflections (Journal)", "Join up to 5 Circles", "Standard Daily Guidance"],
+        benefits: ["Unlimited Private Reflections (Journal)", "Ask Nur AI Companion", "Join up to 5 Circles", "Standard Daily Guidance"],
     },
     true_north: {
-        benefits: ["Unlimited Community Reflections", "Personalized Spiritual Guidance", "Join Unlimited Circles", "Create up to 2 Circles"],
+        benefits: ["Unlimited Community Reflections", "Ask Nur AI Companion", "Personalized Spiritual Guidance", "Join Unlimited Circles", "Create up to 2 Circles"],
         isPopular: true
     },
     zenith: {
-        benefits: ["Elite Spiritual Mentoring", "Deep Community Analysis", "Unlimited Circle Creation", "Location Intelligence"],
+        benefits: ["Elite Spiritual Mentoring", "Ask Nur AI Companion", "Deep Community Analysis", "Unlimited Circle Creation", "Location Intelligence"],
     },
 };
 
@@ -104,18 +105,6 @@ export const SubscriptionScreen = () => {
 
     const renderTierList = () => (
         <View style={styles.tierContainer}>
-            <FadeIn delay={100} from="bottom">
-                <TierCard
-                    name="Free"
-                    price="Free"
-                    period=""
-                    subtext="Basic Experience"
-                    benefits={TIER_METADATA.free.benefits}
-                    icon={TIER_ICONS.free}
-                    isSelected={selectedTier === 'free'}
-                    onSelect={() => setSelectedTier('free')}
-                />
-            </FadeIn>
 
             {loading ? (
                 <ActivityIndicator color={palette.softGold} size="large" style={{ marginTop: 40 }} />
@@ -150,12 +139,25 @@ export const SubscriptionScreen = () => {
                 })
             ) : (
                 <>
+                    <FadeIn delay={100} from="bottom">
+                        <TierCard
+                            name="Free"
+                            price="Free"
+                            period=""
+                            subtext="Basic Experience"
+                            benefits={TIER_METADATA.free.benefits}
+                            icon={TIER_ICONS.free}
+                            isSelected={selectedTier === 'free'}
+                            onSelect={() => setSelectedTier('free')}
+                        />
+                    </FadeIn>
+
                     <FadeIn delay={200} from="bottom">
                         <TierCard
                             name="Compass"
                             price="$5.99"
                             period="/ month"
-                            subtext="Paid Annually ($69.99/yr)"
+                            subtext="Paid Annually"
                             benefits={TIER_METADATA.compass.benefits}
                             icon={CompassIcon}
                             isSelected={selectedTier === 'compass'}
@@ -242,29 +244,33 @@ export const SubscriptionScreen = () => {
                 </FadeIn>
             </View>
 
-            <Modal visible={showSuccessModal} transparent animationType="fade">
-                <View style={styles.modalOverlay}>
-                    <View style={styles.successCard}>
-                        <View style={styles.successIconContainer}>
-                            <Sparkles size={48} color={palette.softGold} />
-                        </View>
-                        <Text style={styles.successTitle}>Vision Aligned</Text>
-                        <Text style={styles.successDesc}>
-                            Your path is now set to <Text style={{ fontFamily: theme.typography.sansBold, color: palette.softGold }}>{selectedTier.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</Text>.
-                            May your journey be filled with divine light and clarity.
-                        </Text>
-                        <TouchableOpacity
-                            style={styles.praiseButton}
-                            onPress={() => {
-                                setShowSuccessModal(false);
-                                navigation.goBack();
-                            }}
-                        >
-                            <Text style={styles.praiseButtonText}>Praise</Text>
-                        </TouchableOpacity>
+            <Popup
+                visible={showSuccessModal}
+                onClose={() => {
+                    setShowSuccessModal(false);
+                    navigation.goBack();
+                }}
+            >
+                <View style={{ alignItems: 'center' }}>
+                    <View style={styles.successIconContainer}>
+                        <Sparkles size={48} color={palette.softGold} />
                     </View>
+                    <Text style={styles.successTitle}>Vision Aligned</Text>
+                    <Text style={styles.successDesc}>
+                        Your path is now set to <Text style={{ fontFamily: theme.typography.sansBold, color: palette.softGold }}>{selectedTier.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</Text>.
+                        May your journey be filled with divine light and clarity.
+                    </Text>
+                    <TouchableOpacity
+                        style={styles.praiseButton}
+                        onPress={() => {
+                            setShowSuccessModal(false);
+                            navigation.goBack();
+                        }}
+                    >
+                        <Text style={styles.praiseButtonText}>Praise</Text>
+                    </TouchableOpacity>
                 </View>
-            </Modal>
+            </Popup>
         </View>
     );
 };

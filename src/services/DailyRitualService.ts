@@ -2,20 +2,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEY_LAST_SEEN_WISDOM = 'last_seen_wisdom_date';
 
-export const AFFIRMATIONS = [
-    { text: "My spirit is anchored in the peace that surpasses all understanding.", author: "Sacred Truth" },
-    { text: "I am a vessel of divine light, radiating love to everyone I meet.", author: "Daily Grace" },
-    { text: "Today, I walk with purpose and intentionality.", author: "Faithful Path" },
-    { text: "Every breath I take is a gift of grace.", author: "True North" },
-    { text: "I focus my heart on what is pure, lovely, and of good report.", author: "Alignment" },
-    { text: "I am worthy of the journey I am on.", author: "Inner Wisdom" },
-    { text: "Gratitude turns what I have into enough.", author: "Daily Thanks" },
-];
+import { contentAgentService } from './ContentAgentService';
+import { useStore } from '../store';
 
 export const DailyRitualService = {
-    getDailyAffirmation: () => {
-        const day = new Date().getDate();
-        return AFFIRMATIONS[day % AFFIRMATIONS.length];
+    getDailyAffirmation: async () => {
+        try {
+            const { beliefType, themes } = useStore.getState();
+            // We use the content agent to get a personalized affirmation
+            // It internally handles the "Sacred Calendar" logic we just added
+            const affirmation = await contentAgentService.getDailyAffirmation(beliefType || 'Open', themes || []);
+
+            return {
+                text: affirmation.text,
+                author: affirmation.verse || "Daily Wisdom"
+            };
+        } catch (error) {
+            console.error('Error fetching daily ritual affirmation:', error);
+            // Fallback (simulating the old static list behavior if offline/error)
+            return {
+                text: "My spirit is anchored in the peace that surpasses all understanding.",
+                author: "Sacred Truth"
+            };
+        }
     },
 
     shouldShowMorningWisdom: async () => {

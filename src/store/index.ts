@@ -13,6 +13,37 @@ export interface DailyGoals {
     weeklyCommunity: boolean;
 }
 
+export interface PlatformFeatures {
+    events: boolean;
+    ticketing: boolean;
+    contentAgent: boolean;
+    askNur: boolean;
+}
+
+export interface ChatMessage {
+    id: string;
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    timestamp: number;
+    mode?: 'affirmation' | 'accountability' | 'strategic' | 'mirror';
+    metadata?: {
+        events?: Array<{
+            event: unknown;
+            circleId: string;
+            circleName: string;
+        }>;
+        [key: string]: unknown;
+    };
+}
+
+export interface CommunityNews {
+    id: string;
+    title: string;
+    content: string;
+    active: boolean;
+    createdAt: number;
+}
+
 export interface NotificationSettings {
     enabled: boolean;
     time: string;
@@ -143,6 +174,7 @@ interface UserState {
     };
     notifications: NotificationSettings;
     lastAdviceTimestamp: number | null;
+    lastNurEventNotification: number | null;
     bookmarkedCircleIds: string[];
     notificationsList: NotificationItem[];
     createdCircles: CreatedCircle[];
@@ -150,6 +182,9 @@ interface UserState {
     userTickets: UserTicket[];
     blockedUserIds: string[];
     blockedCircleIds: string[];
+    platformFeatures: PlatformFeatures;
+    communityNews: CommunityNews[];
+    nurChats: ChatMessage[];
 
     setOnboarded: (value: boolean) => Promise<void>;
     setOnboardingStep: (step: number) => void;
@@ -174,6 +209,7 @@ interface UserState {
     flagCircle: (circleId: string) => void;
     toggleBookmark: (circleId: string) => void;
     setLastAdviceTimestamp: (timestamp: number) => void;
+    setLastNurEventNotification: (timestamp: number) => void;
     addNotification: (notification: NotificationItem) => void;
     deleteNotification: (id: string) => void;
     cleanupOldNotifications: () => void;
@@ -195,6 +231,14 @@ interface UserState {
     validateTicket: (ticketId: string) => { success: boolean, message: string };
     findUserByUsername: (username: string) => { userId: string, username: string } | null;
     addCircleReflection: (circleId: string, reflection: Reflection) => void;
+    updateCircleReflection: (circleId: string, reflectionId: string, content: string, image?: string | null) => void;
+    deleteCircleReflection: (circleId: string, reflectionId: string) => void;
+    togglePlatformFeature: (feature: keyof PlatformFeatures) => void;
+    addCommunityNews: (news: Omit<CommunityNews, 'id' | 'createdAt'>) => void;
+    updateCommunityNews: (id: string, updates: Partial<CommunityNews>) => void;
+    deleteCommunityNews: (id: string) => void;
+    addNurMessage: (message: ChatMessage) => void;
+    clearNurChat: () => void;
     reset: () => void;
     logout: () => void;
 }
@@ -242,11 +286,11 @@ export const useStore = create<UserState>()(
                 time: '07:30',
             },
             lastAdviceTimestamp: null,
+            lastNurEventNotification: null,
             bookmarkedCircleIds: [],
             notificationsList: [
                 { id: '1', title: 'New Affirmation', message: 'Your personal alignment for today is ready.', type: 'affirmation', createdAt: Date.now() - 2 * 60 * 60 * 1000 },
                 { id: '2', title: 'Blessing Received', message: 'Sarah blessed your reflection in Nairobi Chapel Circle.', type: 'blessing', createdAt: Date.now() - 4 * 60 * 60 * 1000 },
-                { id: '3', title: 'Upcoming Event', message: 'Business Alignment session starts in 30 minutes.', type: 'event', createdAt: Date.now() - 24 * 60 * 60 * 1000 },
             ],
             createdCircles: [
                 {
@@ -295,8 +339,15 @@ export const useStore = create<UserState>()(
             ],
             userTickets: [],
             blockedUserIds: [],
-
             blockedCircleIds: [],
+            platformFeatures: {
+                events: true,
+                ticketing: true,
+                contentAgent: true,
+                askNur: false // Disabled by default
+            },
+            communityNews: [],
+            nurChats: [],
             setOnboarded: async (isOnboarded: boolean) => {
                 set({ isOnboarded });
                 if (isOnboarded) set({ onboardingStep: 0 }); // Reset on completion
@@ -336,6 +387,14 @@ export const useStore = create<UserState>()(
                     blockedUserIds: [],
                     blockedCircleIds: [],
                     userTickets: [],
+                    platformFeatures: {
+                        events: true,
+                        ticketing: true,
+                        contentAgent: true,
+                        askNur: true,
+                    },
+                    communityNews: [],
+                    nurChats: [],
                 });
 
             },
@@ -396,6 +455,7 @@ export const useStore = create<UserState>()(
                     : [...state.bookmarkedCircleIds, circleId]
             })),
             setLastAdviceTimestamp: (lastAdviceTimestamp) => set({ lastAdviceTimestamp }),
+            setLastNurEventNotification: (lastNurEventNotification) => set({ lastNurEventNotification }),
             addNotification: (notification) => set((state) => ({
                 notificationsList: [{ ...notification, id: Math.random().toString(36).substr(2, 9), createdAt: Date.now() }, ...state.notificationsList]
             })),
@@ -631,11 +691,56 @@ export const useStore = create<UserState>()(
                     c.id === circleId ? { ...c, reflections: [reflection, ...(c.reflections || [])] } : c
                 )
             })),
+            updateCircleReflection: (circleId, reflectionId, content, image) => set((state) => ({
+                createdCircles: state.createdCircles.map(c =>
+                    c.id === circleId ? {
+                        ...c,
+                        reflections: (c.reflections || []).map(r =>
+                            r.id === reflectionId ? { ...r, content, image } : r
+                        )
+                    } : c
+                )
+            })),
+            deleteCircleReflection: (circleId, reflectionId) => set((state) => ({
+                createdCircles: state.createdCircles.map(c =>
+                    c.id === circleId ? {
+                        ...c,
+                        reflections: (c.reflections || []).filter(r => r.id !== reflectionId)
+                    } : c
+                )
+            })),
+            togglePlatformFeature: (feature) => set((state) => ({
+                platformFeatures: {
+                    ...state.platformFeatures,
+                    [feature]: !state.platformFeatures[feature]
+                }
+            })),
+            addCommunityNews: (news) => set((state) => ({
+                communityNews: [{ ...news, id: Math.random().toString(36).substr(2, 9), createdAt: Date.now() }, ...state.communityNews]
+            })),
+            updateCommunityNews: (id, updates) => set((state) => ({
+                communityNews: state.communityNews.map(n => n.id === id ? { ...n, ...updates } : n)
+            })),
+            deleteCommunityNews: (id) => set((state) => ({
+                communityNews: state.communityNews.filter(n => n.id !== id)
+            })),
+            addNurMessage: (message) => set((state) => ({
+                nurChats: [...state.nurChats, message]
+            })),
+            clearNurChat: () => set({ nurChats: [] }),
             logout: () => set({ isLoggedIn: false, userId: null, subscriptionTier: 'free', username: '', profilePicture: null, dateOfBirth: null, astrologyEnabled: false }),
         }),
         {
             name: 'true-north-storage',
             storage: createJSONStorage(() => AsyncStorage),
+            onRehydrateStorage: () => (state) => {
+                if (state) {
+                    // Force enable Ask Nur feature if it's missing or false in persisted state
+                    if (!state.platformFeatures?.askNur) {
+                        state.togglePlatformFeature('askNur');
+                    }
+                }
+            }
         }
     )
 );

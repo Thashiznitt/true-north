@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, ActionSheetIOS, Share } from 'react-native'; // eslint-disable-line react-native/split-platform-components
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, ActionSheetIOS, Share, ScrollView } from 'react-native'; // eslint-disable-line react-native/split-platform-components
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
@@ -18,6 +18,8 @@ import { supabase } from '../../services/supabase';
 import { paymentService, PaymentMethod } from '../../services/PaymentService';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import ChoiceModal, { ChoiceOption } from '../../components/ChoiceModal';
+import { BottomSheet } from '../../components/BottomSheet';
+import { Typography } from '../../components/Typography';
 
 
 import * as Haptics from 'expo-haptics';
@@ -36,7 +38,7 @@ export const CircleDetailScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const isFocused = useIsFocused();
-    const { createdCircles, bookmarkedCircleIds, toggleBookmark, deleteCreatedCircle, blockedUserIds, blockUser, blockCircle, handleJoinRequest, userId, userTickets, purchaseTicket, addNotification, findUserByUsername, setCircleRole, addCircleReflection } = useStore();
+    const { createdCircles, bookmarkedCircleIds, toggleBookmark, deleteCreatedCircle, blockedUserIds, blockUser, blockCircle, handleJoinRequest, userId, userTickets, purchaseTicket, addNotification, findUserByUsername, setCircleRole, addCircleReflection, platformFeatures } = useStore();
 
 
     const { circleId, circleName: initialName } = (route.params as { circleId: string; circleName?: string }) || {};
@@ -109,6 +111,7 @@ export const CircleDetailScreen = () => {
     const [foundUser, setFoundUser] = useState<{ userId: string, username: string } | null>(null);
     const [selectedRole, setSelectedRole] = useState<'admin' | 'moderator' | 'member' | 'validator'>('moderator');
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [editingReflectionId, setEditingReflectionId] = useState<string | null>(null);
     const [newPostContent, setNewPostContent] = useState('');
     const [newEvent, setNewEvent] = useState<any>({ // eslint-disable-line @typescript-eslint/no-explicit-any
         title: '',
@@ -172,29 +175,38 @@ export const CircleDetailScreen = () => {
                 const effectiveUserId = user.userId || (user.isLoggedIn ? 'user-123' : null);
 
                 if (effectiveUserId) {
-                    const newReflection: Reflection = {
-                        id: Math.random().toString(36).substr(2, 9),
-                        userId: effectiveUserId,
-                        userName: user.username || 'Anonymous',
-                        content: newPostContent.trim(),
-                        time: 'Just now',
-                        blessings: 0,
-                        createdAt: Date.now(),
-                        image: selectedImage
-                    };
+                    if (editingReflectionId) {
+                        // Update existing reflection
+                        useStore.getState().updateCircleReflection(circleId, editingReflectionId, newPostContent.trim(), selectedImage);
+                        setReflections(prev => prev.map(p => p.id === editingReflectionId ? { ...p, content: newPostContent.trim(), image: selectedImage } : p));
+                        Alert.alert("Reflection Updated", "Your reflection has been updated.");
+                        setEditingReflectionId(null);
+                    } else {
+                        // Create new reflection
+                        const newReflection: Reflection = {
+                            id: Math.random().toString(36).substr(2, 9),
+                            userId: effectiveUserId,
+                            userName: user.username || 'Anonymous',
+                            content: newPostContent.trim(),
+                            time: 'Just now',
+                            blessings: 0,
+                            createdAt: Date.now(),
+                            image: selectedImage
+                        };
 
-                    addCircleReflection(circleId, newReflection);
-                    setReflections(prev => [newReflection, ...prev]);
+                        addCircleReflection(circleId, newReflection);
+                        setReflections(prev => [newReflection, ...prev]);
 
-                    await supabase.from('journal_entries').insert({
-                        user_id: effectiveUserId,
-                        content: newPostContent.trim(),
-                        is_private: false,
-                        shared_in_circle_id: circleId,
-                        image: selectedImage
-                    });
+                        await supabase.from('journal_entries').insert({
+                            user_id: effectiveUserId,
+                            content: newPostContent.trim(),
+                            is_private: false,
+                            shared_in_circle_id: circleId,
+                            image: selectedImage
+                        });
+                        Alert.alert("Blessing Shared", "Your reflection has been shared with the circle.");
+                    }
 
-                    Alert.alert("Blessing Shared", "Your reflection has been shared with the circle.");
                     setNewPostContent('');
                     setSelectedImage(null);
                     setIsSharing(false);
@@ -362,6 +374,11 @@ export const CircleDetailScreen = () => {
             return;
         }
 
+        if (!platformFeatures.ticketing) {
+            Alert.alert("Feature Unavailable", "Ticketing is currently disabled for maintenance.");
+            return;
+        }
+
         const success = await paymentService.initializePayment({
             amount: event.price,
             currency: event.currency,
@@ -386,7 +403,7 @@ export const CircleDetailScreen = () => {
         // However, for the specific requirement of "redirect to store if not installed", we usually use a web redirector
         // For now, we'll use the deep link and a friendly message.
 
-        const message = `Join me in our sacred sanctuary on True North! Use this link to join the "${circleName}" circle: ${inviteUrl}\n\nIf you don't have the app, download it here: https://truenorth.app/download`;
+        const message = `Join me in our sacred sanctuary on True North! Use this link to join the "${circleName}" circle: ${inviteUrl}\n\nDiscover spiritual guidance and affirmations on True North. Download here: https://www.truenorth.you/download`;
 
         try {
             await Share.share({
@@ -432,8 +449,10 @@ export const CircleDetailScreen = () => {
         ];
 
         if (isAdmin) {
-            options.splice(2, 0,
-                { text: 'Create Event', onPress: () => setIsAddingEvent(true) },
+            if (platformFeatures.events) {
+                options.splice(2, 0, { text: 'Create Event', onPress: () => setIsAddingEvent(true) });
+            }
+            options.push(
                 { text: 'Manage Roles', onPress: () => setShowRoleManagement(true) },
                 { text: 'Delete Sanctuary', style: 'destructive', onPress: handleDeleteCircle }
             );
@@ -497,19 +516,115 @@ export const CircleDetailScreen = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     };
 
+    const handleDeletePost = (postId: string) => {
+        Alert.alert(
+            "Delete Reflection",
+            "Are you sure you want to delete this reflection?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => {
+                        useStore.getState().deleteCircleReflection(circleId, postId);
+                        setReflections(prev => prev.filter(p => p.id !== postId));
+                        Alert.alert("Deleted", "Reflection removed.");
+                    }
+                }
+            ]
+        );
+    };
+
+    const handlePostOptions = (post: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+        const user = useStore.getState();
+        const isAuthor = post.userId === user.userId || (post.userId === 'user-123' && user.isLoggedIn); // Mock ID check
+        const isCircleAdmin = isAdmin || isModerator;
+
+        if (isAuthor) {
+            const now = Date.now();
+            const createdAt = post.createdAt || 0;
+            const minutesDiff = (now - createdAt) / 1000 / 60;
+            const canEdit = minutesDiff <= 15;
+
+            const options: ChoiceOption[] = [];
+
+            if (canEdit) {
+                options.push({
+                    text: 'Edit Reflection',
+                    onPress: () => {
+                        setNewPostContent(post.content);
+                        setSelectedImage(post.image);
+                        setEditingReflectionId(post.id);
+                        setIsSharing(true);
+                    }
+                });
+            }
+
+            options.push({
+                text: 'Delete Reflection',
+                style: 'destructive',
+                onPress: () => handleDeletePost(post.id)
+            });
+
+            options.push({ text: 'Cancel', style: 'cancel', onPress: () => { } });
+
+            setChoiceModalConfig({
+                title: 'Manage Reflection',
+                message: canEdit ? 'You can edit this reflection for 15 minutes after posting.' : 'Reflection posted over 15 minutes ago cannot be edited.',
+                options
+            });
+            setShowChoiceModal(true);
+
+        } else {
+            // Options for non-authors (Report, Block, Admin Delete)
+            const options: ChoiceOption[] = [
+                {
+                    text: 'Report Reflection',
+                    onPress: () => Alert.alert("Spiritual Intelligence Assessment Started", "Our moderation Spiritual Intelligence is reviewing this post. It will be hidden if it violates our sacred space policies.")
+                },
+                {
+                    text: 'Block User',
+                    style: 'destructive',
+                    onPress: () => {
+                        if (post.userId) {
+                            blockUser(post.userId);
+                            Alert.alert("User Blocked", "You will no longer see reflections from this seeker.");
+                        }
+                    }
+                },
+                { text: 'Cancel', style: 'cancel', onPress: () => { } }
+            ];
+
+            if (isCircleAdmin) {
+                options.splice(2, 0, {
+                    text: 'Delete (Admin)',
+                    style: 'destructive',
+                    onPress: () => handleDeletePost(post.id)
+                });
+            }
+
+            setChoiceModalConfig({
+                title: 'Community Safety',
+                message: 'Keep this space sacred.',
+                options
+            });
+            setShowChoiceModal(true);
+        }
+    };
+
     const renderPost = React.useCallback(({ item, index }: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-        const isCircleAdmin = userCircle?.adminIds?.includes(item.userId) || userCircle?.moderatorIds?.includes(item.userId);
+        const isCircleAdmin = (userCircle?.adminIds?.includes(item.userId) || userCircle?.moderatorIds?.includes(item.userId)) ?? false;
         return (
             <FadeIn delay={Math.min(index * 100, 1000)} from="bottom">
                 <PostItem
                     item={item}
                     onBless={() => handleBless(item.id)}
-                    onReport={() => handleReport(item.id)}
-                    isAdminPost={!!isCircleAdmin}
+                    onReport={() => handlePostOptions(item)}
+                    isAdminPost={isCircleAdmin}
                 />
             </FadeIn>
         );
-    }, [blockedUserIds, handleBless, userCircle?.adminIds, userCircle?.moderatorIds]);
+    }, [userCircle, isAdmin, isModerator]);
 
     const PostItem = React.memo(({ item, onBless, onReport, isAdminPost }: { item: any, onBless: () => void, onReport: () => void, isAdminPost: boolean }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         const userName = item.userName || item.user || 'Anonymous';
@@ -629,26 +744,31 @@ export const CircleDetailScreen = () => {
                             </TouchableOpacity>
                         )}
 
-                        {!isGhostCircle && (
+                        {!isGhostCircle && platformFeatures.events && (
                             <>
-                                <View style={styles.sectionHeader}>
-                                    <Text style={styles.sectionTitle}>Upcoming Events</Text>
-                                </View>
-                                <TrueNorthFlashList
-                                    horizontal
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    data={(circle as any).events || MOCK_EVENTS}
-                                    renderItem={renderEvent}
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    keyExtractor={(item: any) => item.id}
-                                    showsHorizontalScrollIndicator={false}
-                                    style={{ marginHorizontal: -theme.spacing.xl }}
-                                    contentContainerStyle={styles.eventList}
-                                    estimatedItemSize={200}
-                                />
+                                {(circle as any).events && (circle as any).events.length > 0 && (
+                                    <>
+                                        <View style={styles.sectionHeader}>
+                                            <Text style={styles.sectionTitle}>Upcoming Events</Text>
+                                        </View>
+                                        <TrueNorthFlashList
+                                            horizontal
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                            data={(circle as any).events || MOCK_EVENTS}
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                            renderItem={({ item }: { item: any }) => renderEvent({ item })}
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                            keyExtractor={(item: any) => item.id}
+                                            showsHorizontalScrollIndicator={false}
+                                            style={{ marginHorizontal: -theme.spacing.xl }}
+                                            contentContainerStyle={styles.eventList}
+                                            estimatedItemSize={200}
+                                        />
 
 
-                                <View style={styles.sectionDivider} />
+                                        <View style={styles.sectionDivider} />
+                                    </>
+                                )}
                             </>
                         )}
                         <Text style={[styles.sectionTitle, { marginBottom: theme.spacing.xl }]}>Reflections</Text>
@@ -664,24 +784,17 @@ export const CircleDetailScreen = () => {
                 <Text style={styles.fabText}>Share Reflection</Text>
             </TouchableOpacity>
 
-            <Modal visible={isSharing} animationType="slide" transparent>
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    style={styles.modalOverlay}
-                >
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <TouchableOpacity onPress={() => setIsSharing(false)}>
-                                <X size={24} color={theme.colors.text} />
-                            </TouchableOpacity>
-                            <Text style={styles.modalTitle}>Share Reflection</Text>
-                            <TouchableOpacity onPress={handleShare}>
-                                <Text style={[styles.shareAction, { opacity: newPostContent.trim() ? 1 : 0.5 }]}>Share</Text>
-                            </TouchableOpacity>
-                        </View>
-
+            <BottomSheet
+                visible={isSharing}
+                onClose={() => { setIsSharing(false); setEditingReflectionId(null); setNewPostContent(''); setSelectedImage(null); }}
+                title={editingReflectionId ? "Edit Reflection" : "Share Reflection"}
+                actionLabel={editingReflectionId ? "Update" : "Share"}
+                onAction={handleShare}
+            >
+                <ScrollView showsVerticalScrollIndicator={false}>
+                    <View style={styles.inputGroup}>
                         <TextInput
-                            style={styles.modalInput}
+                            style={[styles.modalInput, { padding: 0 }]}
                             placeholder="What's on your heart? (No phone numbers or payment requests)"
                             placeholderTextColor={theme.colors.secondaryText}
                             multiline
@@ -689,461 +802,430 @@ export const CircleDetailScreen = () => {
                             value={newPostContent}
                             onChangeText={setNewPostContent}
                         />
-
-                        {selectedImage && (
-                            <View style={styles.selectedImageContainer}>
-                                <Image source={{ uri: selectedImage }} style={styles.selectedImagePreview} />
-                                <TouchableOpacity style={styles.removeImageBtn} onPress={() => setSelectedImage(null)}>
-                                    <X size={16} color={palette.white} />
-                                </TouchableOpacity>
-                            </View>
-                        )}
-
-                        <View style={styles.modalFooter}>
-                            <TouchableOpacity style={styles.modalIconButton} onPress={handlePickImage}>
-                                <ImageIcon size={22} color={palette.softGold} />
-                                <Text style={[styles.modalIconText, { color: palette.softGold }]}>Add Image</Text>
-                            </TouchableOpacity>
-                        </View>
                     </View>
-                </KeyboardAvoidingView>
-            </Modal>
 
-            <Modal visible={isAddingEvent} animationType="slide" transparent>
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { height: 'auto', paddingBottom: insets.bottom + 40 }]}>
-                        <View style={styles.modalHeader}>
-                            <TouchableOpacity onPress={() => { setIsAddingEvent(false); setEditingEventId(null); setNewEvent({ title: '', date: '', location: '', price: '', currency: 'USD', capacity: '', tiers: [] }); setShowDatePicker(false); }}>
-                                <X size={24} color={theme.colors.text} />
-                            </TouchableOpacity>
-                            <Text style={styles.modalTitle}>{editingEventId ? 'Edit Event' : 'New Event'}</Text>
-                            <TouchableOpacity onPress={handleCreateEvent}>
-                                <Text style={styles.shareAction}>{editingEventId ? 'Update' : 'Create'}</Text>
+                    {selectedImage && (
+                        <View style={styles.selectedImageContainer}>
+                            <Image source={{ uri: selectedImage }} style={styles.selectedImagePreview} />
+                            <TouchableOpacity style={styles.removeImageBtn} onPress={() => setSelectedImage(null)}>
+                                <X size={16} color={palette.white} />
                             </TouchableOpacity>
                         </View>
+                    )}
 
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Event Title</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="e.g. Weekly Reflection"
-                                value={newEvent.title}
-                                onChangeText={t => setNewEvent({ ...newEvent, title: t })}
-                            />
-                        </View>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Date & Time</Text>
-                            <View style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Platform.OS === 'ios' ? 8 : 12 }]}>
-                                <Text style={{ color: newEvent.date ? theme.colors.text : theme.colors.secondaryText, flex: 1 }}>
-                                    {newEvent.date || 'Date & Time'}
-                                </Text>
-                                <DateTimePicker
-                                    value={eventDate}
-                                    mode="datetime"
-                                    display={Platform.OS === 'ios' ? 'compact' : 'default'}
-                                    style={{ width: 180, height: 36 }}
-                                    onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
-                                        if (selectedDate) {
-                                            setEventDate(selectedDate);
-                                            setNewEvent({
-                                                ...newEvent,
-                                                date: selectedDate.toLocaleString('en-US', {
-                                                    weekday: 'short',
-                                                    month: 'short',
-                                                    day: 'numeric',
-                                                    hour: 'numeric',
-                                                    minute: '2-digit',
-                                                    hour12: true
-                                                })
-                                            });
-                                        }
-                                    }}
-                                />
-                            </View>
-                        </View>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Location</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="e.g. Zoom or Physical Address"
-                                value={newEvent.location}
-                                onChangeText={t => setNewEvent({ ...newEvent, location: t })}
-                            />
-                        </View>
-
-                        <View style={styles.inputGroup}>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                                <Text style={styles.inputLabel}>Ticket Tiers</Text>
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <Text style={[styles.inputLabel, { marginRight: 8, marginBottom: 0 }]}>Currency:</Text>
-                                    <TextInput
-                                        style={[styles.input, { width: 60, height: 32, paddingVertical: 0, fontSize: 13 }]}
-                                        placeholder="USD"
-                                        value={newEvent.currency}
-                                        onChangeText={t => setNewEvent({ ...newEvent, currency: t.toUpperCase() })}
-                                        autoCapitalize="characters"
-                                    />
-                                    <TouchableOpacity
-                                        style={styles.addTierButton}
-                                        onPress={() => {
-                                            const newTier = { id: Math.random().toString(36).substr(2, 9), name: '', price: '', capacity: '', ticketsSold: 0 };
-                                            setNewEvent({ ...newEvent, tiers: [...(newEvent.tiers || []), newTier] });
-                                        }}
-                                    >
-                                        <Plus size={16} color={palette.softGold} />
-                                        <Text style={styles.addTierText}>Add Tier</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                            {(newEvent.tiers || []).map((tier: any, idx: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-                                <View key={tier.id} style={styles.tierRow}>
-                                    <TextInput
-                                        style={[styles.input, { flex: 2, marginRight: 4 }]}
-                                        placeholder="Tier Name (e.g. VIP)"
-                                        value={tier.name}
-                                        onChangeText={t => {
-                                            const updated = [...(newEvent.tiers || [])];
-                                            updated[idx] = { ...tier, name: t };
-                                            setNewEvent({ ...newEvent, tiers: updated });
-                                        }}
-                                    />
-                                    <TextInput
-                                        style={[styles.input, { flex: 1, marginRight: 4 }]}
-                                        placeholder="Price"
-                                        keyboardType="numeric"
-                                        value={tier.price?.toString() || ''}
-                                        onChangeText={t => {
-                                            const updated = [...(newEvent.tiers || [])];
-                                            updated[idx] = { ...tier, price: t };
-                                            setNewEvent({ ...newEvent, tiers: updated });
-                                        }}
-                                    />
-                                    <TextInput
-                                        style={[styles.input, { flex: 1, marginRight: 4 }]}
-                                        placeholder="Cap"
-                                        keyboardType="numeric"
-                                        value={tier.capacity?.toString() || ''}
-                                        onChangeText={t => {
-                                            const updated = [...(newEvent.tiers || [])];
-                                            updated[idx] = { ...tier, capacity: t };
-                                            setNewEvent({ ...newEvent, tiers: updated });
-                                        }}
-                                    />
-                                    <TouchableOpacity onPress={() => {
-                                        const updated = (newEvent.tiers || []).filter((_: any, i: number) => i !== idx); // eslint-disable-line @typescript-eslint/no-explicit-any
-                                        setNewEvent({ ...newEvent, tiers: updated });
-                                    }}>
-                                        <X size={18} color="#FF3B30" />
-                                    </TouchableOpacity>
-                                </View>
-                            ))}
-                        </View>
-
+                    <View style={[styles.modalFooter, { borderTopWidth: 0, paddingHorizontal: 0 }]}>
+                        <TouchableOpacity style={styles.modalIconButton} onPress={handlePickImage}>
+                            <ImageIcon size={22} color={palette.softGold} />
+                            <Typography variant="body" color={palette.softGold} style={{ marginLeft: 8 }}>Add Image</Typography>
+                        </TouchableOpacity>
                     </View>
-                </View>
-            </Modal>
-            <Modal visible={showJoinRequests} animationType="slide" transparent>
-                <View style={[styles.modalOverlay, { justifyContent: 'center' }]}>
-                    <View style={[styles.modalContent, { height: '60%', borderRadius: 24, marginHorizontal: 20 }]}>
-                        <View style={styles.modalHeader}>
-                            <TouchableOpacity onPress={() => setShowJoinRequests(false)}>
-                                <X size={24} color={theme.colors.text} />
-                            </TouchableOpacity>
-                            <Text style={styles.modalTitle}>Join Requests</Text>
-                            <TouchableOpacity onPress={() => {
-                                pendingRequests.forEach(r => handleJoinRequest(circleId, r.userId, 'accept'));
-                                setShowJoinRequests(false);
-                                Alert.alert("Success", "All seekers have been accepted into the sanctuary.");
-                            }}>
-                                <Text style={styles.shareAction}>Accept All</Text>
-                            </TouchableOpacity>
-                        </View>
-                        <TrueNorthFlashList
-                            data={pendingRequests}
-                            renderItem={renderRequests}
-                            keyExtractor={(item) => item.userId}
-                            estimatedItemSize={70}
+                </ScrollView>
+            </BottomSheet>
+
+            <BottomSheet
+                visible={isAddingEvent}
+                onClose={() => { setIsAddingEvent(false); setEditingEventId(null); setNewEvent({ title: '', date: '', location: '', price: '', currency: 'USD', capacity: '', tiers: [] }); setShowDatePicker(false); }}
+                title={editingEventId ? 'Edit Event' : 'New Event'}
+                actionLabel={editingEventId ? 'Update' : 'Create'}
+                onAction={handleCreateEvent}
+            >
+                <ScrollView showsVerticalScrollIndicator={false}>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.inputLabel}>Event Title</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="e.g. Weekly Reflection"
+                            value={newEvent.title}
+                            onChangeText={t => setNewEvent({ ...newEvent, title: t })}
                         />
                     </View>
-                </View>
-            </Modal>
-            <Modal
-                visible={showPaymentModal}
-                transparent
-                animationType="slide"
-                onRequestClose={() => setShowPaymentModal(false)}
-            >
-                <View style={styles.paymentModalOverlay}>
-                    <View style={styles.paymentModalContent}>
-                        <View style={styles.paymentModalHeader}>
-                            <Text style={styles.paymentModalTitle}>Complete Purchase</Text>
-                            <TouchableOpacity onPress={() => setShowPaymentModal(false)}>
-                                <X color={theme.colors.text} size={24} />
-                            </TouchableOpacity>
-                        </View>
 
-                        {selectedEventToPay && (
-                            <View style={{ marginBottom: 20 }}>
-                                <Text style={styles.eventTitle}>{selectedEventToPay.title}</Text>
-                                {(selectedEventToPay.tiers && selectedEventToPay.tiers.length > 0) ? (
-                                    <View style={{ marginTop: 12 }}>
-                                        <Text style={styles.paymentSectionTitle}>Select Ticket Tier</Text>
-                                        <View style={styles.tierSelector}>
-                                            {selectedEventToPay.tiers.map((tier: TicketTier) => (
-                                                <TouchableOpacity
-                                                    key={tier.id}
-                                                    style={[
-                                                        styles.tierOption,
-                                                        selectedTierId === tier.id && styles.tierOptionSelected
-                                                    ]}
-                                                    onPress={() => setSelectedTierId(tier.id)}
-                                                >
-                                                    <View style={{ flex: 1 }}>
-                                                        <Text style={[styles.tierOptionName, selectedTierId === tier.id && styles.tierOptionTextSelected]}>{tier.name}</Text>
-                                                        <Text style={styles.tierOptionPrice}>{selectedEventToPay.currency} {tier.price}</Text>
-                                                    </View>
-                                                    {selectedTierId === tier.id && <Check size={18} color={palette.ivory} />}
-                                                </TouchableOpacity>
-                                            ))}
-                                        </View>
-                                    </View>
-                                ) : (
-                                    <Text style={styles.eventPrice}>{selectedEventToPay.currency} {selectedEventToPay.price}</Text>
-                                )}
-                            </View>
-                        )}
-
-                        <View style={styles.quantityContainer}>
-                            <Text style={styles.paymentSectionTitle}>Quantity</Text>
-                            <View style={styles.quantityControls}>
-                                <TouchableOpacity
-                                    style={[styles.quantityButton, quantity <= 1 && styles.quantityButtonDisabled]}
-                                    onPress={() => setQuantity(Math.max(1, quantity - 1))}
-                                    disabled={quantity <= 1}
-                                >
-                                    <Minus size={20} color={quantity <= 1 ? theme.colors.secondaryText : theme.colors.text} />
-                                </TouchableOpacity>
-                                <Text style={styles.quantityText}>{quantity}</Text>
-                                <TouchableOpacity
-                                    style={[styles.quantityButton, quantity >= 2 && styles.quantityButtonDisabled]}
-                                    onPress={() => setQuantity(Math.min(2, quantity + 1))}
-                                    disabled={quantity >= 2}
-                                >
-                                    <Plus size={20} color={quantity >= 2 ? theme.colors.secondaryText : theme.colors.text} />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-
-                        <Text style={styles.paymentSectionTitle}>Select Payment Method</Text>
-
-                        <View style={[styles.paymentOption, { opacity: 0.6 }]}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <CreditCard size={24} color={theme.colors.secondaryText} />
-                                <View>
-                                    <Text style={[styles.paymentText, { color: theme.colors.secondaryText }]}>Card / Apple Pay</Text>
-                                    <Text style={{ fontSize: 10, color: palette.softGold, marginLeft: 12, fontWeight: 'bold' }}>COMING SOON</Text>
-                                </View>
-                            </View>
-                        </View>
-
-                        <TouchableOpacity
-                            style={[
-                                styles.paymentOption,
-                                paymentProvider === 'MPESA' && styles.paymentOptionSelected
-                            ]}
-                            onPress={() => setPaymentProvider('MPESA')}
-                        >
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <Smartphone size={24} color={paymentProvider === 'MPESA' ? palette.success : theme.colors.secondaryText} />
-                                <Text style={[styles.paymentText, paymentProvider === 'MPESA' && styles.paymentTextSelected]}>M-Pesa (STK Push)</Text>
-                            </View>
-                            {paymentProvider === 'MPESA' && <Check size={20} color={palette.success} />}
-                        </TouchableOpacity>
-
-                        {paymentProvider === 'MPESA' && (
-                            <View style={styles.phoneInputContainer}>
-                                <Text style={styles.paymentLabel}>M-Pesa Phone Number</Text>
-                                <TextInput
-                                    style={styles.paymentInput}
-                                    placeholder="e.g. 0712345678"
-                                    placeholderTextColor={theme.colors.secondaryText}
-                                    value={paymentPhone}
-                                    onChangeText={setPaymentPhone}
-                                    keyboardType="phone-pad"
-                                />
-                            </View>
-                        )}
-
-                        <TouchableOpacity
-                            style={[
-                                styles.payButton,
-                                isProcessingPayment && styles.payButtonDisabled,
-                                (!!selectedEventToPay?.tiers?.length && !selectedTierId) && styles.payButtonDisabled
-                            ]}
-                            onPress={async () => {
-                                if (!selectedEventToPay) return;
-
-                                if (paymentProvider === 'MPESA' && !paymentPhone) {
-                                    Alert.alert("Required", "Please enter your M-Pesa phone number.");
-                                    return;
-                                }
-
-                                if (selectedEventToPay?.tiers && selectedEventToPay.tiers.length > 0 && !selectedTierId) {
-                                    Alert.alert("Selection Required", "Please choose your desired ticket tier.");
-                                    return;
-                                }
-
-                                setIsProcessingPayment(true);
-
-                                try {
-                                    const selectedTier = selectedEventToPay.tiers?.find((t: TicketTier) => t.id === selectedTierId);
-                                    const currentPrice = selectedTier ? selectedTier.price : selectedEventToPay.price;
-                                    const totalAmount = currentPrice * quantity;
-
-                                    const result = await paymentService.initializePayment({
-                                        amount: totalAmount,
-                                        currency: selectedEventToPay.currency,
-                                        description: `Ticket for ${selectedEventToPay.title} ${selectedTier ? `(${selectedTier.name})` : ''} (x${quantity})`,
-                                        provider: paymentProvider,
-                                        phoneNumber: paymentProvider === 'MPESA' ? paymentPhone : undefined,
-                                        metadata: {
-                                            eventId: selectedEventToPay.id,
-                                            circleId: circleId,
-                                            userId: userId,
-                                            tierId: selectedTierId,
-                                            quantity: quantity
-                                        }
-                                    });
-
-                                    if (result.success) {
-                                        await purchaseTicket(circleId, selectedEventToPay.id, selectedTierId || undefined, quantity);
-
-                                        addNotification({
-                                            id: Math.random().toString(36).substr(2, 9),
-                                            createdAt: Date.now(),
-                                            title: "Ticket Purchased",
-                                            message: `You've secured ${quantity} spot${quantity > 1 ? 's' : ''} for ${selectedEventToPay.title}.`,
-                                            type: 'event'
-                                        });
-
-
-                                        setShowPaymentModal(false);
-                                        Alert.alert(
-                                            "Success",
-                                            "Ticket purchased successfully! Your spot is secured.",
-                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                            [{ text: "OK", onPress: () => (navigation as any).navigate('Profile') }]
-                                        );
-                                    } else {
-                                        // Alert handled in service for mock
-                                    }
-                                } catch (error) {
-                                    Alert.alert("Error", "Payment failed. Please try again.");
-                                } finally {
-                                    setIsProcessingPayment(false);
-                                }
-                            }}
-                            disabled={isProcessingPayment || (!!selectedEventToPay?.tiers?.length && !selectedTierId)}
-                        >
-                            <Text style={styles.payButtonText}>
-                                {isProcessingPayment ? "Processing..." : `Pay ${selectedEventToPay?.currency} ${((selectedEventToPay?.tiers?.find((t: TicketTier) => t.id === selectedTierId)?.price || selectedEventToPay?.price || 0) * quantity).toLocaleString()}`}
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.inputLabel}>Date & Time</Text>
+                        <View style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Platform.OS === 'ios' ? 8 : 12 }]}>
+                            <Text style={{ color: newEvent.date ? theme.colors.text : theme.colors.secondaryText, flex: 1 }}>
+                                {newEvent.date || 'Date & Time'}
                             </Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
-
-            {/* Role Management Modal */}
-            <Modal visible={showRoleManagement} animationType="slide" transparent>
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { height: '60%' }]}>
-                        <View style={styles.modalHeader}>
-                            <TouchableOpacity onPress={() => {
-                                setShowRoleManagement(false);
-                                setRoleSearchQuery('');
-                                setFoundUser(null);
-                            }}>
-                                <X size={24} color={theme.colors.text} />
-                            </TouchableOpacity>
-                            <Text style={styles.modalTitle}>Manage Circle Roles</Text>
-                            <View style={{ width: 24 }} />
-                        </View>
-
-                        <Text style={styles.inputLabel}>Search seeker by username</Text>
-                        <View style={styles.searchContainer}>
-                            <TextInput
-                                style={styles.searchInput}
-                                placeholder="Enter username..."
-                                placeholderTextColor={theme.colors.secondaryText}
-                                value={roleSearchQuery}
-                                onChangeText={setRoleSearchQuery}
-                            />
-                            <TouchableOpacity
-                                style={styles.searchButton}
-                                onPress={() => {
-                                    const user = findUserByUsername(roleSearchQuery);
-                                    if (user) {
-                                        setFoundUser(user);
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                    } else {
-                                        Alert.alert("Not Found", "We couldn't find a seeker with that username.");
+                            <DateTimePicker
+                                value={eventDate}
+                                mode="datetime"
+                                display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                                style={{ width: 180, height: 36 }}
+                                onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
+                                    if (selectedDate) {
+                                        setEventDate(selectedDate);
+                                        setNewEvent({
+                                            ...newEvent,
+                                            date: selectedDate.toLocaleString('en-US', {
+                                                weekday: 'short',
+                                                month: 'short',
+                                                day: 'numeric',
+                                                hour: 'numeric',
+                                                minute: '2-digit',
+                                                hour12: true
+                                            })
+                                        });
                                     }
                                 }}
-                            >
-                                <Search size={20} color={palette.ivory} />
-                            </TouchableOpacity>
+                            />
                         </View>
+                    </View>
 
-                        {foundUser && (
-                            <MotiView
-                                from={{ opacity: 0, translateY: 10 }}
-                                animate={{ opacity: 1, translateY: 0 }}
-                                style={styles.foundUserCard}
-                            >
-                                <View style={styles.userInfo}>
-                                    <View style={styles.avatar}><Text style={styles.avatarText}>{foundUser.username[0]}</Text></View>
-                                    <Text style={styles.userName}>{foundUser.username}</Text>
-                                </View>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.inputLabel}>Location</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="e.g. Zoom or Physical Address"
+                            value={newEvent.location}
+                            onChangeText={t => setNewEvent({ ...newEvent, location: t })}
+                        />
+                    </View>
 
-                                <View style={styles.rolePicker}>
-                                    {(['member', 'moderator', 'validator', 'admin'] as const).map((role) => (
+                    <View style={styles.inputGroup}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                            <Text style={styles.inputLabel}>Ticket</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <TextInput
+                                    style={[styles.input, { width: 60, height: 32, paddingVertical: 0, fontSize: 13 }]}
+                                    placeholder="USD"
+                                    value={newEvent.currency}
+                                    onChangeText={t => setNewEvent({ ...newEvent, currency: t.toUpperCase() })}
+                                    autoCapitalize="characters"
+                                />
+                                <TouchableOpacity
+                                    style={styles.addTierButton}
+                                    onPress={() => {
+                                        const newTier = { id: Math.random().toString(36).substr(2, 9), name: '', price: '', capacity: '', ticketsSold: 0 };
+                                        setNewEvent({ ...newEvent, tiers: [...(newEvent.tiers || []), newTier] });
+                                    }}
+                                >
+                                    <Plus size={16} color={palette.softGold} />
+                                    <Text style={styles.addTierText}>Add</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                        {(newEvent.tiers || []).map((tier: any, idx: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                            <View key={tier.id} style={styles.tierRow}>
+                                <TextInput
+                                    style={[styles.input, { flex: 2, marginRight: 4 }]}
+                                    placeholder="Tier Name (e.g. VIP)"
+                                    value={tier.name}
+                                    onChangeText={t => {
+                                        const updated = [...(newEvent.tiers || [])];
+                                        updated[idx] = { ...tier, name: t };
+                                        setNewEvent({ ...newEvent, tiers: updated });
+                                    }}
+                                />
+                                <TextInput
+                                    style={[styles.input, { flex: 1, marginRight: 4 }]}
+                                    placeholder="Price"
+                                    keyboardType="numeric"
+                                    value={tier.price?.toString() || ''}
+                                    onChangeText={t => {
+                                        const updated = [...(newEvent.tiers || [])];
+                                        updated[idx] = { ...tier, price: t };
+                                        setNewEvent({ ...newEvent, tiers: updated });
+                                    }}
+                                />
+                                <TextInput
+                                    style={[styles.input, { flex: 1, marginRight: 4 }]}
+                                    placeholder="Cap"
+                                    keyboardType="numeric"
+                                    value={tier.capacity?.toString() || ''}
+                                    onChangeText={t => {
+                                        const updated = [...(newEvent.tiers || [])];
+                                        updated[idx] = { ...tier, capacity: t };
+                                        setNewEvent({ ...newEvent, tiers: updated });
+                                    }}
+                                />
+                                <TouchableOpacity onPress={() => {
+                                    const updated = (newEvent.tiers || []).filter((_: any, i: number) => i !== idx); // eslint-disable-line @typescript-eslint/no-explicit-any
+                                    setNewEvent({ ...newEvent, tiers: updated });
+                                }}>
+                                    <X size={18} color="#FF3B30" />
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                    </View>
+                </ScrollView>
+            </BottomSheet>
+            <BottomSheet
+                visible={showJoinRequests}
+                onClose={() => setShowJoinRequests(false)}
+                title="Join Requests"
+                actionLabel="Accept All"
+                onAction={() => {
+                    pendingRequests.forEach(r => handleJoinRequest(circleId, r.userId, 'accept'));
+                    setShowJoinRequests(false);
+                    Alert.alert("Success", "All seekers have been accepted into the sanctuary.");
+                }}
+            >
+                <TrueNorthFlashList
+                    data={pendingRequests}
+                    renderItem={({ item }: { item: any }) => renderRequests({ item })}
+                    keyExtractor={(item: any) => item.userId}
+                    estimatedItemSize={70}
+                />
+            </BottomSheet>
+            <BottomSheet
+                visible={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                title="Complete Purchase"
+            >
+
+                {selectedEventToPay && (
+                    <View style={{ marginBottom: 20 }}>
+                        <Text style={styles.eventTitle}>{selectedEventToPay.title}</Text>
+                        {(selectedEventToPay.tiers && selectedEventToPay.tiers.length > 0) ? (
+                            <View style={{ marginTop: 12 }}>
+                                <Text style={styles.paymentSectionTitle}>Select Ticket Tier</Text>
+                                <View style={styles.tierSelector}>
+                                    {selectedEventToPay.tiers.map((tier: TicketTier) => (
                                         <TouchableOpacity
-                                            key={role}
+                                            key={tier.id}
                                             style={[
-                                                styles.roleOption,
-                                                selectedRole === role && styles.roleOptionSelected
+                                                styles.tierOption,
+                                                selectedTierId === tier.id && styles.tierOptionSelected
                                             ]}
-                                            onPress={() => setSelectedRole(role)}
+                                            onPress={() => setSelectedTierId(tier.id)}
                                         >
-                                            <Text style={[
-                                                styles.roleOptionText,
-                                                selectedRole === role && styles.roleOptionTextSelected
-                                            ]}>
-                                                {role.charAt(0).toUpperCase() + role.slice(1)}
-                                            </Text>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={[styles.tierOptionName, selectedTierId === tier.id && styles.tierOptionTextSelected]}>{tier.name}</Text>
+                                                <Text style={styles.tierOptionPrice}>{selectedEventToPay.currency} {tier.price}</Text>
+                                            </View>
+                                            {selectedTierId === tier.id && <Check size={18} color={palette.ivory} />}
                                         </TouchableOpacity>
                                     ))}
                                 </View>
-
-                                <TouchableOpacity
-                                    style={styles.assignButton}
-                                    onPress={() => {
-                                        setCircleRole(circleId, foundUser.userId, selectedRole);
-                                        Alert.alert("Success", `${foundUser.username} is now a ${selectedRole} in this sanctuary.`);
-                                        setShowRoleManagement(false);
-                                        setRoleSearchQuery('');
-                                        setFoundUser(null);
-                                    }}
-                                >
-                                    <Text style={styles.assignButtonText}>Assign Role</Text>
-                                </TouchableOpacity>
-                            </MotiView>
+                            </View>
+                        ) : (
+                            <Text style={styles.eventPrice}>{selectedEventToPay.currency} {selectedEventToPay.price}</Text>
                         )}
                     </View>
+                )}
+
+                <View style={styles.quantityContainer}>
+                    <Text style={styles.paymentSectionTitle}>Quantity</Text>
+                    <View style={styles.quantityControls}>
+                        <TouchableOpacity
+                            style={[styles.quantityButton, quantity <= 1 && styles.quantityButtonDisabled]}
+                            onPress={() => setQuantity(Math.max(1, quantity - 1))}
+                            disabled={quantity <= 1}
+                        >
+                            <Minus size={20} color={quantity <= 1 ? theme.colors.secondaryText : theme.colors.text} />
+                        </TouchableOpacity>
+                        <Text style={styles.quantityText}>{quantity}</Text>
+                        <TouchableOpacity
+                            style={[styles.quantityButton, quantity >= 2 && styles.quantityButtonDisabled]}
+                            onPress={() => setQuantity(Math.min(2, quantity + 1))}
+                            disabled={quantity >= 2}
+                        >
+                            <Plus size={20} color={quantity >= 2 ? theme.colors.secondaryText : theme.colors.text} />
+                        </TouchableOpacity>
+                    </View>
                 </View>
-            </Modal>
+
+                <Text style={styles.paymentSectionTitle}>Select Payment Method</Text>
+
+                <View style={[styles.paymentOption, { opacity: 0.6 }]}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <CreditCard size={24} color={theme.colors.secondaryText} />
+                        <View>
+                            <Text style={[styles.paymentText, { color: theme.colors.secondaryText }]}>Card / Apple Pay</Text>
+                            <Text style={{ fontSize: 10, color: palette.softGold, marginLeft: 12, fontWeight: 'bold' }}>COMING SOON</Text>
+                        </View>
+                    </View>
+                </View>
+
+                <TouchableOpacity
+                    style={[
+                        styles.paymentOption,
+                        paymentProvider === 'MPESA' && styles.paymentOptionSelected
+                    ]}
+                    onPress={() => setPaymentProvider('MPESA')}
+                >
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Smartphone size={24} color={paymentProvider === 'MPESA' ? palette.success : theme.colors.secondaryText} />
+                        <Text style={[styles.paymentText, paymentProvider === 'MPESA' && styles.paymentTextSelected]}>M-Pesa (STK Push)</Text>
+                    </View>
+                    {paymentProvider === 'MPESA' && <Check size={20} color={palette.success} />}
+                </TouchableOpacity>
+
+                {paymentProvider === 'MPESA' && (
+                    <View style={styles.phoneInputContainer}>
+                        <Text style={styles.paymentLabel}>M-Pesa Phone Number</Text>
+                        <TextInput
+                            style={styles.paymentInput}
+                            placeholder="e.g. 0712345678"
+                            placeholderTextColor={theme.colors.secondaryText}
+                            value={paymentPhone}
+                            onChangeText={setPaymentPhone}
+                            keyboardType="phone-pad"
+                        />
+                    </View>
+                )}
+
+                <TouchableOpacity
+                    style={[
+                        styles.payButton,
+                        isProcessingPayment && styles.payButtonDisabled,
+                        (!!selectedEventToPay?.tiers?.length && !selectedTierId) && styles.payButtonDisabled
+                    ]}
+                    onPress={async () => {
+                        if (!selectedEventToPay) return;
+
+                        if (paymentProvider === 'MPESA' && !paymentPhone) {
+                            Alert.alert("Required", "Please enter your M-Pesa phone number.");
+                            return;
+                        }
+
+                        if (selectedEventToPay?.tiers && selectedEventToPay.tiers.length > 0 && !selectedTierId) {
+                            Alert.alert("Selection Required", "Please choose your desired ticket tier.");
+                            return;
+                        }
+
+                        setIsProcessingPayment(true);
+
+                        try {
+                            const selectedTier = selectedEventToPay.tiers?.find((t: TicketTier) => t.id === selectedTierId);
+                            const currentPrice = selectedTier ? selectedTier.price : selectedEventToPay.price;
+                            const totalAmount = currentPrice * quantity;
+
+                            const result = await paymentService.initializePayment({
+                                amount: totalAmount,
+                                currency: selectedEventToPay.currency,
+                                description: `Ticket for ${selectedEventToPay.title} ${selectedTier ? `(${selectedTier.name})` : ''} (x${quantity})`,
+                                provider: paymentProvider,
+                                phoneNumber: paymentProvider === 'MPESA' ? paymentPhone : undefined,
+                                metadata: {
+                                    eventId: selectedEventToPay.id,
+                                    circleId: circleId,
+                                    userId: userId,
+                                    tierId: selectedTierId,
+                                    quantity: quantity
+                                }
+                            });
+
+                            if (result.success) {
+                                await purchaseTicket(circleId, selectedEventToPay.id, selectedTierId || undefined, quantity);
+
+                                addNotification({
+                                    id: Math.random().toString(36).substr(2, 9),
+                                    createdAt: Date.now(),
+                                    title: "Ticket Purchased",
+                                    message: `You've secured ${quantity} spot${quantity > 1 ? 's' : ''} for ${selectedEventToPay.title}.`,
+                                    type: 'event'
+                                });
+
+
+                                setShowPaymentModal(false);
+                                Alert.alert(
+                                    "Success",
+                                    "Ticket purchased successfully! Your spot is secured.",
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    [{ text: "OK", onPress: () => (navigation as any).navigate('Profile') }]
+                                );
+                            } else {
+                                // Alert handled in service for mock
+                            }
+                        } catch (error) {
+                            Alert.alert("Error", "Payment failed. Please try again.");
+                        } finally {
+                            setIsProcessingPayment(false);
+                        }
+                    }}
+                    disabled={isProcessingPayment || (!!selectedEventToPay?.tiers?.length && !selectedTierId)}
+                >
+                    <Text style={styles.payButtonText}>
+                        {isProcessingPayment ? "Processing..." : `Pay ${selectedEventToPay?.currency} ${((selectedEventToPay?.tiers?.find((t: TicketTier) => t.id === selectedTierId)?.price || selectedEventToPay?.price || 0) * quantity).toLocaleString()}`}
+                    </Text>
+                </TouchableOpacity>
+            </BottomSheet>
+
+            {/* Role Management Modal */}
+            < BottomSheet
+                visible={showRoleManagement}
+                onClose={() => {
+                    setShowRoleManagement(false);
+                    setRoleSearchQuery('');
+                    setFoundUser(null);
+                }}
+                title="Manage Circle Roles"
+            >
+
+                <Text style={styles.inputLabel}>Search seeker by username</Text>
+                <View style={styles.searchContainer}>
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Enter username..."
+                        placeholderTextColor={theme.colors.secondaryText}
+                        value={roleSearchQuery}
+                        onChangeText={setRoleSearchQuery}
+                    />
+                    <TouchableOpacity
+                        style={styles.searchButton}
+                        onPress={() => {
+                            const user = findUserByUsername(roleSearchQuery);
+                            if (user) {
+                                setFoundUser(user);
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            } else {
+                                Alert.alert("Not Found", "We couldn't find a seeker with that username.");
+                            }
+                        }}
+                    >
+                        <Search size={20} color={palette.ivory} />
+                    </TouchableOpacity>
+                </View>
+
+                {
+                    foundUser && (
+                        <MotiView
+                            from={{ opacity: 0, translateY: 10 }}
+                            animate={{ opacity: 1, translateY: 0 }}
+                            style={styles.foundUserCard}
+                        >
+                            <View style={styles.userInfo}>
+                                <View style={styles.avatar}><Text style={styles.avatarText}>{foundUser.username[0]}</Text></View>
+                                <Text style={styles.userName}>{foundUser.username}</Text>
+                            </View>
+
+                            <View style={styles.rolePicker}>
+                                {(['member', 'moderator', 'validator', 'admin'] as const).map((role) => (
+                                    <TouchableOpacity
+                                        key={role}
+                                        style={[
+                                            styles.roleOption,
+                                            selectedRole === role && styles.roleOptionSelected
+                                        ]}
+                                        onPress={() => setSelectedRole(role)}
+                                    >
+                                        <Text style={[
+                                            styles.roleOptionText,
+                                            selectedRole === role && styles.roleOptionTextSelected
+                                        ]}>
+                                            {role.charAt(0).toUpperCase() + role.slice(1)}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+
+                            <TouchableOpacity
+                                style={styles.assignButton}
+                                onPress={() => {
+                                    setCircleRole(circleId, foundUser.userId, selectedRole);
+                                    Alert.alert("Success", `${foundUser.username} is now a ${selectedRole} in this sanctuary.`);
+                                    setShowRoleManagement(false);
+                                    setRoleSearchQuery('');
+                                    setFoundUser(null);
+                                }}
+                            >
+                                <Text style={styles.assignButtonText}>Assign Role</Text>
+                            </TouchableOpacity>
+                        </MotiView>
+                    )
+                }
+            </BottomSheet >
 
             <ChoiceModal
                 visible={showChoiceModal}
@@ -1152,7 +1234,7 @@ export const CircleDetailScreen = () => {
                 message={choiceModalConfig.message}
                 options={choiceModalConfig.options}
             />
-        </View>
+        </View >
 
     );
 };

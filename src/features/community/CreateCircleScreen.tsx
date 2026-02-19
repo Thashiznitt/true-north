@@ -9,6 +9,9 @@ import { ChevronLeft, X, Check, Lock, Globe, Users, Search, MapPin, Sparkles } f
 import { useStore, BeliefType } from '../../store';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { COUNTRIES, COUNTRIES_DATA } from '../../data/locations';
+import { BottomSheet } from '../../components/BottomSheet';
+import { Popup } from '../../components/Popup';
+import { Typography } from '../../components/Typography';
 
 const BELIEFS: BeliefType[] = ['Christian', 'Muslim', 'Spiritual', 'Exploring', 'Open'];
 
@@ -32,8 +35,33 @@ export const CreateCircleScreen = () => {
     const allGoalCategories = ['spirituality', 'spouse', 'career', 'business', 'health', 'family', 'children', 'friends', 'finances'];
     const displayTopics = allGoalCategories;
 
+    // Refs for focus management
+    const descriptionRef = React.useRef<TextInput>(null);
+
     const filteredItems = (pickerType === 'country' ? COUNTRIES : (COUNTRIES_DATA[country] || []))
         .filter(item => item.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const handleContinue = () => {
+        if (!name.trim()) {
+            Alert.alert('Missing Name', 'Please give your circle a name.');
+            return;
+        }
+        if (!country.trim()) {
+            setPickerType('country');
+            setPickerVisible(true);
+            return;
+        }
+        if (!city.trim()) {
+            setPickerType('city');
+            setPickerVisible(true);
+            return;
+        }
+        if (!description.trim()) {
+            descriptionRef.current?.focus();
+            return;
+        }
+        setStep(1);
+    };
 
     const handleCreate = () => {
         if (!name.trim() || !country.trim() || !city.trim()) {
@@ -78,6 +106,18 @@ export const CreateCircleScreen = () => {
                 placeholderTextColor={theme.colors.secondaryText}
                 value={name}
                 onChangeText={setName}
+                returnKeyType="next"
+                onSubmitEditing={() => {
+                    if (!country) {
+                        setPickerType('country');
+                        setPickerVisible(true);
+                    } else if (!city) {
+                        setPickerType('city');
+                        setPickerVisible(true);
+                    } else {
+                        descriptionRef.current?.focus();
+                    }
+                }}
                 maxLength={40}
             />
 
@@ -119,6 +159,7 @@ export const CreateCircleScreen = () => {
 
             <Text style={styles.label}>Tell us about the purpose</Text>
             <TextInput
+                ref={descriptionRef}
                 style={[styles.input, styles.textArea]}
                 placeholder="Describe the intention of this circle..."
                 placeholderTextColor={theme.colors.secondaryText}
@@ -127,6 +168,8 @@ export const CreateCircleScreen = () => {
                 multiline
                 numberOfLines={4}
                 maxLength={200}
+                returnKeyType="done"
+                blurOnSubmit={true} // Allow closing keyboard if needed, or handle submit to next step if desired (though multiline usually implies newlines)
             />
 
             <Text style={styles.label}>Primary Belief Focus</Text>
@@ -211,6 +254,17 @@ export const CreateCircleScreen = () => {
                     setCity(item);
                 }
                 setPickerVisible(false);
+                // Auto-advance logic after picker selection
+                if (pickerType === 'country') {
+                    setTimeout(() => {
+                        setPickerType('city');
+                        setPickerVisible(true);
+                    }, 300);
+                } else {
+                    setTimeout(() => {
+                        descriptionRef.current?.focus();
+                    }, 300);
+                }
             }}
         >
             <MapPin size={18} color={palette.softGold} style={{ marginRight: 12 }} />
@@ -223,59 +277,53 @@ export const CreateCircleScreen = () => {
 
     const renderModals = () => (
         <>
-            <Modal visible={pickerVisible} animationType="slide" transparent={true}>
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.pickerContainer, { paddingTop: insets.top }]}>
-                        <View style={styles.pickerHeader}>
-                            <TouchableOpacity onPress={() => setPickerVisible(false)}>
-                                <X size={24} color={theme.colors.text} />
-                            </TouchableOpacity>
-                            <Text style={styles.pickerTitle}>Select {pickerType === 'country' ? 'Country' : 'City'}</Text>
-                            <View style={{ width: 24 }} />
-                        </View>
-                        <View style={styles.searchBar}>
-                            <Search size={20} color={theme.colors.secondaryText} />
-                            <TextInput
-                                style={styles.searchInput}
-                                placeholder="Search..."
-                                value={searchQuery}
-                                onChangeText={setSearchQuery}
-                                autoFocus
-                            />
-                        </View>
-                        <TrueNorthFlashList
-                            data={filteredItems}
-                            keyExtractor={(item) => item}
-                            renderItem={renderPickerItem}
-                            estimatedItemSize={60}
-                        />
-                    </View>
+            <BottomSheet
+                visible={pickerVisible}
+                onClose={() => setPickerVisible(false)}
+                title={`Select ${pickerType === 'country' ? 'Country' : 'City'}`}
+                height="90%"
+            >
+                <View style={[styles.searchBar, { marginTop: 0 }]}>
+                    <Search size={20} color={theme.colors.secondaryText} />
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        autoFocus
+                    />
                 </View>
-            </Modal>
-
-            <Modal visible={showSuccessModal} transparent={true} animationType="fade">
-                <View style={styles.modalOverlay}>
-                    <View style={styles.successCard}>
-                        <View style={styles.successIconContainer}>
-                            <Sparkles size={40} color={palette.softGold} />
-                        </View>
-                        <Text style={styles.successTitle}>Sanctuary Established</Text>
-                        <Text style={styles.successDesc}>
-                            Your sacred circle <Text style={{ fontFamily: theme.typography.sansBold }}>&quot;{name}&quot;</Text> in {city} has been created.
-                        </Text>
-
-                        <TouchableOpacity
-                            style={styles.praiseButton}
-                            onPress={() => {
-                                setShowSuccessModal(false);
-                                navigation.navigate('Main', { screen: 'Circles' });
-                            }}
-                        >
-                            <Text style={styles.praiseButtonText}>Praise</Text>
-                        </TouchableOpacity>
-                    </View>
+                <View style={{ flex: 1 }}>
+                    <TrueNorthFlashList
+                        data={filteredItems}
+                        keyExtractor={(item) => item}
+                        renderItem={renderPickerItem}
+                        estimatedItemSize={60}
+                    />
                 </View>
-            </Modal>
+            </BottomSheet>
+
+            <Popup visible={showSuccessModal} onClose={() => setShowSuccessModal(false)}>
+                <View style={{ alignItems: 'center' }}>
+                    <View style={styles.successIconContainer}>
+                        <Sparkles size={40} color={palette.softGold} />
+                    </View>
+                    <Text style={styles.successTitle}>Sanctuary Established</Text>
+                    <Text style={styles.successDesc}>
+                        Your sacred circle <Text style={{ fontFamily: theme.typography.sansBold }}>&quot;{name}&quot;</Text> in {city} has been created.
+                    </Text>
+
+                    <TouchableOpacity
+                        style={styles.praiseButton}
+                        onPress={() => {
+                            setShowSuccessModal(false);
+                            navigation.navigate('Main', { screen: 'Circles' });
+                        }}
+                    >
+                        <Text style={styles.praiseButtonText}>Praise</Text>
+                    </TouchableOpacity>
+                </View>
+            </Popup>
         </>
     );
 
@@ -291,9 +339,8 @@ export const CreateCircleScreen = () => {
             <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
                 {step === 0 ? (
                     <TouchableOpacity
-                        style={[styles.nextButton, !name && { opacity: 0.5 }]}
-                        onPress={() => setStep(1)}
-                        disabled={!name}
+                        style={[styles.nextButton, (!name || !country || !city) && { opacity: 0.5 }]}
+                        onPress={handleContinue}
                     >
                         <Text style={styles.nextButtonText}>Continue</Text>
                     </TouchableOpacity>

@@ -10,12 +10,10 @@ import { FadeIn } from '../../components/FadeIn';
 import { Moon } from 'lucide-react-native';
 import { supabase } from '../../services/supabase';
 
-const BELIEF_TYPES: { type: BeliefType; description: string }[] = [
-    { type: 'Christian', description: 'Grounded in biblical wisdom and Christ-centered living.' },
-    { type: 'Muslim', description: 'Centered on Islamic principles, prayer, and faith.' },
-    { type: 'Secular', description: 'Universal human values and philosophical reflection.' },
-    { type: 'Exploring', description: 'Finding your path across diverse spiritual traditions.' },
-];
+import { APP_BELIEFS } from '../../types/beliefs';
+
+// Use APP_BELIEFS for the source of truth
+const BELIEF_TYPES = APP_BELIEFS.map(b => ({ type: b.id, description: b.description }));
 
 export const BeliefSettingsScreen = () => {
     const insets = useSafeAreaInsets();

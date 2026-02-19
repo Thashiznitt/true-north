@@ -132,27 +132,23 @@ export const FaithNews = ({ type, onClose }: FaithNewsProps) => {
     };
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <View style={styles.badge}>
-                    <Text style={styles.badgeText}>COMMUNITY NEWS</Text>
-                </View>
-                <Newspaper size={12} color={theme.colors.secondaryText} />
-            </View>
+        <TouchableOpacity style={styles.container} onPress={handlePress} activeOpacity={0.9}>
+            <Image source={{ uri: news.image }} style={styles.image} contentFit="cover" />
 
-            <TouchableOpacity style={styles.content} onPress={handlePress} activeOpacity={0.9}>
-                <Image source={{ uri: news.image }} style={styles.image} />
-                <View style={styles.textContainer}>
-                    <Text style={styles.subtitle}>{news.subtitle}</Text>
-                    <Text style={styles.title}>{news.title}</Text>
-                    <Text style={styles.description} numberOfLines={2}>{news.description}</Text>
-                    <View style={styles.ctaRow}>
-                        <Text style={styles.ctaText}>{news.cta}</Text>
-                        <ExternalLink size={14} color={palette.softGold} />
-                    </View>
+            <View style={styles.content}>
+                <View style={styles.meta}>
+                    <Text style={styles.source}>{news.type === 'product' ? 'Featured' : news.belief}</Text>
+                    <Text style={styles.date}>• {news.type === 'event' ? 'Event' : 'News'}</Text>
                 </View>
-            </TouchableOpacity>
-        </View>
+
+                <Text style={styles.title} numberOfLines={2}>{news.title}</Text>
+
+                <View style={[styles.meta, { marginTop: 'auto' }]}>
+                    <Text style={[styles.source, { color: theme.colors.primary }]}>{news.cta}</Text>
+                    <ExternalLink size={12} color={theme.colors.primary} />
+                </View>
+            </View>
+        </TouchableOpacity>
     );
 };
 
@@ -183,53 +179,42 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.border,
         paddingHorizontal: 6,
         paddingVertical: 2,
-        borderRadius: 4,
-    },
-    badgeText: {
-        fontFamily: theme.typography.sansBold,
-        fontSize: 9,
-        color: theme.colors.secondaryText,
-        letterSpacing: 0.5,
-    },
-    content: {
-        flexDirection: 'row',
-        padding: theme.spacing.md,
+        shadowRadius: 8,
+        elevation: 2
     },
     image: {
-        width: 80,
-        height: 80,
-        borderRadius: theme.borderRadius.md,
-        backgroundColor: theme.colors.border,
+        width: '100%',
+        height: 110,
     },
-    textContainer: {
-        flex: 1,
-        marginLeft: theme.spacing.md,
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.2)',
     },
-    subtitle: {
-        fontFamily: theme.typography.sansBold,
-        fontSize: 10,
-        color: palette.softGold,
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-        marginBottom: 2,
+    content: {
+        padding: theme.spacing.md,
+        justifyContent: 'center',
+        flex: 1
     },
     title: {
         fontFamily: theme.typography.serifBold,
-        fontSize: 16,
+        fontSize: 15,
         color: theme.colors.text,
         marginBottom: 4,
+        lineHeight: 20
     },
-    description: {
-        fontFamily: theme.typography.sans,
-        fontSize: 12,
-        color: theme.colors.secondaryText,
-        lineHeight: 16,
-        marginBottom: 8,
-    },
-    ctaRow: {
+    meta: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        gap: 6
+    },
+    source: {
+        fontFamily: theme.typography.sansBold,
+        fontSize: 11,
+        color: palette.softGold,
+        textTransform: 'uppercase'
+    },
+    date: {
+        fontFamily: theme.typography.sans,
     },
     ctaText: {
         fontFamily: theme.typography.sansBold,

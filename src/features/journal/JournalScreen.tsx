@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, LayoutAnimation, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, LayoutAnimation, Alert, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { theme, palette } from '../../theme';
@@ -58,6 +58,13 @@ export const JournalScreen = () => {
             if (securityPin) {
                 setIsLocked(false);
             }
+            return;
+        }
+
+        // Handle Simulator Mock Success
+        if (Platform.OS === 'ios' && !LocalAuthentication.hasHardwareAsync()) {
+            setIsLocked(false);
+            setBioError(false);
             return;
         }
 
@@ -130,7 +137,7 @@ export const JournalScreen = () => {
     };
 
 
-    const renderEntry = ({ item, index }: { item: JournalEntry, index: number }) => {
+    const renderEntry = ({ item, index }: any) => {
         const delay = index * 100;
 
         return (
@@ -153,7 +160,7 @@ export const JournalScreen = () => {
                         <Text style={styles.entryPreview} numberOfLines={2}>{item.content}</Text>
                         {item.tags && item.tags.length > 0 && (
                             <View style={styles.entryTags}>
-                                {item.tags.map((tag, i) => (
+                                {item.tags.map((tag: string, i: number) => (
                                     <View key={i} style={styles.entryTag}>
                                         <Tag size={10} color={palette.softGold} style={{ marginRight: 4 }} />
                                         <Text style={styles.entryTagText}>{tag}</Text>

@@ -8,11 +8,13 @@ import { OptimizedImage } from '../../components/performance/OptimizedImage';
 import { useNavigation } from '@react-navigation/native';
 import { FadeIn } from '../../components/FadeIn';
 import * as ImagePicker from 'expo-image-picker';
+import Constants from 'expo-constants';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '../../store';
 import { notificationService } from '../../services/notifications';
 import { theme, palette } from '../../theme';
-import { Check, ArrowRight, ChevronLeft, Plus, Shield, Heart, Sparkles, Compass, Fingerprint, Star, Moon } from 'lucide-react-native';
+import { Check, ArrowRight, ChevronLeft, Plus, Shield, Heart, Sparkles, Compass, Fingerprint, Star, Moon, BookOpen, Feather, Mountain, Anchor, Sun, Hourglass, HandHeart } from 'lucide-react-native';
 import { subscriptionService } from '../../services/subscription';
 import { authService } from '../../services/auth';
 import { supabase } from '../../services/supabase';
@@ -23,24 +25,41 @@ import { env } from '../../services/env';
 import { COUNTRIES, COUNTRIES_DATA } from '../../data/locations';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { Search, MapPin, X } from 'lucide-react-native';
-import { Modal } from 'react-native';
+import { BottomSheet } from '../../components/BottomSheet';
+import { APP_THEMES, THEME_ICONS_MAP, AppTheme } from '../../types/themes';
 
 
 const THEME_ICONS: Record<string, any> = { // eslint-disable-line
-    Strength: Shield,
-    Love: Heart,
-    Wisdom: Sparkles,
-    Faith: Compass,
+    Shield,
+    Heart,
+    BookOpen,
+    Compass,
+    Feather,
+    Mountain,
+    Anchor,
+    Sun,
+    Hourglass,
+    HandHeart
 };
 
-const THEMES = ['Strength', 'Love', 'Wisdom', 'Faith'];
-const BELIEFS = ['Catholic', 'Protestant', 'Muslim', 'Spiritual', 'Exploring'];
+// ... 
+
+
+
+import { APP_BELIEFS, BeliefId } from '../../types/beliefs';
+
+const BELIEFS = APP_BELIEFS.map(b => b.id);
 
 const BELIEF_META: Record<string, { icon: React.FC<any>, desc: string }> = { // eslint-disable-line
     Catholic: { icon: Heart, desc: "Liturgical dates, Mass reflections, and daily grace." },
     Protestant: { icon: Star, desc: "Sermon insights, scripture focus, and daily guidance." },
+    Christian: { icon: Star, desc: "Follower of the teachings of Jesus Christ." },
     Muslim: { icon: Moon, desc: "Khutbah insights and daily alignment prompts." },
     Spiritual: { icon: Sparkles, desc: "Universal wisdom and mindfulness reflections." },
+    Jewish: { icon: Star, desc: "Covenant with God through Torah and tradition." },
+    Sikh: { icon: Sparkles, desc: "Devotion to the One Creator and service to humanity." },
+    Hindu: { icon: Sparkles, desc: "Pursuing Dharma, Karma, and liberation (Moksha)." },
+    Buddhist: { icon: Sparkles, desc: "Following the Eightfold Path to enlightenment and compassion." },
     Exploring: { icon: Compass, desc: "Discovering your own unique spiritual path." },
 };
 
@@ -111,6 +130,11 @@ export const OnboardingScreen = () => {
     const [offeringLoading, setOfferingLoading] = useState(!env.useMockServices);
     const [isPurchasing, setIsPurchasing] = useState(false);
 
+    // Username State
+    const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+    const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
+    const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+
     // Location State
     const [locationCountry, setLocationCountry] = useState('');
     const [locationCity, setLocationCity] = useState('');
@@ -153,37 +177,33 @@ export const OnboardingScreen = () => {
         [renderPickerItem]);
 
     const renderLocationPickerModal = (visible: boolean, onClose: () => void, type: 'country' | 'city') => (
-        <Modal visible={visible} animationType="slide" transparent={true}>
-            <View style={styles.modalOverlay}>
-                <View style={[styles.pickerContainer, { paddingTop: insets.top }]}>
-                    <View style={styles.pickerHeader}>
-                        <TouchableOpacity onPress={onClose}>
-                            <X size={24} color={theme.colors.text} />
-                        </TouchableOpacity>
-                        <Text style={styles.pickerTitle}>Select {type === 'country' ? 'Country' : 'City'}</Text>
-                        <View style={{ width: 24 }} />
-                    </View>
-                    <View style={styles.searchBar}>
-                        <Search size={20} color={theme.colors.secondaryText} />
-                        <TextInput
-                            style={styles.searchInput}
-                            placeholder="Search..."
-                            placeholderTextColor={theme.colors.secondaryText}
-                            value={searchQuery}
-                            onChangeText={setSearchQuery}
-                            autoFocus
-                        />
-                    </View>
-                    <TrueNorthFlashList
-                        data={type === 'country' ? filteredCountries : filteredCities}
-                        keyExtractor={(item: string) => item}
-                        renderItem={type === 'country' ? renderCountryItem : renderCityItem}
-                        estimatedItemSize={60}
-                        keyboardShouldPersistTaps="handled"
-                    />
-                </View>
+        <BottomSheet
+            visible={visible}
+            onClose={onClose}
+            title={`Select ${type === 'country' ? 'Country' : 'City'}`}
+            height="80%"
+        >
+            <View style={[styles.searchBar, { marginTop: 0 }]}>
+                <Search size={20} color={theme.colors.secondaryText} />
+                <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search..."
+                    placeholderTextColor={theme.colors.secondaryText}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    autoFocus
+                />
             </View>
-        </Modal>
+            <View style={{ flex: 1 }}>
+                <TrueNorthFlashList
+                    data={type === 'country' ? filteredCountries : filteredCities}
+                    keyExtractor={(item: any) => item}
+                    renderItem={({ item }: { item: any }) => (type === 'country' ? renderCountryItem({ item }) : renderCityItem({ item }))}
+                    estimatedItemSize={60}
+                    keyboardShouldPersistTaps="handled"
+                />
+            </View>
+        </BottomSheet>
     );
 
     React.useEffect(() => {
@@ -202,6 +222,64 @@ export const OnboardingScreen = () => {
     React.useEffect(() => {
         setOnboardingStep(step);
     }, [step]);
+
+
+    const checkUsernameAvailability = React.useCallback(async (name: string) => {
+        if (!name || name.length < 3) {
+            setUsernameAvailable(null);
+            setUsernameSuggestions([]);
+            return;
+        }
+
+        setIsCheckingUsername(true);
+        setUsernameAvailable(null);
+
+        try {
+            // Check if username exists in Supabase
+            // Note: This requires a policy allowing public read of usernames or an edge function
+            // For now assuming we can query users table for username existence
+            const { count, error } = await supabase
+                .from('users')
+                .select('username', { count: 'exact', head: true })
+                .eq('username', name);
+
+            if (error) throw error;
+
+            const isAvailable = count === 0;
+            setUsernameAvailable(isAvailable);
+
+            if (!isAvailable) {
+                // Generate suggestions
+                const random = Math.floor(Math.random() * 1000);
+                const year = new Date().getFullYear();
+                const suggestions = [
+                    `${name}${random}`,
+                    `${name}_${random}`,
+                    `${name}${year}`
+                ];
+                setUsernameSuggestions(suggestions);
+            } else {
+                setUsernameSuggestions([]);
+            }
+
+        } catch (error) {
+            console.error("Error checking username:", error);
+            // Fallback to allowing it if check fails to avoid blocking users
+            setUsernameAvailable(true);
+        } finally {
+            setIsCheckingUsername(false);
+        }
+    }, []);
+
+    // Debounce the check
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            if (username.length >= 3) {
+                checkUsernameAvailability(username);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [username, checkUsernameAvailability]);
 
 
     const inputRefs = React.useRef<Array<TextInput | null>>([]);
@@ -257,28 +335,39 @@ export const OnboardingScreen = () => {
                 Alert.alert("Name Required", "Please let us know what to call you.");
                 return;
             }
+            if (usernameAvailable === false) {
+                Alert.alert("Unavailable", "Please choose a different username.");
+                return;
+            }
             if (!dateOfBirth) {
-                // Instead of alert, just open the date picker for a smoother flow
                 setShowDatePicker(true);
                 return;
             }
             setStep(8);
 
         } else if (step === 8) {
+            // Profile Picture step - no strict validation needed
+            setStep(9);
+
+        } else if (step === 9) {
             // This is the Security Step (Biometrics/PIN)
             if (setupBiometrics && !pin) {
                 Alert.alert("PIN Required", "Please set a backup PIN for security.");
                 return;
             }
-            if (pin && pin.length < 4) {
-                Alert.alert("Invalid PIN", "PIN must be at least 4 digits.");
+            if (pin && pin.length > 0 && pin.length < 4) {
+                Alert.alert("Invalid PIN", "PIN must be 4 digits.");
                 return;
             }
-            setStep(9);
-        } else if (step === 9) {
-            // Location Step
             setStep(10);
         } else if (step === 10) {
+            // Location Step
+            if (!locationCountry || !locationCity) {
+                Alert.alert("Location Required", "Please select your country and city.");
+                return;
+            }
+            setStep(11);
+        } else if (step === 11) {
             // This will be the Paywall
         } else {
             setStep(step + 1);
@@ -563,39 +652,42 @@ export const OnboardingScreen = () => {
     );
 
     const renderStep1 = () => (
-        <StepContainer>
-            <FadeIn delay={100} from="bottom">
-                {renderHeader("Core Themes", "What areas of life do you want to focus on?")}
-            </FadeIn>
-            <View style={styles.grid}>
-                {THEMES.map((t, index) => {
-                    const Icon = THEME_ICONS[t];
-                    return (
-                        <FadeIn key={t} delay={200 + index * 100} from="bottom" style={{ width: '47.5%' }}>
-                            <TouchableOpacity
-                                style={[styles.themeCard, selectedThemes.includes(t) && styles.themeCardActive, { width: '100%' }]}
-                                onPress={() => toggleTheme(t)}
-                            >
-                                <View style={styles.themeHeader}>
-                                    <Icon
-                                        size={24}
-                                        color={selectedThemes.includes(t) ? palette.softGold : theme.colors.secondaryText}
-                                        strokeWidth={1.5}
-                                    />
-                                    {selectedThemes.includes(t) && <Check size={18} color={palette.softGold} />}
-                                </View>
-                                <Text style={[styles.themeText, selectedThemes.includes(t) && styles.themeTextActive]}>{t}</Text>
-                            </TouchableOpacity>
-                        </FadeIn>
-                    );
-                })}
-            </View>
-            <FadeIn delay={800} from="bottom">
-                <TouchableOpacity style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
-                    <Text style={styles.loginLinkText}>Have an account? <Text style={styles.loginLinkHighlight}>Log In</Text></Text>
-                </TouchableOpacity>
-            </FadeIn>
-        </StepContainer>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+            <StepContainer>
+                <FadeIn delay={100} from="bottom">
+                    {renderHeader("Core Themes", "What areas of life do you want to focus on?")}
+                </FadeIn>
+                <View style={styles.grid}>
+                    {APP_THEMES.map((t, index) => {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const Icon = (THEME_ICONS as any)[THEME_ICONS_MAP[t]] || Sparkles;
+                        return (
+                            <FadeIn key={t} delay={200 + index * 50} from="bottom" style={{ width: '47.5%' }}>
+                                <TouchableOpacity
+                                    style={[styles.themeCard, selectedThemes.includes(t) && styles.themeCardActive, { width: '100%' }]}
+                                    onPress={() => toggleTheme(t)}
+                                >
+                                    <View style={styles.themeHeader}>
+                                        <Icon
+                                            size={24}
+                                            color={selectedThemes.includes(t) ? palette.softGold : theme.colors.secondaryText}
+                                            strokeWidth={1.5}
+                                        />
+                                        {selectedThemes.includes(t) && <Check size={18} color={palette.softGold} />}
+                                    </View>
+                                    <Text style={[styles.themeText, selectedThemes.includes(t) && styles.themeTextActive]}>{t}</Text>
+                                </TouchableOpacity>
+                            </FadeIn>
+                        );
+                    })}
+                </View>
+                <FadeIn delay={800} from="bottom">
+                    <TouchableOpacity style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
+                        <Text style={styles.loginLinkText}>Have an account? <Text style={styles.loginLinkHighlight}>Log In</Text></Text>
+                    </TouchableOpacity>
+                </FadeIn>
+            </StepContainer>
+        </ScrollView>
     );
 
     // ... (logic for handleGoalChange)
@@ -644,53 +736,86 @@ export const OnboardingScreen = () => {
         </>
     );
 
-    const renderStep3 = () => (
-        <StepContainer>
-            <FadeIn delay={100} from="bottom">
-                {renderHeader("Spiritual Path", "This helps us personalize your affirmations and guidance.")}
-            </FadeIn>
-            <View style={styles.beliefGrid}>
-                {BELIEFS.map((b, index) => {
-                    const meta = BELIEF_META[b];
-                    const Icon = meta.icon;
-                    const isActive = beliefType === b;
+    const renderStep3 = () => {
+        // Sort beliefs to prioritize Muslim, then others
+        const sortedBeliefs = [...BELIEFS].sort((a, b) => {
+            if (a === 'Muslim') return -1;
+            if (b === 'Muslim') return 1;
+            return 0; // Keep original order for others
+        });
 
-                    return (
-                        <FadeIn
-                            key={b}
-                            delay={200 + index * 100}
-                            from="bottom"
-                        >
-                            <TouchableOpacity
-                                style={[styles.beliefCard, isActive && styles.beliefCardActive]}
-                                onPress={() => setBeliefType(b)}
-                                activeOpacity={0.7}
-                            >
-                                <View
-                                    style={[styles.beliefIconCircle, isActive && styles.beliefIconCircleActive]}
-                                >
-                                    <Icon size={32} color={isActive ? palette.ivory : palette.softGold} />
-                                </View>
-
-                                <View style={styles.beliefContent}>
-                                    <Text style={[styles.beliefText, isActive && styles.beliefTextActive]}>{b}</Text>
-                                    <Text style={[styles.beliefDesc, isActive && styles.beliefDescActive]}>{meta.desc}</Text>
-                                </View>
-
-                                {isActive && (
-                                    <View
-                                        style={styles.beliefCheck}
-                                    >
-                                        <Check size={16} color={palette.softGold} />
-                                    </View>
-                                )}
-                            </TouchableOpacity>
+        return (
+            <View style={{ flex: 1 }}>
+                <ScrollView showsVerticalScrollIndicator={true} contentContainerStyle={{ paddingBottom: 120 }}>
+                    <StepContainer>
+                        <FadeIn delay={100} from="bottom">
+                            {renderHeader("Spiritual Path", "This helps us personalize your affirmations and guidance.")}
                         </FadeIn>
-                    );
-                })}
+                        <View style={styles.beliefGrid}>
+                            {sortedBeliefs.map((b, index) => {
+                                const meta = BELIEF_META[b];
+                                const Icon = meta.icon;
+                                const isActive = beliefType === b;
+
+                                return (
+                                    <FadeIn
+                                        key={b}
+                                        delay={200 + index * 100}
+                                        from="bottom"
+                                    >
+                                        <TouchableOpacity
+                                            style={[styles.beliefCard, isActive && styles.beliefCardActive]}
+                                            onPress={() => setBeliefType(b)}
+                                            activeOpacity={0.7}
+                                        >
+                                            <View
+                                                style={[styles.beliefIconCircle, isActive && styles.beliefIconCircleActive]}
+                                            >
+                                                <Icon size={32} color={isActive ? palette.ivory : palette.softGold} />
+                                            </View>
+
+                                            <View style={styles.beliefContent}>
+                                                <Text style={[styles.beliefText, isActive && styles.beliefTextActive]}>{b}</Text>
+                                                <Text style={[styles.beliefDesc, isActive && styles.beliefDescActive]}>{meta.desc}</Text>
+                                            </View>
+
+                                            {isActive && (
+                                                <View
+                                                    style={styles.beliefCheck}
+                                                >
+                                                    <Check size={16} color={palette.softGold} />
+                                                </View>
+                                            )}
+                                        </TouchableOpacity>
+                                    </FadeIn>
+                                );
+                            })}
+                        </View>
+                    </StepContainer>
+                </ScrollView>
+                {/* Scroll Indicator Hint */}
+                <FadeIn delay={1000} style={{ position: 'absolute', bottom: 20, alignSelf: 'center', zIndex: 10 }}>
+                    <View style={{
+                        alignItems: 'center',
+                        backgroundColor: theme.colors.surface,
+                        paddingVertical: 8,
+                        paddingHorizontal: 16,
+                        borderRadius: 20,
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 4,
+                        elevation: 4,
+                        flexDirection: 'row',
+                        gap: 8
+                    }}>
+                        <Text style={{ fontFamily: theme.typography.sansMedium, fontSize: 13, color: palette.softGold }}>Scroll for more</Text>
+                        <ChevronLeft size={16} color={palette.softGold} style={{ transform: [{ rotate: '-90deg' }] }} />
+                    </View>
+                </FadeIn>
             </View>
-        </StepContainer>
-    );
+        );
+    };
 
     const renderStep4 = () => (
         <View style={StyleSheet.absoluteFill}>
@@ -798,61 +923,108 @@ export const OnboardingScreen = () => {
     const renderStep6 = () => (
 
 
-        <StepContainer>
-            <FadeIn delay={100} from="bottom">
-                {renderHeader("Choose Username", "How should we address you in True North?")}
-            </FadeIn>
-            <FadeIn delay={300} from="bottom">
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Username</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter your username..."
-                        placeholderTextColor={theme.colors.secondaryText}
-                        value={username}
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        onChangeText={setUsername}
-                    />
-                </View>
-                <View style={[styles.inputGroup, { marginTop: 24 }]}>
-                    <Text style={styles.label}>Date of Birth</Text>
-                    <TouchableOpacity
-                        style={styles.input}
-                        onPress={() => setShowDatePicker(true)}
-                    >
-                        <Text style={{
-                            color: dateOfBirth ? theme.colors.text : theme.colors.secondaryText,
-                            fontFamily: theme.typography.sans
-                        }}>
-                            {dateOfBirth ? formatDisplayDate(dateOfBirth) : "Select your birthday..."}
-                        </Text>
-                    </TouchableOpacity>
-                    {showDatePicker && (
-                        <DateTimePicker
-                            mode="date"
-                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                            value={dateOfBirth ? new Date(dateOfBirth) : new Date(2000, 0, 1)}
-                            maximumDate={new Date()}
-                            onChange={(event, selectedDate) => {
-                                setShowDatePicker(false);
-                                if (selectedDate) {
-                                    const formatted = selectedDate.toISOString().split('T')[0];
-                                    setDateOfBirth(formatted);
+        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <StepContainer>
+                <FadeIn delay={100} from="bottom">
+                    {renderHeader("Choose Username", "How should we address you in True North?")}
+                </FadeIn>
+                <FadeIn delay={300} from="bottom">
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Username</Text>
+                        <View>
+                            <TextInput
+                                style={[
+                                    styles.input,
+                                    usernameAvailable === true && { borderColor: palette.success },
+                                    usernameAvailable === false && { borderColor: 'red' }
+                                ]}
+                                placeholder="Enter your username..."
+                                placeholderTextColor={theme.colors.secondaryText}
+                                value={username}
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                onChangeText={setUsername}
+                            />
+                            {isCheckingUsername && (
+                                <ActivityIndicator
+                                    size="small"
+                                    color={palette.softGold}
+                                    style={{ position: 'absolute', right: 16, top: 20 }}
+                                />
+                            )}
+                            {!isCheckingUsername && usernameAvailable === true && (
+                                <Check
+                                    size={20}
+                                    color={palette.success}
+                                    style={{ position: 'absolute', right: 16, top: 20 }}
+                                />
+                            )}
+                            {!isCheckingUsername && usernameAvailable === false && (
+                                <View style={{ position: 'absolute', right: 16, top: 20 }}>
+                                    <Text style={{ color: 'red', fontSize: 20 }}>✕</Text>
+                                </View>
+                            )}
+                        </View>
 
-                                    // Auto-advance if username is filled
-                                    if (username.trim()) {
-                                        setTimeout(() => setStep(8), 300);
+                        {!isCheckingUsername && usernameAvailable === false && usernameSuggestions.length > 0 && (
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                                <Text style={{ width: '100%', color: theme.colors.secondaryText, fontSize: 13, marginBottom: 4 }}>Suggestions:</Text>
+                                {usernameSuggestions.map(s => (
+                                    <TouchableOpacity
+                                        key={s}
+                                        style={{
+                                            backgroundColor: theme.colors.surface,
+                                            paddingHorizontal: 12,
+                                            paddingVertical: 8,
+                                            borderRadius: 16,
+                                            borderWidth: 1,
+                                            borderColor: palette.softGold
+                                        }}
+                                        onPress={() => setUsername(s)}
+                                    >
+                                        <Text style={{ color: theme.colors.text, fontSize: 13 }}>{s}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        )}
+                    </View>
+                    <View style={[styles.inputGroup, { marginTop: 24, paddingBottom: 100 }]}>
+                        <Text style={styles.label}>Date of Birth</Text>
+                        <TouchableOpacity
+                            style={styles.input}
+                            onPress={() => setShowDatePicker(true)}
+                        >
+                            <Text style={{
+                                color: dateOfBirth ? theme.colors.text : theme.colors.secondaryText,
+                                fontFamily: theme.typography.sans
+                            }}>
+                                {dateOfBirth ? formatDisplayDate(dateOfBirth) : "Select your birthday..."}
+                            </Text>
+                        </TouchableOpacity>
+                        {showDatePicker && (
+                            <DateTimePicker
+                                mode="date"
+                                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                value={dateOfBirth ? new Date(dateOfBirth) : new Date(2000, 0, 1)}
+                                maximumDate={new Date()}
+                                onChange={(event, selectedDate) => {
+                                    // Don't hide immediately on iOS spinner or it feels glitchy
+                                    if (Platform.OS !== 'ios') {
+                                        setShowDatePicker(false);
                                     }
-                                }
-                            }}
-                        />
-                    )}
+                                    if (selectedDate) {
+                                        const formatted = selectedDate.toISOString().split('T')[0];
+                                        setDateOfBirth(formatted);
+                                    }
+                                }}
+                            />
+                        )}
 
-                    <Text style={[styles.pickerHint, { marginTop: 8, textAlign: 'left' }]}>Used for birthday blessings.</Text>
-                </View>
-            </FadeIn>
-        </StepContainer>
+                        <Text style={[styles.pickerHint, { marginTop: 8, textAlign: 'left' }]}>Used for birthday blessings.</Text>
+                    </View>
+                </FadeIn>
+            </StepContainer>
+        </ScrollView>
     );
 
     const renderStep7 = () => (
@@ -894,10 +1066,41 @@ export const OnboardingScreen = () => {
                 <FadeIn delay={300} from="bottom">
                     <TouchableOpacity
                         style={[styles.securityCard, setupBiometrics && styles.securityCardActive]}
-                        onPress={() => setSetupBiometrics(!setupBiometrics)}
+                        onPress={async () => {
+                            if (!setupBiometrics) {
+                                // Mock activation on simulator
+                                if (Platform.OS === 'ios' && !Constants.isDevice) {
+                                    setLoading(true);
+                                    setTimeout(() => {
+                                        setLoading(false);
+                                        setSetupBiometrics(true);
+                                        Alert.alert("Success", "Mock Biometrics enabled for Simulator.");
+                                    }, 1000);
+                                    return;
+                                }
+
+                                const hasHardware = await LocalAuthentication.hasHardwareAsync();
+                                if (!hasHardware) {
+                                    Alert.alert("Unavailable", "Biometric hardware not found.");
+                                    return;
+                                }
+                                const result = await LocalAuthentication.authenticateAsync({
+                                    promptMessage: 'Enable Biometrics for True North',
+                                });
+                                if (result.success) {
+                                    setSetupBiometrics(true);
+                                }
+                            } else {
+                                setSetupBiometrics(false);
+                            }
+                        }}
                     >
                         <View style={styles.securityIconContainer}>
-                            <Fingerprint size={28} color={setupBiometrics ? palette.ivory : theme.colors.text} />
+                            {loading && !setupBiometrics ? (
+                                <ActivityIndicator color={palette.softGold} />
+                            ) : (
+                                <Fingerprint size={28} color={setupBiometrics ? palette.ivory : theme.colors.text} />
+                            )}
                         </View>
                         <View style={styles.securityTextContainer}>
                             <Text style={[styles.securityTitle, setupBiometrics && styles.securityTextActive]}>Enable Biometrics</Text>
@@ -945,6 +1148,8 @@ export const OnboardingScreen = () => {
             <StepContainer>
                 <FadeIn delay={100} from="bottom">
                     {renderHeader("Your Location", "Connect with a sanctuary near you.")}
+
+
                 </FadeIn>
 
                 <FadeIn delay={300} from="bottom">
@@ -1001,7 +1206,7 @@ export const OnboardingScreen = () => {
         ];
 
         return (
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, backgroundColor: palette.charcoal, paddingTop: insets.top }}>
                 <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{ paddingBottom: 120 }}
@@ -1180,7 +1385,7 @@ export const OnboardingScreen = () => {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={[styles.container, step !== 0 && step !== 4 && step !== 11 && { paddingTop: insets.top + 20, paddingBottom: insets.bottom }]}
+            style={[styles.container, step !== 0 && step !== 4 && step !== 10 && step !== 11 && { paddingTop: insets.top + 20, paddingBottom: insets.bottom }]}
         >
             {step !== 0 && step !== 4 && step !== 10 && step !== 11 && (
                 <View style={styles.nav}>
@@ -1203,13 +1408,13 @@ export const OnboardingScreen = () => {
                     {step === 6 && renderStepPassword()}
                     {step === 7 && renderStep6()}
                     {step === 8 && renderStep7()}
-                    {step === 9 && renderStep9()}
-                    {step === 10 && renderStep10()}
+                    {step === 9 && renderStep8()}
+                    {step === 10 && renderStep9()}
                     {step === 11 && renderStep10()}
                 </FadeIn>
             </View>
 
-            {step !== 0 && step !== 4 && step !== 10 && step !== 11 && (
+            {step !== 0 && step !== 4 && step !== 9 && step !== 10 && step !== 11 && (
                 <View style={styles.footer}>
                     <TouchableOpacity
                         style={[
@@ -1233,6 +1438,8 @@ export const OnboardingScreen = () => {
                     </TouchableOpacity>
                 </View>
             )}
+            {renderLocationPickerModal(showCountryPicker, () => setShowCountryPicker(false), 'country')}
+            {renderLocationPickerModal(showCityPicker, () => setShowCityPicker(false), 'city')}
         </KeyboardAvoidingView >
     );
 };
@@ -1372,7 +1579,7 @@ const styles = StyleSheet.create({
     inputDropdown: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.md,
-        padding: theme.spacing.lg, borderWidth: 1, borderColor: theme.colors.border,
+        paddingHorizontal: theme.spacing.lg, borderWidth: 1, borderColor: theme.colors.border,
         height: 56
     },
     inputText: { fontFamily: theme.typography.sansMedium, fontSize: 16, color: theme.colors.text },

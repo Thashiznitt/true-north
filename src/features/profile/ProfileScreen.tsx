@@ -7,7 +7,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { theme, palette } from '../../theme';
 import { useStore, UserGoals, UserTicket } from '../../store';
-import { BookOpen, ChevronRight, LogOut, Bell, CreditCard, Shield, Sparkles, Camera, Heart, ShieldCheck, LucideIcon, Lock, X, Save, Target, QrCode, Calendar, MapPin, Check } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, UserPlus, UserCheck, Clock, Users, BookOpen, Lock, MoreVertical, ShieldAlert, Sparkles, Link, Flag, Heart, Bell, Camera, Calendar, Target, CreditCard, Shield, ShieldCheck, LogOut, Check, X, QrCode, MapPin, LucideIcon } from 'lucide-react-native';
+import { StatsCard } from '../../components/StatsCard';
+
 
 
 
@@ -16,6 +18,8 @@ import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashL
 import { supabase } from '../../services/supabase';
 import { FadeIn } from '../../components/FadeIn';
 import QRCode from 'react-native-qrcode-svg';
+import { BottomSheet } from '../../components/BottomSheet';
+import { Popup } from '../../components/Popup';
 const APP_ICON = require('../../../assets/icon.png'); // eslint-disable-line @typescript-eslint/no-require-imports
 
 export const ProfileScreen = () => {
@@ -193,6 +197,7 @@ export const ProfileScreen = () => {
                                 </View>
                             )}
                         </View>
+                        {/* Ask Nur Floating Entry - Removed and moved to Tabs */}
                         <View style={styles.cameraIconContainer}>
                             <Camera size={14} color={palette.ivory} />
                         </View>
@@ -213,44 +218,34 @@ export const ProfileScreen = () => {
             </FadeIn>
 
             <FadeIn delay={200} from="bottom">
-                <View style={styles.statsRow}>
-                    <View style={styles.statItem}>
-                        <Heart size={20} color={palette.softGold} />
-                        <Text style={styles.statNumber}>{themes.length}</Text>
-                        <Text style={styles.statLabel}>Themes</Text>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                        <BookOpen size={20} color={palette.softGold} />
-                        <Text style={styles.statNumber}>{journalEntries.length}</Text>
-                        <Text style={styles.statLabel}>Reflections</Text>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                        <Bell size={20} color={palette.softGold} />
-                        <Text style={styles.statNumber}>{notificationsList.length}</Text>
-                        <Text style={styles.statLabel}>Alerts</Text>
-                    </View>
+                <View style={{ marginHorizontal: 20 }}>
+                    <StatsCard
+                        stats={[
+                            { label: 'Themes', value: themes.length, icon: <Heart size={20} color={palette.softGold} /> },
+                            { label: 'Reflections', value: journalEntries.length, icon: <BookOpen size={20} color={palette.softGold} /> },
+                            { label: 'Alerts', value: notificationsList.length, icon: <Bell size={20} color={palette.softGold} /> },
+                        ]}
+                    />
                 </View>
             </FadeIn>
 
             <FadeIn delay={250} from="bottom">
-                <View style={styles.section}>
+                <View style={[styles.section, { marginTop: 20 }]}>
                     <Text style={styles.sectionTitle}>My Sanctuary Tickets</Text>
                     {activeTickets.length > 0 ? (
                         <TrueNorthFlashList
                             horizontal
                             data={activeTickets}
-                            keyExtractor={(item) => item.id}
+                            keyExtractor={(item: any) => item.id}
                             showsHorizontalScrollIndicator={false}
                             contentContainerStyle={styles.ticketList}
                             estimatedItemSize={280}
-                            renderItem={renderTicketItem}
+                            renderItem={({ item }: { item: any }) => renderTicketItem({ item })}
                         />
                     ) : (
                         <TouchableOpacity
                             style={styles.emptyTicketsCard}
-                            onPress={() => navigation.navigate('Community')}
+                            onPress={() => navigation.navigate('Circles')}
                         >
                             <Calendar size={32} color={theme.colors.secondaryText} style={{ marginBottom: 8, opacity: 0.5 }} />
                             <Text style={{ fontFamily: theme.typography.sansMedium, color: theme.colors.secondaryText, marginBottom: 4 }}>No Upcoming Events</Text>
@@ -376,98 +371,75 @@ export const ProfileScreen = () => {
     ), [insets.top, profilePicture, username, subscriptionTier, beliefType, themes.length, journalEntries.length, notificationsList.length, palette.ivory, palette.softGold, navigation, userTickets, renderTicketItem]);
 
     const renderGoalsModal = () => (
-
-
-        <Modal
+        <BottomSheet
             visible={showGoalsModal}
-            animationType="slide"
-            presentationStyle="pageSheet"
-            onRequestClose={() => setShowGoalsModal(false)}
+            onClose={() => setShowGoalsModal(false)}
+            title="My Goals"
+            height="90%"
+            actionLabel="Save"
+            onAction={handleSaveGoals}
         >
-            <View style={styles.modalContainer}>
-                <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>My Goals</Text>
-                    <TouchableOpacity onPress={() => setShowGoalsModal(false)} style={styles.closeButton}>
-                        <X size={24} color={theme.colors.text} />
-                    </TouchableOpacity>
-                </View>
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    style={{ flex: 1 }}
-                >
-                    <TrueNorthFlashList
-                        data={Object.keys(editingGoals)}
-                        keyExtractor={(item) => item}
-                        renderItem={renderGoalItem}
-                        contentContainerStyle={styles.modalContent}
-                        ListHeaderComponent={<Text style={styles.modalSubtitle}>Update your aspirations to keep your journey aligned.</Text>}
-                        ListFooterComponent={<View style={styles.footerSpacer} />}
-                        estimatedItemSize={100}
-                    />
-                </KeyboardAvoidingView>
-
-                <View style={[styles.modalFooter, { paddingBottom: insets.bottom + 20 }]}>
-                    <TouchableOpacity style={styles.saveButton} onPress={handleSaveGoals}>
-                        <Save size={20} color={palette.ivory} />
-                        <Text style={styles.saveButtonText}>Save Changes</Text>
-                    </TouchableOpacity>
-                </View>
+            <View style={{ flex: 1 }}>
+                <TrueNorthFlashList
+                    data={Object.keys(editingGoals)}
+                    keyExtractor={(item: any) => item}
+                    renderItem={({ item }: { item: any }) => renderGoalItem({ item })}
+                    contentContainerStyle={styles.modalContent}
+                    ListHeaderComponent={<Text style={styles.modalSubtitle}>Update your aspirations to keep your journey aligned.</Text>}
+                    ListFooterComponent={<View style={styles.footerSpacer} />}
+                    estimatedItemSize={100}
+                />
             </View>
-        </Modal>
+        </BottomSheet>
     );
 
+
     const renderValidationModal = () => (
-        <Modal
+        <Popup
             visible={showValidationModal}
-            animationType="slide"
-            transparent
+            onClose={() => {
+                setShowValidationModal(false);
+                setTicketIdToValidate('');
+            }}
         >
-            <View style={styles.validationModalOverlay}>
-                <View style={styles.validationModalContent}>
-                    <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>Validate Ticket</Text>
-                        <TouchableOpacity onPress={() => {
+            <View>
+                <View style={[styles.modalHeader, { borderBottomWidth: 0, paddingVertical: 0, marginBottom: 12 }]}>
+                    <Text style={styles.modalTitle}>Validate Ticket</Text>
+                </View>
+
+                <Text style={styles.modalSubtitle}>Enter the Ticket ID manually or prepare to scan when the scanner is available.</Text>
+
+                <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Ticket ID</Text>
+                    <TextInput
+                        style={[styles.input, { minHeight: 50 }]}
+                        placeholder="e.g. tn-ticket-..."
+                        placeholderTextColor={theme.colors.secondaryText}
+                        value={ticketIdToValidate}
+                        onChangeText={setTicketIdToValidate}
+                        autoCapitalize="none"
+                    />
+                </View>
+
+                <TouchableOpacity
+                    style={[styles.saveButton, { marginTop: 20, opacity: ticketIdToValidate.trim() ? 1 : 0.5 }]}
+                    disabled={!ticketIdToValidate.trim()}
+                    onPress={() => {
+                        const result = validateTicket(ticketIdToValidate.trim());
+                        if (result.success) {
+                            Alert.alert("Valid Ticket", result.message);
                             setShowValidationModal(false);
                             setTicketIdToValidate('');
-                        }} style={styles.closeButton}>
-                            <X size={24} color={theme.colors.text} />
-                        </TouchableOpacity>
-                    </View>
-
-                    <Text style={styles.modalSubtitle}>Enter the Ticket ID manually or prepare to scan when the scanner is available.</Text>
-
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Ticket ID</Text>
-                        <TextInput
-                            style={[styles.input, { minHeight: 50 }]}
-                            placeholder="e.g. tn-ticket-..."
-                            placeholderTextColor={theme.colors.secondaryText}
-                            value={ticketIdToValidate}
-                            onChangeText={setTicketIdToValidate}
-                            autoCapitalize="none"
-                        />
-                    </View>
-
-                    <TouchableOpacity
-                        style={[styles.saveButton, { marginTop: 20, opacity: ticketIdToValidate.trim() ? 1 : 0.5 }]}
-                        disabled={!ticketIdToValidate.trim()}
-                        onPress={() => {
-                            const result = validateTicket(ticketIdToValidate.trim());
-                            if (result.success) {
-                                Alert.alert("Valid Ticket", result.message);
-                                setShowValidationModal(false);
-                                setTicketIdToValidate('');
-                            } else {
-                                Alert.alert("Invalid Ticket", result.message);
-                            }
-                        }}
-                    >
-                        <Check size={20} color={palette.ivory} />
-                        <Text style={styles.saveButtonText}>Verify & Check In</Text>
-                    </TouchableOpacity>
-                </View>
+                        } else {
+                            Alert.alert("Invalid Ticket", result.message);
+                        }
+                    }}
+                >
+                    <Check size={20} color={palette.ivory} />
+                    <Text style={styles.saveButtonText}>Verify & Check In</Text>
+                </TouchableOpacity>
             </View>
-        </Modal>
+        </Popup>
     );
 
     const renderScannerModal = () => (
@@ -517,8 +489,8 @@ export const ProfileScreen = () => {
         <View style={styles.container}>
             <TrueNorthFlashList
                 data={['content']}
-                renderItem={renderProfileContent}
-                keyExtractor={(item) => item}
+                renderItem={() => renderProfileContent()}
+                keyExtractor={(item: any) => item}
                 estimatedItemSize={800}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
@@ -636,6 +608,26 @@ const styles = StyleSheet.create({
     menuLabel: { fontFamily: theme.typography.sansMedium, fontSize: 16, flexShrink: 1 },
     menuItemRight: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs, marginLeft: theme.spacing.md },
     menuValue: { fontFamily: theme.typography.sans, fontSize: 14, color: theme.colors.secondaryText, flexShrink: 1 },
+    adminButton: {
+        flexDirection: 'row', alignItems: 'center', gap: 6,
+        backgroundColor: theme.colors.error, paddingHorizontal: 12, paddingVertical: 6,
+        borderRadius: 20, marginTop: 12
+    },
+    adminButtonText: { fontFamily: theme.typography.sansBold, fontSize: 12, color: palette.ivory },
+
+    askNurButton: {
+        flexDirection: 'row', alignItems: 'center', gap: 12,
+        backgroundColor: palette.charcoal, margin: theme.spacing.lg, padding: 16,
+        borderRadius: 16, shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1, shadowRadius: 8, elevation: 4
+    },
+    askNurIconContainer: {
+        width: 48, height: 48, borderRadius: 24, backgroundColor: palette.softGold,
+        alignItems: 'center', justifyContent: 'center'
+    },
+    askNurTitle: { fontFamily: theme.typography.serifBold, fontSize: 18, color: palette.ivory },
+    askNurSubtitle: { fontFamily: theme.typography.sans, fontSize: 12, color: palette.ivory, opacity: 0.8 },
+
     versionText: {
         textAlign: 'center', fontFamily: theme.typography.sans, fontSize: 12,
         color: theme.colors.secondaryText, marginTop: theme.spacing.xl, opacity: 0.5

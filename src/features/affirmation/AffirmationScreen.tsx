@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ImageBackground, Share, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, Share, Platform, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { useStore } from '../../store';
@@ -21,6 +21,7 @@ import { contentAgentService } from '../../services/ContentAgentService';
 import { FaithNews } from '../../components/FaithNews';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import ChoiceModal, { ChoiceOption } from '../../components/ChoiceModal';
+import { BottomSheet } from '../../components/BottomSheet';
 
 // Define aliases for icons to avoid name conflicts with common words
 const HeartIcon = Heart;
@@ -83,7 +84,7 @@ export const AffirmationScreen = () => {
         // Fallback to share if clipboard is not available
         try {
             await Share.share({
-                message: `"${current.text}" - ${current.author}`,
+                message: `"${current.text}" - ${current.author}\n\nDiscover spiritual guidance and affirmations on True North. Download here: https://www.truenorth.you/download`,
             });
         } catch (error) {
             console.error(error);
@@ -100,7 +101,7 @@ export const AffirmationScreen = () => {
                     onPress: async () => {
                         try {
                             await Share.share({
-                                message: `Today's True North Affirmation:\n\n"${current.text}"\n\nDownload True North for your daily spiritual alignment.`,
+                                message: `Today's True North Affirmation:\n\n"${current.text}"\n\nDiscover spiritual guidance and affirmations on True North. Download here: https://www.truenorth.you/download`,
                             });
                         } catch (error) {
                             console.error(error);
@@ -171,16 +172,6 @@ export const AffirmationScreen = () => {
                     source={{ uri: BACKGROUNDS[bgIdx] }}
                     style={styles.background}
                 >
-                    <FadeIn delay={100} from="top">
-                        <View style={[styles.headerOverlay, { top: insets.top + 10 }]}>
-                            <TouchableOpacity
-                                style={styles.guideButton}
-                                onPress={() => navigation.navigate('UserGuide')}
-                            >
-                                <GuideIcon color={palette.ivory} size={24} />
-                            </TouchableOpacity>
-                        </View>
-                    </FadeIn>
 
                     <View style={styles.overlay} />
 
@@ -260,6 +251,16 @@ export const AffirmationScreen = () => {
                             </>
                         }
                     />
+                    <FadeIn delay={100} from="top" style={{ zIndex: 100, position: 'absolute', top: 0, left: 0, right: 0 }}>
+                        <View style={[styles.headerOverlay, { top: insets.top + 10 }]}>
+                            <TouchableOpacity
+                                style={styles.guideButton}
+                                onPress={() => navigation.navigate('UserGuide')}
+                            >
+                                <GuideIcon color={palette.ivory} size={24} />
+                            </TouchableOpacity>
+                        </View>
+                    </FadeIn>
                 </ImageBackground>
             </ViewShot>
 
@@ -280,46 +281,35 @@ export const AffirmationScreen = () => {
 
 
 
-            <Modal
+            <BottomSheet
                 visible={showAdvice}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setShowAdvice(false)}
+                onClose={() => setShowAdvice(false)}
+                title="Spiritual Advice"
+                height="60%"
             >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <View style={styles.modalHeaderLeft}>
-                                <Sparkles color={palette.softGold} size={20} />
-                                <Text style={styles.modalTitle}>Spiritual Advice</Text>
-                            </View>
-                            <TouchableOpacity onPress={() => setShowAdvice(false)}>
-                                <CloseIcon color={theme.colors.text} size={24} />
-                            </TouchableOpacity>
+                <TrueNorthFlashList
+                    data={[]}
+                    renderItem={renderItem}
+                    keyExtractor={() => 'advice'}
+                    estimatedItemSize={400}
+                    contentContainerStyle={styles.adviceScroll}
+                    ListHeaderComponent={
+                        <View style={{ alignItems: 'center', paddingVertical: 10 }}>
+                            <Sparkles color={palette.softGold} size={32} style={{ marginBottom: 16 }} />
+                            <Text style={styles.adviceText}>
+                                {adviceContent}
+                            </Text>
                         </View>
+                    }
+                />
 
-                        <TrueNorthFlashList
-                            data={[]}
-                            renderItem={renderItem}
-                            keyExtractor={() => 'advice'}
-                            estimatedItemSize={400}
-                            contentContainerStyle={styles.adviceScroll}
-                            ListHeaderComponent={
-                                <Text style={styles.adviceText}>
-                                    {adviceContent}
-                                </Text>
-                            }
-                        />
-
-                        <TouchableOpacity
-                            style={styles.closeBtn}
-                            onPress={() => setShowAdvice(false)}
-                        >
-                            <Text style={styles.closeBtnText}>Return to Presence</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
+                <TouchableOpacity
+                    style={[styles.closeBtn, { marginTop: 16 }]}
+                    onPress={() => setShowAdvice(false)}
+                >
+                    <Text style={styles.closeBtnText}>Return to Presence</Text>
+                </TouchableOpacity>
+            </BottomSheet>
 
             <ChoiceModal
                 visible={showChoiceModal}
@@ -337,16 +327,15 @@ const styles = StyleSheet.create({
     background: { flex: 1, width: '100%', height: '100%' },
     overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
     scrollContent: { flexGrow: 1, paddingHorizontal: theme.spacing.xl, paddingBottom: 60, paddingTop: 120 },
-    scrollContentWallpaper: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: theme.spacing.xxl },
+    scrollContentWallpaper: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: theme.spacing.xxl, paddingBottom: 0, paddingTop: 0 },
     content: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     quoteText: {
         fontFamily: theme.typography.serifBold, fontSize: 36, color: palette.ivory,
-        textAlign: 'center', lineHeight: 48, letterSpacing: -0.5,
-        marginTop: theme.spacing.xl
+        textAlign: 'center', lineHeight: 48, letterSpacing: -0.5
     },
     authorText: {
         fontFamily: theme.typography.sansBold, fontSize: 13, color: palette.softGold,
-        textTransform: 'uppercase', letterSpacing: 2, marginTop: theme.spacing.xl
+        textTransform: 'uppercase', letterSpacing: 2, marginTop: theme.spacing.lg
     },
     actions: { flexDirection: 'row', marginTop: theme.spacing.xl, gap: theme.spacing.xl },
     actionButton: { width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },

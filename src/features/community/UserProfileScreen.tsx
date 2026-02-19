@@ -10,6 +10,9 @@ import { useStore } from '../../store';
 import { FadeIn } from '../../components/FadeIn';
 import { MotiView } from 'moti';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
+import { ReflectionCard } from '../../components/ReflectionCard';
+import { StatsCard } from '../../components/StatsCard';
+import { CircleCard } from '../../components/CircleCard';
 
 const { width } = Dimensions.get('window');
 
@@ -242,46 +245,50 @@ export const UserProfileScreen = () => {
             from={{ opacity: 0, translateX: -20 }}
             animate={{ opacity: 1, translateX: 0 }}
             transition={{ delay: 200 + index * 100 }}
-            style={styles.reflectionCard}
         >
-            <View style={styles.cardHeader}>
-                <View style={styles.circleTag}>
-                    <Users size={12} color={palette.softGold} />
-                    <Text style={styles.circleTagName}>{item.circles?.name || 'Public Sanctuary'}</Text>
-                </View>
-                <Text style={styles.timeTag}>{new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</Text>
-            </View>
-            <Text style={styles.reflectionBody}>{item.content}</Text>
+            <ReflectionCard
+                id={item.id}
+                content={item.content}
+                createdAt={item.created_at}
+                circleName={item.circles?.name}
+                userName={profile?.username || userName}
+                userAvatar={profile?.avatar_url}
+                blessings={(index * 7) + 3} // Mock blessing count for now as it's not in the fetched reflection type yet
+                onBless={() => { }}
+                onReport={() => Alert.alert("Report", "Flagged for moderation.")}
+            />
         </MotiView>
     );
 
-    const ProfileHeader = () => (
-        <>
-            {/* Header Sticky Placeholder - FlashList stickyHeaderIndices handles this */}
-            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ChevronLeft size={24} color={theme.colors.text} />
-                </TouchableOpacity>
+    const FixedHeader = () => (
+        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <ChevronLeft size={24} color={theme.colors.text} />
+            </TouchableOpacity>
 
-                <View style={styles.headerTitleGroup}>
-                    <View style={styles.headerAvatarMini}>
-                        <Text style={styles.headerAvatarText}>{(profile?.username || userName)?.[0]}</Text>
-                    </View>
-                    <Text style={styles.headerProfileTitle} numberOfLines={1}>{profile?.username || userName}</Text>
+            <View style={styles.headerTitleGroup}>
+                <View style={styles.headerAvatarMini}>
+                    <Text style={styles.headerAvatarText}>{(profile?.username || userName)?.[0]}</Text>
                 </View>
-
-                <View style={styles.headerActions}>
-                    <TouchableOpacity onPress={handleShare} style={styles.headerIconBtn}>
-                        <Link size={18} color={theme.colors.text} />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => Alert.alert("Report", "Reporting seeker to moderation Spiritual Intelligence...")} style={styles.headerIconBtn}>
-                        <Flag size={18} color={theme.colors.text} />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={handleMoreAction} style={styles.headerIconBtn}>
-                        <MoreVertical size={18} color={theme.colors.text} />
-                    </TouchableOpacity>
-                </View>
+                <Text style={styles.headerProfileTitle} numberOfLines={1}>{profile?.username || userName}</Text>
             </View>
+
+            <View style={styles.headerActions}>
+                <TouchableOpacity onPress={handleShare} style={styles.headerIconBtn}>
+                    <Link size={18} color={theme.colors.text} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => Alert.alert("Report", "Reporting seeker to moderation Spiritual Intelligence...")} style={styles.headerIconBtn}>
+                    <Flag size={18} color={theme.colors.text} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleMoreAction} style={styles.headerIconBtn}>
+                    <MoreVertical size={18} color={theme.colors.text} />
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+
+    const ProfileHero = () => (
+        <>
 
             {/* Profile Hero Section */}
             <MotiView
@@ -332,23 +339,16 @@ export const UserProfileScreen = () => {
                 from={{ opacity: 0, translateY: 20 }}
                 animate={{ opacity: 1, translateY: 0 }}
                 transition={{ delay: 200 }}
-                style={styles.statsContainer}
+                style={{ marginHorizontal: 20, marginTop: -15 }}
             >
-                <View style={styles.statsBackground} />
-                <View style={styles.statBox}>
-                    <Text style={styles.statNumber}>{stats.followers}</Text>
-                    <Text style={styles.statLabel}>Followers</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={styles.statBox}>
-                    <Text style={styles.statNumber}>{stats.circles}</Text>
-                    <Text style={styles.statLabel}>Circles</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={stats.reflections > 0 ? styles.statBox : styles.statBox}>
-                    <Text style={styles.statNumber}>{stats.reflections}</Text>
-                    <Text style={styles.statLabel}>Reflections</Text>
-                </View>
+                <StatsCard
+                    variant="glass"
+                    stats={[
+                        { label: 'Followers', value: stats.followers },
+                        { label: 'Circles', value: stats.circles },
+                        { label: 'Reflections', value: stats.reflections },
+                    ]}
+                />
             </MotiView>
 
             {/* Shared Reflections Title */}
@@ -384,9 +384,15 @@ export const UserProfileScreen = () => {
                             from={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: 200 + i * 50 }}
-                            style={styles.circleChip}
+                            style={{ marginBottom: 10, width: '48%' }}
                         >
-                            <Text style={styles.circleChipText}>{c.circles?.name}</Text>
+                            <CircleCard
+                                id={c.circle_id}
+                                name={c.circles?.name || 'Unknown Circle'}
+                                belief={c.circles?.belief}
+                                onPress={() => { }}
+                                style={{ width: '100%' }}
+                            />
                         </MotiView>
                     )) : (
                         <Text style={styles.emptyText}>Not currently active in public sanctuaries.</Text>
@@ -409,15 +415,20 @@ export const UserProfileScreen = () => {
 
     return (
         <View style={styles.container}>
+            <FixedHeader />
             <TrueNorthFlashList
                 data={showReflections ? reflections : []}
                 renderItem={renderReflectionItem}
                 keyExtractor={(item: Reflection) => item.id}
                 estimatedItemSize={120}
-                ListHeaderComponent={<ProfileHeader />}
+                ListHeaderComponent={<ProfileHero />}
                 ListFooterComponent={<ProfileFooter />}
                 showsVerticalScrollIndicator={false}
-                stickyHeaderIndices={[0]}
+                contentContainerStyle={{ paddingTop: 60 }} // Offset for fixed header if needed, but header is separate now. 
+                // Actually header is fixed, so list needs padding top equivalent to header height.
+                // FixedHeader height approx 60-80 depending on insets.
+                // Let's safe guess or measure. For now just standard padding.
+
                 ListEmptyComponent={
                     showReflections ? (
                         <View style={styles.emptyState}>
@@ -447,7 +458,7 @@ const styles = StyleSheet.create({
     headerProfileTitle: { fontFamily: theme.typography.serifBold, fontSize: 16, color: theme.colors.text, maxWidth: 150 },
     headerActions: { flexDirection: 'row', alignItems: 'center', gap: 5 },
     headerIconBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 18, backgroundColor: theme.colors.surface },
-    heroSection: { alignItems: 'center', paddingVertical: 40, position: 'relative' },
+    heroSection: { alignItems: 'center', paddingTop: 10, paddingBottom: 40, position: 'relative' },
     heroBackground: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' },
     heroGradient: { flex: 1, backgroundColor: palette.softGold + '08' },
     avatarWrapper: { position: 'relative', marginBottom: 20 },

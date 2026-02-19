@@ -5,10 +5,12 @@ import { X, Share2, Sparkles } from 'lucide-react-native';
 import { DailyRitualService } from '../services/DailyRitualService';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useStore } from '../store';
 
 const { width, height } = Dimensions.get('window');
 
 export const DailyWisdomModal = () => {
+    const { username } = useStore();
     const [visible, setVisible] = useState(false);
     const [affirmation, setAffirmation] = useState<{ text: string, author: string } | null>(null);
     const insets = useSafeAreaInsets();
@@ -20,7 +22,7 @@ export const DailyWisdomModal = () => {
     const checkDailyWisdom = async () => {
         const shouldShow = await DailyRitualService.shouldShowMorningWisdom();
         if (shouldShow) {
-            const dailyAffirmation = DailyRitualService.getDailyAffirmation();
+            const dailyAffirmation = await DailyRitualService.getDailyAffirmation();
             setAffirmation(dailyAffirmation);
             // Slight delay to allow app to load
             setTimeout(() => setVisible(true), 1500);
@@ -58,6 +60,8 @@ export const DailyWisdomModal = () => {
 
                         <Text style={styles.title}>Daily Wisdom</Text>
 
+                        <Text style={styles.greeting}>Hello, {username || 'Seeker'}</Text>
+
                         <View style={styles.card}>
                             <Text style={styles.affirmationText}>&quot;{affirmation.text}&quot;</Text>
                             <Text style={styles.author}>- {affirmation.author}</Text>
@@ -91,9 +95,22 @@ const styles = StyleSheet.create({
     },
     affirmationText: {
         fontFamily: theme.typography.serifBold, fontSize: 24, color: palette.ivory,
-        textAlign: 'center', lineHeight: 36, marginBottom: 20
+        textAlign: 'center', lineHeight: 36, marginBottom: 20,
+        textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 4
     },
-    author: { fontFamily: theme.typography.sansMedium, fontSize: 16, color: palette.softGold, letterSpacing: 1, textTransform: 'uppercase' },
+    author: {
+        fontFamily: theme.typography.sansMedium, fontSize: 16, color: palette.softGold,
+        letterSpacing: 1, textAlign: 'center',
+        textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2
+    },
+    greeting: {
+        fontFamily: theme.typography.serif,
+        fontSize: 20,
+        color: palette.ivory,
+        marginBottom: 20,
+        textAlign: 'center',
+        opacity: 0.9
+    },
     button: {
         width: '100%', backgroundColor: palette.softGold, paddingVertical: 20, borderRadius: 30,
         alignItems: 'center', shadowColor: palette.softGold, shadowOffset: { width: 0, height: 4 },

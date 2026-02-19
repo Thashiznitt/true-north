@@ -14,6 +14,7 @@ import * as Location from 'expo-location';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { SanctuaryLock } from '../../components/SanctuaryLock';
 import { FadeIn } from '../../components/FadeIn';
+import { CircleCard } from '../../components/CircleCard';
 
 const getBeliefIcon = (belief: string) => {
     switch (belief) {
@@ -384,6 +385,7 @@ const styles = StyleSheet.create({
     searchInput: { flex: 1, marginLeft: theme.spacing.sm, fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.text, letterSpacing: 0 },
     cardContainer: {
         marginBottom: theme.spacing.xl,
+        marginHorizontal: theme.spacing.xl,
     },
     card: {
         flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface,
@@ -498,45 +500,23 @@ const CircleItem = React.memo(({ item, index, bookmarkedCircleIds, navigation }:
     const delay = index * 100;
 
     return (
-        <View
-            style={styles.cardContainer}
-        >
-            <TouchableOpacity
-                style={styles.card}
+        <View style={styles.cardContainer}>
+            <CircleCard
+                id={item.id}
+                name={item.name}
+                city={item.city}
+                country={item.country}
+                belief={item.belief}
+                members={item.members}
+                lastActivity={item.lastActivity}
+                isPrivate={item.type === 'Private'}
+                isBookmarked={bookmarkedCircleIds.includes(item.id)}
                 onPress={() => navigation.navigate('CircleDetail', {
                     circleId: item.id,
                     circleName: item.name,
                     circleType: `${item.belief} Circle`
                 })}
-            >
-                {bookmarkedCircleIds.includes(item.id) && (
-                    <View style={styles.bookmarkBadge}>
-                        <Heart size={12} color={palette.ivory} fill={palette.ivory} />
-                    </View>
-                )}
-                <View style={styles.cardIconContainer}>
-                    <View style={styles.cardIcon}>
-                        {item.type === 'Private' ? (
-                            <Lock size={20} color={palette.softGold} />
-                        ) : (
-                            <BeliefIcon size={20} color={palette.softGold} />
-                        )}
-                    </View>
-                    <View style={styles.beliefBadge}>
-                        <Text style={styles.cardBelief}>{item.belief}</Text>
-                    </View>
-                </View>
-                <View style={styles.cardContent}>
-                    <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
-                    <Text style={styles.cardLocation} numberOfLines={1}>{item.city}, {item.country}</Text>
-                    <View style={styles.cardStats}>
-                        <Text style={styles.cardDetail}>{item.members.toLocaleString()} members</Text>
-                        <View style={styles.statDot} />
-                        <Text style={styles.cardDetail}>{item.lastActivity}</Text>
-                    </View>
-                </View>
-                <ChevronRight size={18} color={theme.colors.border} style={{ marginLeft: theme.spacing.sm }} />
-            </TouchableOpacity>
+            />
         </View>
     );
 });

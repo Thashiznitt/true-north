@@ -7,6 +7,7 @@ export const palette = {
   white: '#FFFFFF',
   black: '#000000',
   success: '#34C759', // For blessings
+  error: '#FF3B30',
 };
 
 export const theme = {
@@ -19,6 +20,9 @@ export const theme = {
     border: palette.border,
     accent: palette.softGold,
     inverseText: palette.white,
+    success: palette.success,
+    error: palette.error,
+    tertiaryText: '#C7C7CC',
   },
   typography: {
     serif: 'PlayfairDisplay_400Regular',

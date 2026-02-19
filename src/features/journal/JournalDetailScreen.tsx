@@ -141,7 +141,7 @@ export const JournalDetailScreen = () => {
     const handleShare = async () => {
         try {
             await Share.share({
-                message: `${title}\n\n${content}\n\n— My True North Reflection`,
+                message: `${title}\n\n${content}\n\n— My True North Reflection\n\nDiscover spiritual guidance and affirmations on True North. Download here: https://www.truenorth.you/download`,
             });
 
         } catch (error) {

@@ -1,4 +1,6 @@
 import { BeliefType } from '../types';
+import { AppTheme } from '../types/themes';
+import { CircleEvent } from '../store';
 
 export interface GhostReflection {
     id: string;
@@ -21,7 +23,8 @@ export interface GhostCircle {
     description: string;
     lastActivity: string;
     reflections: GhostReflection[];
-    theme: string;
+    theme: AppTheme | string;
+    events?: CircleEvent[];
 }
 
 const GHOST_USERS: Record<BeliefType, string[]> = {
@@ -54,10 +57,22 @@ const GHOST_USERS: Record<BeliefType, string[]> = {
     Spiritual: [
         'Alex R.', 'Jamie L.', 'Riley M.', 'Jordan S.', 'Casey K.', 'Taylor B.', 'Morgan P.', 'Skyler J.', 'Charlie V.', 'Quinn D.',
         'Sasha F.', 'Robin G.', 'Avery H.', 'Drew T.', 'Peyton B.', 'River O.', 'Dakota W.', 'Phoenix S.', 'Sage K.', 'Emerson J.'
+    ],
+    Sikh: [
+        'Arjun S.', 'Simran K.', 'Harpreet S.', 'Jasleen K.', 'Rajinder S.', 'Gurdeep K.', 'Manpreet S.', 'Kiran K.', 'Daljeet S.', 'Amrit K.'
+    ],
+    Hindu: [
+        'Aarav P.', 'Diya M.', 'Vihaan S.', 'Ananya R.', 'Rohan K.', 'Ishaan B.', 'Priya N.', 'Aditya J.', 'Kavya L.', 'Sai T.'
+    ],
+    Buddhist: [
+        'Tenzin L.', 'Pema D.', 'Sonam K.', 'Karma T.', 'Jigme W.', 'Dechen Y.', 'Sangye R.', 'Dolma S.', 'Norbu P.', 'Yeshe M.'
+    ],
+    Jewish: [
+        'Ari G.', 'Noa L.', 'David C.', 'Sarah K.', 'Ezra S.', 'Miriam R.', 'Levi B.', 'Rachel M.', 'Eli T.', 'Leah W.'
     ]
 };
 
-const REFLECTION_TEMPLATES: Record<BeliefType, Record<string, string[]>> = {
+const REFLECTION_TEMPLATES: Record<BeliefType, Partial<Record<AppTheme | string, string[]>>> = {
     Christian: {
         Strength: [
             "Today's verse about waiting on the Lord really hit home. Struggling with patience lately but feeling stronger now.",
@@ -179,6 +194,62 @@ const REFLECTION_TEMPLATES: Record<BeliefType, Record<string, string[]>> = {
             "Seeking alignment wherever it may be found. Keep an open heart today.",
             "Truth is a journey, not a destination. Still exploring, still growing."
         ]
+    },
+    Jewish: {
+        Strength: [
+            "Strength and courage are found in community. Am Yisrael Chai.",
+            "Drawing resilience from our history and hope from our prayers today."
+        ],
+        Wisdom: [
+            "Who is wise? One who learns from every man. (Pirkei Avot)",
+            "Reflecting on the Torah portion this week. Always a new layer of meaning to uncover."
+        ],
+        Peace: [
+            "Shabbat Shalom to those preparing for rest. May your home be a sanctuary.",
+            "Praying for peace in our hearts and in the world (Oseh Shalom)."
+        ]
+    },
+    Sikh: {
+        Strength: [
+            "Chardi Kala - keeping high spirits even in difficult times.",
+            "Service (Seva) is where I find my true strength. Helping at the Langar today grounded me."
+        ],
+        Wisdom: [
+            "Recognize the human race as one. A powerful reminder from Guru Gobind Singh Ji.",
+            "Listening to Kirtan and finding clarity in the music."
+        ],
+        Peace: [
+            "Satnam Waheguru. Meditating on the True Name brought me stillness this morning.",
+            "Peace comes when we eliminate the ego. Working on humility today."
+        ]
+    },
+    Hindu: {
+        Strength: [
+            "Perform your duty without attachment to results. The Gita's wisdom guiding me through a tough project.",
+            "Inner strength comes from self-discipline (Tapas). Staying committed to my practice."
+        ],
+        Wisdom: [
+            "Knowledge removes fear. Studying the scriptures to understand the nature of the self.",
+            "The truth is one, but the wise call it by many names. Unity in diversity."
+        ],
+        Peace: [
+            "Om Shanti Shanti Shanti. Wishing peace for all beings everywhere.",
+            "Finding balance through Yoga and meditation. The body and mind are one."
+        ]
+    },
+    Buddhist: {
+        Strength: [
+            "Patient endurance is the supreme austerity. Taking a deep breath before reacting.",
+            "Strength is not force, but stability of mind. Standing like a mountain."
+        ],
+        Wisdom: [
+            "Pain is inevitable, suffering is optional. Choosing to let go of resistance today.",
+            "Everything is impermanent. Cherishing this moment exactly as it is."
+        ],
+        Peace: [
+            "May all beings be free from suffering. Metta meditation to start the day.",
+            "Silence is a powerful teacher. Sitting in zazen and just being."
+        ]
     }
 };
 
@@ -230,6 +301,15 @@ export const LIFE_CIRCLES: GhostCircle[] = [
     { id: 'c28', name: 'Business Ethics Lab', belief: 'Secular', theme: 'Wisdom', members: 1400, type: 'Public', city: 'Dublin', country: 'Ireland', description: 'Integrity in the marketplace.', lastActivity: '55m ago', reflections: [] },
     { id: 'c29', name: 'Grief Recovery (Biblical)', belief: 'Christian', theme: 'Peace', members: 930, type: 'Public', city: 'Chicago', country: 'USA', description: 'Comfort from the word.', lastActivity: '1h ago', reflections: [] },
     { id: 'c30', name: 'New Muslim Support', belief: 'Muslim', theme: 'Wisdom', members: 1700, type: 'Public', city: 'Online', country: 'Global', description: 'Welcome to the Ummah.', lastActivity: '18m ago', reflections: [] },
+    // New Belief Circles
+    { id: 'c31', name: 'Sikh Seva Society', belief: 'Sikh', theme: 'Strength', members: 890, type: 'Public', city: 'Amritsar', country: 'India', description: 'Serving humanity with humility.', lastActivity: '5m ago', reflections: [] },
+    { id: 'c32', name: 'Dharma Path', belief: 'Hindu', theme: 'Wisdom', members: 1200, type: 'Public', city: 'Varanasi', country: 'India', description: 'Studying the scriptures together.', lastActivity: '1h ago', reflections: [] },
+    { id: 'c33', name: 'Mindful Sangha', belief: 'Buddhist', theme: 'Peace', members: 2100, type: 'Public', city: 'Chiang Mai', country: 'Thailand', description: 'Walking the path of awareness.', lastActivity: '30m ago', reflections: [] },
+    { id: 'c34', name: 'Torah Study Group', belief: 'Jewish', theme: 'Wisdom', members: 750, type: 'Public', city: 'Jerusalem', country: 'Israel', description: 'Weekly portion discussions.', lastActivity: '2h ago', reflections: [] },
+    { id: 'c35', name: 'Global Sikh Youth', belief: 'Sikh', theme: 'Purpose', members: 1500, type: 'Public', city: 'Toronto', country: 'Canada', description: 'Connecting the next generation.', lastActivity: '10m ago', reflections: [] },
+    { id: 'c36', name: 'Yoga & Vedanta', belief: 'Hindu', theme: 'Peace', members: 3000, type: 'Public', city: 'Rishikesh', country: 'India', description: 'Union of breath and truth.', lastActivity: '45m ago', reflections: [] },
+    { id: 'c37', name: 'Compassion (Karuna)', belief: 'Buddhist', theme: 'Love', members: 1800, type: 'Public', city: 'Kyoto', country: 'Japan', description: 'Cultivating a heart of gold.', lastActivity: '15m ago', reflections: [] },
+    { id: 'c38', name: 'Shabbat Table', belief: 'Jewish', theme: 'Peace', members: 1100, type: 'Public', city: 'New York', country: 'USA', description: 'Preparing for the holy rest.', lastActivity: '3h ago', reflections: [] },
 ];
 
 // --- Spiritual Brain: Platform Identity ---
@@ -251,22 +331,45 @@ import { supabase } from './supabase';
 type SubscriptionTier = 'free' | 'compass' | 'true_north' | 'zenith';
 
 const SACRED_CALENDAR = [
+    // General fixed dates (Month is 0-indexed in JS Date, so 1 = Feb)
     { name: "Valentine's Day", month: 1, day: 14, type: 'general', prompt: "Focus on divine love, heart-centered connections, and the beauty of human affection." },
     { name: "Mother's Day", month: 4, day: 10, type: 'general', prompt: "Honor the nurturing energy of the Divine Feminine and the strength of maternal love." },
     { name: "Father's Day", month: 5, day: 21, type: 'general', prompt: "Celebrate the protective and guiding spirit of fatherhood and divine strength." },
-    { name: "Best Friends Day", month: 5, day: 8, type: 'general', prompt: "Focus on the sacred bond of soul-friendship and communal support." },
-    { name: "Boyfriends Day", month: 9, day: 3, type: 'general', prompt: "Celebrate the growth, support, and sacred partnership in your relationship." },
-    { name: "Couples Day", month: 7, day: 18, type: 'general', prompt: "Focus on the divine dance of union, mutual respect, and shared spiritual growth." },
-    { name: "Girlfriends Day", month: 7, day: 1, type: 'general', prompt: "Celebrate the supportive, loving, and sacred presence of the girlfriend in your life." },
-    { name: "Siblings Day", month: 3, day: 10, type: 'general', prompt: "Honor the lifelong bonds of brotherhood and sisterhood." },
-    { name: "Daughters Day", month: 8, day: 25, type: 'general', prompt: "Celebrate the joy and future of the daughters in our lives." },
-    { name: "Sons Day", month: 8, day: 28, type: 'general', prompt: "Honor the strength and potential of the sons in our lives." },
-    { name: "Grandparents Day", month: 8, day: 13, type: 'general', prompt: "Honor the legacy, wisdom, and roots provided by grandparents." },
-    { name: "International Peace Day", month: 8, day: 21, type: 'general', prompt: "Focus on global harmony, internal peace, and the cessation of conflict." },
-    { name: "Ramadan", month: 1, day: 18, type: 'Muslim', prompt: "Start of the Holy Month! Focus on fasting, prayer (Salah), community (Ummah), and spiritual purification." },
-    { name: "Lent / Ash Wednesday", month: 1, day: 18, type: 'Christian', prompt: "Start of the Lenten season. Focus on repentance, prayer, and preparing children of God for renewal." },
-    { name: "Easter Sunday", month: 3, day: 5, type: 'Christian', prompt: "Easter Sunday! Celebrate the resurrection, victory over darkness, and new life in Christ." },
-    { name: "Eid al-Fitr", month: 2, day: 20, type: 'Muslim', prompt: "Eid al-Fitr! Celebrate the joy of completion, gratitude for Ramadan, and community blessings." },
+    { name: "Global Fasting", month: 0, day: 1, type: 'general', prompt: "A day of new beginnings and spiritual discipline." }, // Placeholder example
+
+    // 2026 Movable Feasts & Seasons (Strictly Religious)
+    // Ramadan 2026: Feb 17 - Mar 19
+    {
+        name: "Ramadan",
+        type: 'Muslim',
+        startDate: '2026-02-17',
+        endDate: '2026-03-19',
+        prompt: "It is the Holy Month of Ramadan. Focus heavily on fasting (Sawm), prayer (Salah), community (Ummah), and spiritual purification (Tazkiyah). Acknowledge their fasting."
+    },
+    // Lent 2026: Feb 18 - Apr 2
+    {
+        name: "Lent",
+        type: 'Christian',
+        startDate: '2026-02-18',
+        endDate: '2026-04-02',
+        prompt: "It is the season of Lent. Focus on repentance, prayer, fasting, and preparing the heart for the resurrection. Encourage steadfastness in their Lenten sacrifice."
+    },
+    // Eid al-Fitr 2026 (Approx Mar 20)
+    {
+        name: "Eid al-Fitr",
+        type: 'Muslim',
+        startDate: '2026-03-20',
+        endDate: '2026-03-21',
+        prompt: "Eid Mubarak! Celebrate the joy of completion, gratitude for Ramadan, and the blessings of the community."
+    },
+    // Easter 2026 (Apr 5)
+    {
+        name: "Easter Sunday",
+        type: 'Christian',
+        startDate: '2026-04-05',
+        endDate: '2026-04-05',
+        prompt: "He is Risen! Celebrate the resurrection, victory over darkness, and new life in Christ."
+    }
 ];
 
 const getZodiacSign = async (dobString: string | null) => {
@@ -338,30 +441,34 @@ const constructSystemPrompt = async (belief: BeliefType, context: string, tier: 
     // Check Sacred Calendar
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let activeHoliday: any = null;
-    try {
-        const { data: holidays } = await supabase
-            .from('sacred_calendar')
-            .select('*')
-            .eq('month', currentMonth + 1)
-            .eq('day', currentDay);
 
-        if (holidays && holidays.length > 0) {
-            activeHoliday = holidays.find(h => h.type === 'general' || h.type === belief);
+    // 1. Check Date Ranges (Year specific)
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+
+    // Filter for holidays that match the user's belief (or are general/open)
+    // AND match the current date
+    activeHoliday = SACRED_CALENDAR.find(h => {
+        // Belief Check: strictly enforce religious boundaries
+        const isBeliefMatch = h.type === 'general' || h.type === belief ||
+            (h.type === 'Christian' && (belief === 'Catholic' || belief === 'Protestant'));
+
+        if (!isBeliefMatch) return false;
+
+        // Date Check
+        if ('startDate' in h && 'endDate' in h) {
+            // Range check
+            const rh = h as { startDate: string; endDate: string };
+            return todayStr >= rh.startDate && todayStr <= rh.endDate;
+        } else if ('month' in h && 'day' in h) {
+            // Fixed date check
+            const fh = h as { month: number; day: number };
+            return fh.month === currentMonth && fh.day === currentDay;
         }
-    } catch (e) {
-        console.error('Error fetching holidays from DB:', e);
-    }
-
-    if (!activeHoliday) {
-        activeHoliday = SACRED_CALENDAR.find(h =>
-            h.month === currentMonth &&
-            h.day === currentDay &&
-            (h.type === 'general' || h.type === belief)
-        );
-    }
+        return false;
+    });
 
     if (activeHoliday) {
-        specialContext += `\n\nSACRED CALENDAR AWARENESS: Today is ${activeHoliday.name}. ${activeHoliday.prompt || activeHoliday.prompt_insight || ''}`;
+        specialContext += `\n\nSACRED SEASON AWARENESS: Today is (or is during) ${activeHoliday.name}. ${activeHoliday.prompt || activeHoliday.prompt_insight || ''}\nCRITICAL: Weave this season's themes into the affirmation.`;
     }
 
     // Check Astrology
@@ -389,7 +496,11 @@ const constructSystemPrompt = async (belief: BeliefType, context: string, tier: 
 
         Open: "Use inclusive, heart-centered language applicable to all spiritual seekers.",
         Catholic: "Use sacramental language, references to saints, and focus on tradition and community.",
-        Protestant: "Use scripture-centric language, focus on grace, personal relationship with Jesus, and evangelism."
+        Protestant: "Use scripture-centric language, focus on grace, personal relationship with Jesus, and evangelism.",
+        Sikh: "Use respectful, egalitarian language. Focus on the One (Ik Onkar), service (Seva), and living honestly.",
+        Hindu: "Use language respecting Dharma, Karma, and the manifold expressions of the Divine. Focus on duty and devotion.",
+        Buddhist: "Use calm, mindful language. Focus on compassion, impermanence, and the alleviation of suffering.",
+        Jewish: "Use respectful, tradition-rich language. Focus on mitzvot, covenant, and the holiness of time and action."
     };
 
 
@@ -437,11 +548,10 @@ export const contentAgentService = {
         const provider = await SpiritualIntelligenceService.getProvider();
 
         let content = '';
-
         if (provider === 'LocalMock') {
-            const templates = (REFLECTION_TEMPLATES[belief as BeliefType] && REFLECTION_TEMPLATES[belief as BeliefType][theme])
-                ? REFLECTION_TEMPLATES[belief as BeliefType][theme]
-                : GENERIC_TEMPLATES;
+            const defaultTemplates = GENERIC_TEMPLATES;
+            const themeTemplates = REFLECTION_TEMPLATES[belief as BeliefType]?.[theme];
+            const templates = themeTemplates || defaultTemplates;
             content = templates[Math.floor(Math.random() * templates.length)];
         } else {
             try {
@@ -527,6 +637,26 @@ export const contentAgentService = {
                     "{{name}}, stand firm in faith regarding {{theme}}. His word is a lamp to your feet.",
                     "{{name}}, trusting that He who began a good work in you concerning {{theme}} will carry it to completion.",
                     "Grace upon grace for you today, {{name}}, as you walk in {{theme}}."
+                ],
+                Sikh: [
+                    "{{name}}, as you focus on {{theme}}, remember that the True Name (Satnam) is your anchor. Stay grounded in Seva.",
+                    "Your path in {{theme}} is guided by the One, {{name}}. Let your actions reflect the wisdom of the Guru today.",
+                    "{{name}}, find strength in Chardi Kala today as you navigate {{theme}}. Your spirit is tireless."
+                ],
+                Hindu: [
+                    "{{name}}, reflecting on {{theme}}, remember your Dharma. Action without attachment is the highest path today.",
+                    "For your journey in {{theme}}, {{name}}, consider the divine light within you. May your karma be pure and your heart light.",
+                    "{{name}}, in the pursuit of {{theme}}, find balance in the rhythm of the universe. OM Shanti."
+                ],
+                Buddhist: [
+                    "{{name}}, as you cultivate {{theme}}, remember that mindfulness is the path to liberation. Breathe through this moment.",
+                    "Your growth in {{theme}}, {{name}}, is like the lotus—rising from the mud to find the light. Stay present.",
+                    "{{name}}, find peace in impermanence today regarding {{theme}}. Observe everything with compassion."
+                ],
+                Jewish: [
+                    "{{name}}, focusing on {{theme}}? Remember that every mitzvah is a step toward alignment. Your actions matter.",
+                    "Your path in {{theme}} is rich with tradition, {{name}}. Find wisdom in the questions and strength in the covenant.",
+                    "{{name}}, may your day be filled with Chesed as you pursue {{theme}}. Shalom is found in the doing."
                 ]
             };
 
@@ -556,13 +686,13 @@ export const contentAgentService = {
     },
 
     getDailyPrayerOrQuote: async (username: string, belief: BeliefType): Promise<{ content: string, title: string, buttonLabel: string }> => {
-        const isReligious = belief === 'Christian' || belief === 'Muslim';
+        const isReligious = belief === 'Christian' || belief === 'Muslim' || belief === 'Jewish' || belief === 'Sikh' || belief === 'Hindu' || belief === 'Catholic' || belief === 'Protestant';
         const provider = await SpiritualIntelligenceService.getProvider();
         const { subscriptionTier: tier, dateOfBirth, astrologyEnabled } = useStore.getState();
 
         if (provider === 'LocalMock') {
             const name = username || 'friend';
-            const prayers: Record<'Christian' | 'Muslim', string[]> = {
+            const prayers: Record<string, string[]> = {
                 Christian: [
                     "Heavenly Father, we lift up {{name}} today. Grant them the strength to walk in Your light and the wisdom to see Your path. May Your peace, which surpasses all understanding, guard their heart and mind. Amen.",
                     "Lord, thank You for {{name}}. Bless their journey this day. Fill them with Your Spirit and guide their every step. May they be a beacon of Your love to everyone they meet. Amen."
@@ -570,6 +700,26 @@ export const contentAgentService = {
                 Muslim: [
                     "O Allah, we ask You to bless {{name}} with guidance, piety, and contentment. Grant them success in this life and the hereafter, and protect them from all harm. Ameen.",
                     "Allahumma, guide {{name}} to the straight path. Fill their day with barakah and grant them the patience and wisdom to navigate their challenges with faith. Ameen."
+                ],
+                Jewish: [
+                    "May it be Your will, Hashem, to guide {{name}} in the path of righteousness. Grant them clarity in their study and strength in their mitzvot. May your counts be blessed with Shalom. Amen.",
+                    "Blessed are You, who grants wisdom to the heart of {{name}}. May this day be one of growth, kindness, and deep connection to the tradition. Amen."
+                ],
+                Sikh: [
+                    "Waheguru Ji, we pray for the well-being of {{name}}. Grant them the gift of Nam Simran and the strength for Seva. May they always remain in Chardi Kala. Nanaksar. Amen.",
+                    "O True Guru, guide {{name}} to live a life of truth and humility. Protect them from the five thieves and fill their heart with Your Divine Light. Amen."
+                ],
+                Hindu: [
+                    "Om Ganeshaya Namaha. May all obstacles be removed from the path of {{name}} today. Grant them the wisdom to follow their Dharma and the peace of a steady mind. Shanti.",
+                    "O Divine Mother, bless {{name}} with strength and compassion. May their actions lead to growth and their heart find rest in Your infinite grace. Shanti."
+                ],
+                Catholic: [
+                    "Lord Jesus, through the intercession of the Saints, bless {{name}} today. May the Holy Spirit guide their every thought and action toward Your greater glory. Amen.",
+                    "Hail Mary, full of grace... we ask for your maternal protection over {{name}} this day. Guide them closer to your Son. Amen."
+                ],
+                Protestant: [
+                    "Father, we thank You for Your grace that covers {{name}}. Guide them by Your Word today and fill them with the joy of Your salvation. In Jesus' name, Amen.",
+                    "Lord, we pray that {{name}} would experience Your presence in a powerful way today. Use them as a vessel of Your light and truth. Amen."
                 ]
             };
 
@@ -582,11 +732,22 @@ export const contentAgentService = {
             if (isReligious && belief in prayers) {
                 const templates = prayers[belief as keyof typeof prayers];
                 const content = templates[Math.floor(Math.random() * templates.length)].replace('{{name}}', name);
-                return {
-                    title: belief === 'Christian' ? "Daily Prayer" : "Daily Du'a",
-                    content,
-                    buttonLabel: belief === 'Christian' ? "Amen" : "Ameen"
-                };
+
+                let title = "Daily Prayer";
+                let buttonLabel = "Amen";
+
+                if (belief === 'Muslim') {
+                    title = "Daily Du'a";
+                    buttonLabel = "Ameen";
+                } else if (belief === 'Hindu') {
+                    title = "Daily Mantra";
+                    buttonLabel = "Shanti";
+                } else if (belief === 'Sikh') {
+                    title = "Daily Ardas";
+                    buttonLabel = "Amen";
+                }
+
+                return { title, content, buttonLabel };
             } else {
                 const content = quotes[Math.floor(Math.random() * quotes.length)].replace('{{name}}', name);
                 return {
@@ -669,7 +830,67 @@ export const contentAgentService = {
                     action = "Renew Intention";
                 }
             }
-            else { // Secular / Open / Exploring
+            else if (belief === 'Jewish') {
+                if (isAnxious) {
+                    message = "In moments of worry, remember: 'The heart of man plans his way, but the Lord establishes his steps' (Proverbs 16:9). Trust in the covenant and find peace in doing one small mitzvah right now.";
+                    action = "Do a Mitzvah";
+                } else if (isSad) {
+                    message = "Even in the narrowest place (Mitzrayim), there is a path to liberation. Your sorrow is acknowledged. Let the light of the tradition steady your soul.";
+                    action = "Find Light";
+                } else if (isHappy) {
+                    message = "Mazel Tov! This joy is a blessing to be shared. 'Serve the Lord with gladness.' Let your heart sing today.";
+                    action = "Share Joy";
+                } else {
+                    message = "Reflect on how your actions today can bring more holiness into the world. Every moment is an opportunity for connection.";
+                    action = "Seek Holiness";
+                }
+            }
+            else if (belief === 'Sikh') {
+                if (isAnxious) {
+                    message = "Waheguru is the Protector of all. 'Why do you worry, O mind? The Lord Himself provides.' Ground yourself in Nam Simran and let go of the ego's fear.";
+                    action = "Meditate (Simran)";
+                } else if (isSad) {
+                    message = "In times of pain, remember the spirit of Chardi Kala. 'Nanak Naam Chardi Kala, Tere Bhane Sarbat Da Bhala.' May your spirit remain high as you seek the well-being of all.";
+                    action = "Rise in Spirit";
+                } else if (isHappy) {
+                    message = "Lakh Lakh Vadhaiya! This happiness is a gift from the True Guru. Express your gratitude through Seva (selfless service) to those around you.";
+                    action = "Do Seva";
+                } else {
+                    message = "Is your mind in alignment with the Truth (Sat)? Reflect on whether your actions today are honest and selfless.";
+                    action = "Verify Truth";
+                }
+            }
+            else if (belief === 'Hindu') {
+                if (isAnxious) {
+                    message = "Anxiety arises from attachment to the fruits of action. 'You have a right to perform your prescribed duty, but you are not entitled to the fruits of action.' Re-center in your Dharma.";
+                    action = "Focus on Dharma";
+                } else if (isSad) {
+                    message = "Life is a flow of dualities—pleasure and pain, heat and cold. This too shall pass. Find the steady witness (Atman) within that remains untouched by the waves of emotion.";
+                    action = "Seek the Witness";
+                } else if (isHappy) {
+                    message = "Enjoy this state of Sattva (purity and joy). Let it fuel your devotion (Bhakti). 'Whatever you do... do that as an offering to Me.'";
+                    action = "Offer Gratitude";
+                } else {
+                    message = "What is the quality of your mind right now? Seek to move from Rajas (restlessness) or Tamas (lethargy) toward Sattva (clarity).";
+                    action = "Seek Balance";
+                }
+            }
+            else if (belief === 'Buddhist') {
+                if (isAnxious) {
+                    message = "Anxiety is a story the mind tells about a future that doesn't exist. Return to the breath. 'Do not dwell in the past, do not dream of the future, concentrate the mind on the present moment.'";
+                    action = "Return to Breath";
+                } else if (isSad) {
+                    message = "Compassion includes yourself. Observe this sadness without judgment, like rain falling on a garden. It is a part of the human experience, not the whole of you.";
+                    action = "Practice Metta";
+                } else if (isHappy) {
+                    message = "Savor this joy, but notice its nature—fluid and changing. Enjoy it fully without clinging, like a beautiful sunset. This is the path of equanimity.";
+                    action = "Savor Equanimity";
+                } else {
+                    message = "Are you acting with Right Intention today? Check if your thoughts are rooted in non-attachment and compasssion.";
+                    action = "Check Intention";
+                }
+            }
+            else { // Secular / Open / Exploring / Spiritual / General Path
                 if (isAnxious) {
                     if (isWork) {
                         message = "Work anxiety often comes from attaching our worth to our output. Remember: You are not your job. Your value is intrinsic. Focus on what is within your control, and release the rest.";
@@ -739,14 +960,14 @@ export const contentAgentService = {
                     { text: "Direction is more important than speed. I am aligned with my true values.", verse: "Mindfulness" }
                 ],
                 Exploring: [
-                    { text: "The universe reflects my inner light. I am open to the truth appearing in my day.", verse: "Universal Truth" },
-                    { text: "I am a seeker of wisdom, finding alignment in the flow of existence.", verse: "Ancient Light" },
-                    { text: "Every moment is a new sanctuary of possibility. I step forward with grace.", verse: "Exploring Light" }
+                    { text: "The universe reflects my inner light. I am open to the truth appearing in my day.", verse: "Rumi" },
+                    { text: "I am a seeker of wisdom, finding alignment in the flow of existence.", verse: "Ancient Sage" },
+                    { text: "Every moment is a new sanctuary of possibility. I step forward with grace.", verse: "Universal Wisdom" }
                 ],
                 Open: [
-                    { text: "I am centered, I am grounded, I am exactly where I need to be.", verse: "True North" },
-                    { text: "Compassion is my compass, and wisdom is my guide along this sacred path.", verse: "Peaceful Seeker" },
-                    { text: "I choose to radiate peace and receive the abundance of this moment.", verse: "Sanctuary Breath" }
+                    { text: "I am centered, I am grounded, I am exactly where I need to be.", verse: "Marcus Aurelius" },
+                    { text: "Compassion is my compass, and wisdom is my guide along this sacred path.", verse: "The Way" },
+                    { text: "I choose to radiate peace and receive the abundance of this moment.", verse: "Inner Peace" }
                 ],
                 Spiritual: [
                     { text: "I am a vessel of light and love, perfectly aligned with the rhythm of the universe.", verse: "Universal Spirit" },
@@ -762,6 +983,26 @@ export const contentAgentService = {
                     { text: "I am saved by grace through faith, and created for good works.", verse: "Eph 2:8-10" },
                     { text: "I can do all things through Christ who strengthens me.", verse: "Phil 4:13" },
                     { text: "I trust in the Lord with all my heart and lean not on my own understanding.", verse: "Prov 3:5" }
+                ],
+                Sikh: [
+                    { text: "The True Name is my support; I walk in the light of the Guru's wisdom.", verse: "Guru Granth Sahib, Ang 2" },
+                    { text: "I am a servant of the One, finding my strength in Seva and my peace in Simran.", verse: "Guru Granth Sahib, Ang 282" },
+                    { text: "In Chardi Kala, my spirit rises above every challenge with courage and grace.", verse: "Ardas" }
+                ],
+                Hindu: [
+                    { text: "My soul is eternal, untouched by the dualities of life; I am one with the Divine.", verse: "Bhagavad Gita 2.20" },
+                    { text: "I follow my Dharma with a clear mind and a heart full of devotion.", verse: "Bhagavad Gita 3.35" },
+                    { text: "Peace is my true nature; OM Shanti Shanti Shanti.", verse: "Mandukya Upanishad" }
+                ],
+                Buddhist: [
+                    { text: "I am present, I am mindful, and I meet every moment with compassion.", verse: "Dhammapada 1.1" },
+                    { text: "Like a lotus in the water, I remain untouched by the chaos around me.", verse: "Dhammapada 4.58" },
+                    { text: "I let go of what no longer serves me and find peace in what is.", verse: "Dhammapada 20.279" }
+                ],
+                Jewish: [
+                    { text: "I am a partner in the work of creation; every mitzvah I do brings light into the world.", verse: "Talmud, Shabbat 10a" },
+                    { text: "If I am not for myself, who will be for me? If I am only for myself, what am I?", verse: "Pirkei Avot 1:14" },
+                    { text: "I walk the path of Chesed, bringing kindness and Shalom into my daily life.", verse: "Pirkei Avot 2:1" }
                 ]
             };
 
@@ -783,7 +1024,21 @@ export const contentAgentService = {
                     return { text: jsonStr };
                 }
             } catch {
-                return { text: "Today, I walk in the strength of my purpose.", verse: "True North" };
+                // Return a belief-specific fallback instead of a generic one
+                const fallbacks: Record<string, { text: string, verse: string }> = {
+                    Christian: { text: "I can do all things through Christ who strengthens me.", verse: "Philippians 4:13" },
+                    Catholic: { text: "My soul magnifies the Lord, and my spirit rejoices in God my Savior.", verse: "Luke 1:46" },
+                    Protestant: { text: "The Lord is my shepherd; I shall not want.", verse: "Psalm 23:1" },
+                    Muslim: { text: "Truly, with every hardship comes ease.", verse: "Quran 94:6" },
+                    Hindu: { text: "You have a right to perform your prescribed duties, but you are not entitled to the fruits of your actions.", verse: "Bhagavad Gita 2.47" },
+                    Buddhist: { text: "Peace comes from within. Do not seek it without.", verse: "Buddha" },
+                    Jewish: { text: "The world is built on three things: Torah, service, and acts of kindness.", verse: "Pirkei Avot 1:2" },
+                    Sikh: { text: "God is One, and Truth is His Name.", verse: "Guru Nanak" },
+                    Spiritual: { text: "I am a vessel of light, perfectly aligned with the universe.", verse: "Universal Spirit" },
+                    Secular: { text: "I am the architect of my own peace.", verse: "Stoic Wisdom" }
+                };
+                const fallback = fallbacks[belief] || { text: "Today, I walk in the strength of my purpose.", verse: "True North" };
+                return fallback;
             }
         }
     }

@@ -7,6 +7,7 @@ import { Platform, Alert } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import * as Crypto from 'expo-crypto';
 
 export type AuthProvider = 'Apple' | 'Google' | 'Email';
 
@@ -103,6 +104,7 @@ class AuthService {
             if (Platform.OS === 'android') {
                 await GoogleSignin.hasPlayServices();
             }
+
             const userInfo = await GoogleSignin.signIn();
 
             if (userInfo.data?.idToken) {
