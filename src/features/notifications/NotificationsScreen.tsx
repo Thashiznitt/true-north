@@ -6,6 +6,7 @@ import { Bell, LucideIcon, Heart, Sparkles, MessageCircle, ChevronLeft, X, Trash
 import { Swipeable } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import { FadeIn } from '../../components/FadeIn';
+import { EmptyState } from '../../components/EmptyState';
 
 import { useStore } from '../../store';
 import { useEffect } from 'react';
@@ -105,16 +106,11 @@ export const NotificationsScreen = () => {
                 contentContainerStyle={styles.list}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
-                    <View style={styles.emptyState}>
-                        <Bell size={48} color={theme.colors.border} style={{ opacity: 0.5 }} />
-                        <Text style={[styles.emptyText, { fontFamily: theme.typography.sansBold, fontSize: 18, color: theme.colors.text, marginTop: 16 }]}>
-                            All Caught Up
-                        </Text>
-                        <Text style={styles.emptyText}>
-                            Your sanctuary is peaceful.{'\n'}We&apos;ll notify you when there&apos;s an update.
-                        </Text>
-                    </View>
-
+                    <EmptyState
+                        icon={Bell}
+                        title="All Caught Up"
+                        description="Your sanctuary is peaceful. We'll notify you when there's an update."
+                    />
                 }
             />
         </View>

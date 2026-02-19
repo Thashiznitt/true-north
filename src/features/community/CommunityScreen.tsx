@@ -6,7 +6,7 @@ import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { Users, Lock, ChevronRight, Heart, Search, Plus, Bell, BookOpen, Moon, Leaf, Sun, Compass } from 'lucide-react-native';
-import { contentAgentService, GhostCircle } from '../../services/ContentAgentService';
+import { contentAgentService, GhostCircle, isGhostWorkingHour } from '../../services/ContentAgentService';
 import { useStore } from '../../store';
 import { FaithNews } from '../../components/FaithNews';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
@@ -15,6 +15,8 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import { SanctuaryLock } from '../../components/SanctuaryLock';
 import { FadeIn } from '../../components/FadeIn';
 import { CircleCard } from '../../components/CircleCard';
+import { EmptyState } from '../../components/EmptyState';
+import { Users2 } from 'lucide-react-native';
 
 const getBeliefIcon = (belief: string) => {
     switch (belief) {
@@ -135,6 +137,8 @@ export const CommunityScreen = () => {
 
         // Simulated Cron: Randomly add a reflection every 30 seconds for higher activity
         const interval = setInterval(async () => {
+            if (!isGhostWorkingHour()) return;
+
             const currentCircles = circlesRef.current;
             if (currentCircles.length === 0) return;
 
@@ -316,34 +320,15 @@ export const CommunityScreen = () => {
                     </View>
                 }
                 ListEmptyComponent={
-                    <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 60, paddingHorizontal: 40 }}>
-                        <Users size={48} color={theme.colors.border} />
-                        <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 18, color: theme.colors.text, marginTop: 16, textAlign: 'center' }}>
-                            {searchQuery ? "No Sanctuaries Found" : "Be the First"}
-                        </Text>
-                        <Text style={{ fontFamily: theme.typography.sans, fontSize: 15, color: theme.colors.secondaryText, textAlign: 'center', marginTop: 8, lineHeight: 22 }}>
-                            {searchQuery
-                                ? "Try adjusting your search terms or create a new circle to gather your community."
-                                : "The path is open. Create a new circle to gather your community and start a movement."}
-                        </Text>
-                        <TouchableOpacity
-                            style={{
-                                marginTop: 24,
-                                backgroundColor: palette.softGold,
-                                paddingHorizontal: 24,
-                                paddingVertical: 12,
-                                borderRadius: 30,
-                                flexDirection: 'row',
-                                alignItems: 'center'
-                            }}
-                            onPress={() => navigation.navigate('CreateCircle')}
-                        >
-                            <Plus size={20} color={palette.ivory} style={{ marginRight: 8 }} />
-                            <Text style={{ fontFamily: theme.typography.sansBold, color: palette.ivory, fontSize: 16 }}>
-                                Establish Circle
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
+                    <EmptyState
+                        icon={searchQuery ? Search : Users2}
+                        title={searchQuery ? "No Sanctuaries Found" : "Be the First"}
+                        description={searchQuery
+                            ? "Try adjusting your search terms or create a new circle to gather your community."
+                            : "The path is open. Create a new circle to gather your community and start a movement."}
+                        buttonLabel="Establish Circle"
+                        onPress={() => navigation.navigate('CreateCircle')}
+                    />
                 }
 
             />

@@ -10,6 +10,8 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import { SanctuaryLock } from '../../components/SanctuaryLock';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { FadeIn } from '../../components/FadeIn';
+import { EmptyState } from '../../components/EmptyState';
+import { Book } from 'lucide-react-native';
 
 
 interface JournalEntry {
@@ -288,46 +290,26 @@ export const JournalScreen = () => {
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
-                    <View style={styles.emptyState}>
-                        <Sparkles size={48} color={palette.softGold} style={{ marginBottom: 16, opacity: 0.5 }} />
-                        <Text style={styles.emptyStateTitle}>
-                            {searchQuery ? "No entries found" : "Your Sanctuary Awaits"}
-                        </Text>
-                        <Text style={styles.emptyStateText}>
-                            {searchQuery
-                                ? "No reflections match your search."
-                                : beliefType === 'Catholic'
-                                    ? "Start by sharing a reflection on today's Mass, a prayer for grace, or a moment of divine guidance."
-                                    : beliefType === 'Protestant' || beliefType === 'Christian'
-                                        ? "Record your first sermon insight, a heartfelt prayer, or a step in your walk with Christ."
-                                        : beliefType === 'Muslim'
-                                            ? "Begin by recording a reflection on the Khutbah, a sincere Dua, or a moment of spiritual clarity."
-                                            : beliefType === 'Spiritual'
-                                                ? "Share your first meditation insight, a moment of presence, or a ripple of universal wisdom."
-                                                : beliefType === 'Exploring'
-                                                    ? "Start by journaling a discovery, a question that sparks your soul, or a step on your path."
-                                                    : "Start your sacred journal today."
-                            }
-                        </Text>
-                        <TouchableOpacity
-                            style={{
-                                marginTop: 24,
-                                backgroundColor: palette.softGold,
-                                paddingHorizontal: 24,
-                                paddingVertical: 12,
-                                borderRadius: 30,
-                                flexDirection: 'row',
-                                alignItems: 'center'
-                            }}
-                            onPress={() => navigation.navigate('JournalDetail')}
-                        >
-                            <Plus size={20} color={palette.ivory} style={{ marginRight: 8 }} />
-                            <Text style={{ fontFamily: theme.typography.sansBold, color: palette.ivory, fontSize: 16 }}>
-                                New Reflection
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-
+                    <EmptyState
+                        icon={searchQuery ? Search : Book}
+                        title={searchQuery ? "No entries found" : "Your Sanctuary Awaits"}
+                        description={searchQuery
+                            ? "No reflections match your search."
+                            : beliefType === 'Catholic'
+                                ? "Start by sharing a reflection on today's Mass, a prayer for grace, or a moment of divine guidance."
+                                : beliefType === 'Protestant' || beliefType === 'Christian'
+                                    ? "Record your first sermon insight, a heartfelt prayer, or a step in your walk with Christ."
+                                    : beliefType === 'Muslim'
+                                        ? "Begin by recording a reflection on the Khutbah, a sincere Dua, or a moment of spiritual clarity."
+                                        : beliefType === 'Spiritual'
+                                            ? "Share your first meditation insight, a moment of presence, or a ripple of universal wisdom."
+                                            : beliefType === 'Exploring'
+                                                ? "Start by journaling a discovery, a question that sparks your soul, or a step on your path."
+                                                : "Start your sacred journal today."
+                        }
+                        buttonLabel="New Reflection"
+                        onPress={() => navigation.navigate('JournalDetail')}
+                    />
                 }
 
                 ListFooterComponent={!isSubscribed ? <FaithNews type="product" /> : null}

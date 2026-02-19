@@ -103,6 +103,8 @@ export interface Reflection {
     time: string;
     image?: string | null;
     createdAt: number;
+    isFlagged?: boolean;
+    flagReason?: string;
 }
 
 export interface CreatedCircle {
@@ -288,55 +290,9 @@ export const useStore = create<UserState>()(
             lastAdviceTimestamp: null,
             lastNurEventNotification: null,
             bookmarkedCircleIds: [],
-            notificationsList: [
-                { id: '1', title: 'New Affirmation', message: 'Your personal alignment for today is ready.', type: 'affirmation', createdAt: Date.now() - 2 * 60 * 60 * 1000 },
-                { id: '2', title: 'Blessing Received', message: 'Sarah blessed your reflection in Nairobi Chapel Circle.', type: 'blessing', createdAt: Date.now() - 4 * 60 * 60 * 1000 },
-            ],
-            createdCircles: [
-                {
-                    id: 'mock-circle-1',
-                    name: 'Nairobi Chapel',
-                    belief: 'Christian',
-                    members: 142,
-                    type: 'Public',
-                    city: 'Nairobi',
-                    country: 'Kenya',
-                    description: 'A community of believers in the heart of Nairobi.',
-                    lastActivity: '2 hours ago',
-                    reflections: [],
-                    createdAt: Date.now() - 10000000,
-                    adminIds: ['user-123'], // Assuming current user for demo
-                    moderatorIds: [],
-                    validatorIds: ['user-123'],
-                    events: [
-                        {
-                            id: 'mock-event-1',
-                            title: 'Sunday Service & Worship',
-                            date: 'Sunday, 10:00 AM',
-                            location: 'Main Hall',
-                            price: 0,
-                            currency: 'KES',
-                            capacity: 500,
-                            ticketsSold: 0
-                        },
-                        {
-                            id: 'mock-event-2',
-                            title: 'Leadership Summit',
-                            date: 'Aug 15, 9:00 AM',
-                            location: 'Conference Center',
-                            price: 1500, // 1500 KES
-                            currency: 'KES',
-                            capacity: 50,
-                            ticketsSold: 12
-                        }
-                    ]
-                }
-            ],
-
-            journalEntries: [
-                { id: '1', date: 'Oct 24, 2023', title: 'A New Beginning', content: 'Today was the first day I felt truly aligned. The morning affirmation really spoke to me...' },
-                { id: '2', date: 'Oct 23, 2023', title: 'Strength in Silence', content: 'Finding peace in the quiet moments between meetings. Focusing on the "Strength" theme.' },
-            ],
+            notificationsList: [],
+            createdCircles: [],
+            journalEntries: [],
             userTickets: [],
             blockedUserIds: [],
             blockedCircleIds: [],
@@ -678,13 +634,8 @@ export const useStore = create<UserState>()(
                 return result;
             },
             findUserByUsername: (username: string) => {
-                const mockUsers = [
-                    { userId: 'u1', username: 'Mary W.' }, { userId: 'u2', username: 'Peter J.' },
-                    { userId: 'u3', username: 'Sarah N.' }, { userId: 'u4', username: 'John D.' },
-                    { userId: 'u5', username: 'Amina Z.' }, { userId: 'u6', username: 'Omar H.' },
-                    { userId: 'u7', username: 'Alex R.' }, { userId: 'u8', username: 'Jamie L.' }
-                ];
-                return mockUsers.find(u => u.username.toLowerCase() === username.toLowerCase()) || null;
+                // Return null by default, or implement dynamic search if needed
+                return null;
             },
             addCircleReflection: (circleId: string, reflection: Reflection) => set((state) => ({
                 createdCircles: state.createdCircles.map(c =>

@@ -105,12 +105,22 @@ class AuthService {
                 await GoogleSignin.hasPlayServices();
             }
 
-            const userInfo = await GoogleSignin.signIn();
+            // Generate a random nonce for iOS to fix "No nonce" error
+            const rawNonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            const hashedNonce = await Crypto.digestStringAsync(
+                Crypto.CryptoDigestAlgorithm.SHA256,
+                rawNonce
+            );
+
+            const userInfo = await GoogleSignin.signIn({
+                nonce: hashedNonce,
+            } as any);
 
             if (userInfo.data?.idToken) {
                 const { data, error } = await supabase.auth.signInWithIdToken({
                     provider: 'google',
                     token: userInfo.data.idToken,
+                    nonce: rawNonce,
                 });
 
                 if (error) throw error;

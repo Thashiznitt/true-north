@@ -1,6 +1,7 @@
 import { BeliefType } from '../types';
 import { AppTheme } from '../types/themes';
 import { CircleEvent } from '../store';
+import { ModeratorAgentService } from './ModeratorAgentService';
 
 export interface GhostReflection {
     id: string;
@@ -10,6 +11,8 @@ export interface GhostReflection {
     blessings: number;
     theme?: string;
     createdAt: number;
+    isFlagged?: boolean;
+    flagReason?: string;
 }
 
 export interface GhostCircle {
@@ -100,7 +103,7 @@ const REFLECTION_TEMPLATES: Record<BeliefType, Partial<Record<AppTheme | string,
         Purpose: ["Discerning my vocation with patience.", "Serving the least of these is our highest calling."]
     },
     Protestant: {
-        Strength: ["Sola Fide - faith alone sustains me.", "Standing on the promises of God."],
+        Strength: ["Sola Fide: faith alone sustains me.", "Standing on the promises of God."],
         Peace: ["It is well with my soul.", "In Christ alone my hope is found."],
         Purpose: ["Living out the Great Commission in daily life.", "Called to be salt and light."]
     },
@@ -108,7 +111,7 @@ const REFLECTION_TEMPLATES: Record<BeliefType, Partial<Record<AppTheme | string,
         Strength: [
             "SubhanAllah, the Fajr prayer today felt so grounding. Facing my meetings with new resolve.",
             "Reminding myself that Allah does not burden a soul beyond what it can bear. Stay strong, brothers and sisters.",
-            "Checking in with the circle—how are you all staying consistent with your daily intentions?",
+            "Checking in with the circle: how are you all staying consistent with your daily intentions?",
             "In every hardship there is ease. Keeping this at the center of my heart tonight.",
             "True strength is found in our vulnerability before Allah. May He grant us steadfastness."
         ],
@@ -128,7 +131,7 @@ const REFLECTION_TEMPLATES: Record<BeliefType, Partial<Record<AppTheme | string,
     Secular: {
         Purpose: [
             "Spent some time today realigning my actions with my core values. Hard work, but so rewarding.",
-            "Thinking about 'Ikigai'—finding that sweet spot between what I love and what the world needs.",
+            "Thinking about 'Ikigai': finding that sweet spot between what I love and what the world needs.",
             "If you're feeling lost, remember that direction is more important than speed.",
             "Living intentionally is a practice, not a destination. Grateful for this community's focus.",
             "What's one thing you're doing today that your future self will thank you for?"
@@ -149,7 +152,7 @@ const REFLECTION_TEMPLATES: Record<BeliefType, Partial<Record<AppTheme | string,
     Spiritual: {
         Purpose: [
             "Spent some time today realigning my actions with my core values. Hard work, but so rewarding.",
-            "Thinking about 'Ikigai'—finding that sweet spot between what I love and what the world needs.",
+            "Thinking about 'Ikigai': finding that sweet spot between what I love and what the world needs.",
             "If you're feeling lost, remember that direction is more important than speed.",
             "Living intentionally is a practice, not a destination. Grateful for this community's focus.",
             "What's one thing you're doing today that your future self will thank you for?"
@@ -172,14 +175,14 @@ const REFLECTION_TEMPLATES: Record<BeliefType, Partial<Record<AppTheme | string,
             "Sending a wave of compassion out to everyone in the circle. You are enough exactly as you are.",
             "Choosing kindness today, especially to myself. It's the foundation of everything else.",
             "Reminded today that love is an action, not just a feeling. Reach out to someone today.",
-            "Heart-centered living is the path. Thank you for walking it with me.",
+            "Heart centered living is the path. Thank you for walking it with me.",
             "May we all find a bit more empathy for ourselves and each other today."
         ],
         Wisdom: [
             "Ancient wisdom for a modern world: the only constant is change. Breathing through it.",
             "Listening more than I talk today. It's amazing what you hear when you truly pay attention.",
             "Seeking clarity in the chaos. Sometimes the answer is just to unplug for a while.",
-            "The greatest teacher is the present moment. Re-centering right now.",
+            "The greatest teacher is the present moment. Re centering right now.",
             "Wisdom is knowing when to hold on and when to let go. Finding that balance."
         ],
         Strength: [
@@ -201,7 +204,7 @@ const REFLECTION_TEMPLATES: Record<BeliefType, Partial<Record<AppTheme | string,
             "Drawing resilience from our history and hope from our prayers today."
         ],
         Wisdom: [
-            "Who is wise? One who learns from every man. (Pirkei Avot)",
+            "Who is wise? One who learns from every person. (Pirkei Avot)",
             "Reflecting on the Torah portion this week. Always a new layer of meaning to uncover."
         ],
         Peace: [
@@ -211,7 +214,7 @@ const REFLECTION_TEMPLATES: Record<BeliefType, Partial<Record<AppTheme | string,
     },
     Sikh: {
         Strength: [
-            "Chardi Kala - keeping high spirits even in difficult times.",
+            "Chardi Kala: keeping high spirits even in difficult times.",
             "Service (Seva) is where I find my true strength. Helping at the Langar today grounded me."
         ],
         Wisdom: [
@@ -226,7 +229,7 @@ const REFLECTION_TEMPLATES: Record<BeliefType, Partial<Record<AppTheme | string,
     Hindu: {
         Strength: [
             "Perform your duty without attachment to results. The Gita's wisdom guiding me through a tough project.",
-            "Inner strength comes from self-discipline (Tapas). Staying committed to my practice."
+            "Inner strength comes from self discipline (Tapas). Staying committed to my practice."
         ],
         Wisdom: [
             "Knowledge removes fear. Studying the scriptures to understand the nature of the self.",
@@ -255,61 +258,134 @@ const REFLECTION_TEMPLATES: Record<BeliefType, Partial<Record<AppTheme | string,
 
 const GENERIC_TEMPLATES = [
     "Thinking about our shared intentions today. I'm feeling particularly inspired by this circle.",
-    "Checking in—how is everyone finding balance today?",
+    "Checking in: how is everyone finding balance today?",
     "A quick reflection: what's one moment of clarity you've had in the last 24 hours?",
     "Grateful for the energy in this community. It makes a difference.",
     "Small consistent steps lead to big changes. Proud of everyone's journey here.",
     "Sharing a bit of positivity with you all. May your path be clear today.",
-    "Re-reading our circle's purpose and feeling re-energized. Let's make today count.",
+    "Re reading our circle's purpose and feeling re energized. Let's make today count.",
     "Sometimes the best reflection is just acknowledging how far we've come.",
     "Community makes the heavy times lighter. Thank you for being here.",
     "Just a reminder that you are valued and your journey matters."
 ];
 
 export const LIFE_CIRCLES: GhostCircle[] = [
-    // Christian Circles
+    // --- CHRISTIAN CIRCLES ---
     { id: 'c1', name: 'Faithful Parents', belief: 'Christian', theme: 'Strength', members: 1240, type: 'Public', city: 'Nairobi', country: 'Kenya', description: 'Grounded parenting through Christ.', lastActivity: '2m ago', reflections: [] },
     { id: 'c2', name: 'Scripture & Stillness', belief: 'Christian', theme: 'Peace', members: 850, type: 'Public', city: 'London', country: 'UK', description: 'Finding God in the quiet moments.', lastActivity: '15m ago', reflections: [] },
     { id: 'c3', name: 'Youth in Alignment', belief: 'Christian', theme: 'Purpose', members: 2100, type: 'Public', city: 'Lagos', country: 'Nigeria', description: 'Refining our path as young believers.', lastActivity: '1h ago', reflections: [] },
-    // Muslim Circles
+    { id: 'c3b', name: 'Believer\'s Business', belief: 'Christian', theme: 'Purpose', members: 3200, type: 'Public', city: 'New York', country: 'USA', description: 'Ethics and faith in the corporate world.', lastActivity: '5m ago', reflections: [] },
+    { id: 'c3c', name: 'Gospel & Grace', belief: 'Christian', theme: 'Love', members: 1800, type: 'Public', city: 'Atlanta', country: 'USA', description: 'Sharing the message of love.', lastActivity: '12m ago', reflections: [] },
+    { id: 'c3d', name: 'Christian Creatives', belief: 'Christian', theme: 'Wisdom', members: 950, type: 'Public', city: 'Nashville', country: 'USA', description: 'Art inspired by the Creator.', lastActivity: '22m ago', reflections: [] },
+    { id: 'c3e', name: 'Modern Monastics', belief: 'Christian', theme: 'Peace', members: 450, type: 'Public', city: 'Portland', country: 'USA', description: 'Ancient practices for modern lives.', lastActivity: '45m ago', reflections: [] },
+    { id: 'c3f', name: 'Faith in Fitness', belief: 'Christian', theme: 'Strength', members: 2800, type: 'Public', city: 'Miami', country: 'USA', description: 'Treating the body as a temple.', lastActivity: '8m ago', reflections: [] },
+    { id: 'c3g', name: 'Empty Nesters Faith', belief: 'Christian', theme: 'Purpose', members: 600, type: 'Public', city: 'Phoenix', country: 'USA', description: 'New seasons of spiritual growth.', lastActivity: '3h ago', reflections: [] },
+    { id: 'c3h', name: 'The Narrow Path', belief: 'Christian', theme: 'Perseverance', members: 12000, type: 'Public', city: 'Online', country: 'Global', description: 'Devoted to the fundamental truths.', lastActivity: '2m ago', reflections: [] },
+
+    // --- CATHOLIC CIRCLES ---
+    { id: 'ca1', name: 'Sacred Heart Devotion', belief: 'Catholic', theme: 'Love', members: 4500, type: 'Public', city: 'Rome', country: 'Italy', description: 'Daily prayers and meditations on Christ’s love.', lastActivity: '5m ago', reflections: [] },
+    { id: 'ca2', name: 'Marian Sanctuary', belief: 'Catholic', theme: 'Peace', members: 3200, type: 'Public', city: 'Lourdes', country: 'France', description: 'Reflections on the life of the Blessed Mother.', lastActivity: '12m ago', reflections: [] },
+    { id: 'ca3', name: 'Young Catholic Professionals', belief: 'Catholic', theme: 'Purpose', members: 1800, type: 'Public', city: 'Chicago', country: 'USA', description: 'Living the faith in the modern workplace.', lastActivity: '25m ago', reflections: [] },
+    { id: 'ca4', name: 'Rosary Walkers', belief: 'Catholic', theme: 'Peace', members: 950, type: 'Public', city: 'Dublin', country: 'Ireland', description: 'The beauty of the Rosary in motion.', lastActivity: '1h ago', reflections: [] },
+    { id: 'ca5', name: 'St. Francis Circle', belief: 'Catholic', theme: 'Gratitude', members: 2400, type: 'Public', city: 'Assisi', country: 'Italy', description: 'Care for creation and the poor.', lastActivity: '15m ago', reflections: [] },
+    { id: 'ca6', name: 'The Catechism Study', belief: 'Catholic', theme: 'Wisdom', members: 5600, type: 'Public', city: 'Online', country: 'Global', description: 'Deep diving into the teachings of the Church.', lastActivity: '8m ago', reflections: [] },
+    { id: 'ca7', name: 'Eucharistic Adoration', belief: 'Catholic', theme: 'Peace', members: 1200, type: 'Public', city: 'Madrid', country: 'Spain', description: 'Stillness in the presence of the Lord.', lastActivity: '30m ago', reflections: [] },
+    { id: 'ca8', name: 'Modern Martyrs Support', belief: 'Catholic', theme: 'Strength', members: 300, type: 'Public', city: 'Lagos', country: 'Nigeria', description: 'Strength for the persecuted Church.', lastActivity: '4h ago', reflections: [] },
+    { id: 'ca9', name: 'Catholic Artists Guild', belief: 'Catholic', theme: 'Love', members: 780, type: 'Public', city: 'Florence', country: 'Italy', description: 'Beauty as a path to the Divine.', lastActivity: '2h ago', reflections: [] },
+    { id: 'ca10', name: 'Advent & Lent Journeys', belief: 'Catholic', theme: 'Perseverance', members: 8900, type: 'Public', city: 'Online', country: 'Global', description: 'Preparing our hearts for the seasons.', lastActivity: '10m ago', reflections: [] },
+
+    // --- PROTESTANT CIRCLES ---
+    { id: 'pr1', name: 'Reformation Study', belief: 'Protestant', theme: 'Wisdom', members: 2100, type: 'Public', city: 'Berlin', country: 'Germany', description: 'Reflecting on the five solas.', lastActivity: '1h ago', reflections: [] },
+    { id: 'pr2', name: 'Modern Hymnals', belief: 'Protestant', theme: 'Love', members: 1400, type: 'Public', city: 'London', country: 'UK', description: 'Worship through song and spirit.', lastActivity: '45m ago', reflections: [] },
+    { id: 'pr3', name: 'Grace Alone Collective', belief: 'Protestant', theme: 'Peace', members: 3400, type: 'Public', city: 'Dallas', country: 'USA', description: 'Resting in the gift of salvation.', lastActivity: '20m ago', reflections: [] },
+    { id: 'pr4', name: 'Campus Crusaders', belief: 'Protestant', theme: 'Purpose', members: 1200, type: 'Public', city: 'Boston', country: 'USA', description: 'Faith on the front lines of education.', lastActivity: '30m ago', reflections: [] },
+    { id: 'pr5', name: 'Living the Great Commission', belief: 'Protestant', theme: 'Purpose', members: 5600, type: 'Public', city: 'Online', country: 'Global', description: 'Missions and community outreach.', lastActivity: '5m ago', reflections: [] },
+    { id: 'pr6', name: 'Bible Study Fellowship', belief: 'Protestant', theme: 'Wisdom', members: 15000, type: 'Public', city: 'Houston', country: 'USA', description: 'Deep study of the Word.', lastActivity: '2m ago', reflections: [] },
+    { id: 'pr7', name: 'The Wayfarers', belief: 'Protestant', theme: 'Perseverance', members: 670, type: 'Public', city: 'Stockholm', country: 'Sweden', description: 'Finding faith in secular spaces.', lastActivity: '3h ago', reflections: [] },
+    { id: 'pr8', name: 'Worship Leaders Hub', belief: 'Protestant', theme: 'Love', members: 920, type: 'Public', city: 'Sydney', country: 'Australia', description: 'Heart centered leadership in the Church.', lastActivity: '1h ago', reflections: [] },
+    { id: 'pr9', name: 'Small Group Leaders', belief: 'Protestant', theme: 'Wisdom', members: 1100, type: 'Public', city: 'Online', country: 'Global', description: 'Equipping the saints for ministry.', lastActivity: '40m ago', reflections: [] },
+    { id: 'pr10', name: 'Faith & Fintech', belief: 'Protestant', theme: 'Strength', members: 540, type: 'Public', city: 'San Francisco', country: 'USA', description: 'Intergrity in the new economy.', lastActivity: '2h ago', reflections: [] },
+
+    // --- MUSLIM CIRCLES ---
     { id: 'c4', name: 'Sabr & Strength', belief: 'Muslim', theme: 'Strength', members: 1560, type: 'Public', city: 'Dubai', country: 'UAE', description: 'Endurance and faith in daily life.', lastActivity: '30m ago', reflections: [] },
     { id: 'c5', name: 'Quiet Reflections', belief: 'Muslim', theme: 'Peace', members: 920, type: 'Public', city: 'London', country: 'UK', description: 'Modern living, Islamic peace.', lastActivity: '45m ago', reflections: [] },
     { id: 'c6', name: 'Guided Growth', belief: 'Muslim', theme: 'Wisdom', members: 3400, type: 'Public', city: 'Istanbul', country: 'Turkey', description: 'Seeking Ilm and understanding.', lastActivity: '10m ago', reflections: [] },
-    // Secular Circles
+    { id: 'm1', name: 'Sisters in Sujood', belief: 'Muslim', theme: 'Love', members: 5400, type: 'Public', city: 'London', country: 'UK', description: 'A safe space for Muslim women’s growth.', lastActivity: '15m ago', reflections: [] },
+    { id: 'm2', name: 'Dhikr & Discipline', belief: 'Muslim', theme: 'Strength', members: 2100, type: 'Public', city: 'Cairo', country: 'Egypt', description: 'Maintaining spiritual focus in chaos.', lastActivity: '8m ago', reflections: [] },
+    { id: 'm3', name: 'The Quranic Heart', belief: 'Muslim', theme: 'Wisdom', members: 8900, type: 'Public', city: 'Medina', country: 'Saudi Arabia', description: 'Inner meanings of the sacred text.', lastActivity: '3m ago', reflections: [] },
+    { id: 'm4', name: 'Muslim Creatives Hub', belief: 'Muslim', theme: 'Purpose', members: 1200, type: 'Public', city: 'Kuala Lumpur', country: 'Malaysia', description: 'Art, design, and Islamic values.', lastActivity: '1h ago', reflections: [] },
+    { id: 'm5', name: 'Ramadan Daily Boost', belief: 'Muslim', theme: 'Perseverance', members: 25000, type: 'Public', city: 'Online', country: 'Global', description: 'Daily motivation during the Holy Month.', lastActivity: '1m ago', reflections: [] },
+    { id: 'm6', name: 'Business in Light (Halal)', belief: 'Muslim', theme: 'Purpose', members: 3400, type: 'Public', city: 'Dubai', country: 'UAE', description: 'Ethics and entrepreneurship.', lastActivity: '22m ago', reflections: [] },
+    { id: 'm7', name: 'Modern Muslims in West', belief: 'Muslim', theme: 'Peace', members: 6700, type: 'Public', city: 'New York', country: 'USA', description: 'Identity and harmony in pluralism.', lastActivity: '55m ago', reflections: [] },
+
+    // --- SPIRITUAL CIRCLES ---
+    { id: 's1', name: 'Conscious Breathing', belief: 'Spiritual', theme: 'Peace', members: 5600, type: 'Public', city: 'Bali', country: 'Indonesia', description: 'The art of the sacred breath.', lastActivity: '5m ago', reflections: [] },
+    { id: 's2', name: 'Vibrational Healing', belief: 'Spiritual', theme: 'Love', members: 3400, type: 'Public', city: 'Sedona', country: 'USA', description: 'Sound, frequency, and energy work.', lastActivity: '12m ago', reflections: [] },
+    { id: 's3', name: 'Shadow Work Circle', belief: 'Spiritual', theme: 'Wisdom', members: 2100, type: 'Public', city: 'Berlin', country: 'Germany', description: 'Integrating the hidden parts of the self.', lastActivity: '45m ago', reflections: [] },
+    { id: 's4', name: 'Universal Light Seekers', belief: 'Spiritual', theme: 'Purpose', members: 8900, type: 'Public', city: 'Online', country: 'Global', description: 'Connecting with the source of all being.', lastActivity: '3m ago', reflections: [] },
+    { id: 's5', name: 'Sacred Geometry Lab', belief: 'Spiritual', theme: 'Wisdom', members: 1200, type: 'Public', city: 'Alexandria', country: 'Egypt', description: 'The mathematical language of the soul.', lastActivity: '1h ago', reflections: [] },
+    { id: 's6', name: 'Modern Mystics', belief: 'Spiritual', theme: 'Peace', members: 4500, type: 'Public', city: 'London', country: 'UK', description: 'Ancient mysteries for current times.', lastActivity: '20m ago', reflections: [] },
+    { id: 's7', name: 'Nature\'s Pulse', belief: 'Spiritual', theme: 'Gratitude', members: 3200, type: 'Public', city: 'Vancouver', country: 'Canada', description: 'Connecting with Gaia’s energy.', lastActivity: '30m ago', reflections: [] },
+    { id: 's8', name: 'The Intuitive Life', belief: 'Spiritual', theme: 'Purpose', members: 920, type: 'Public', city: 'Los Angeles', country: 'USA', description: 'Listening to the quiet voice within.', lastActivity: '1h ago', reflections: [] },
+    { id: 's9', name: 'Starseeds & Souls', belief: 'Spiritual', theme: 'Wisdom', members: 7800, type: 'Public', city: 'Online', country: 'Global', description: 'Cosmic origin and earthly mission.', lastActivity: '8m ago', reflections: [] },
+    { id: 's10', name: 'Heart Centered Leadership', belief: 'Spiritual', theme: 'Love', members: 1400, type: 'Public', city: 'Sydney', country: 'Australia', description: 'Leading from a place of compassion.', lastActivity: '2h ago', reflections: [] },
+
+    // --- SECULAR CIRCLES ---
     { id: 'c7', name: 'Mindful Techies', belief: 'Secular', theme: 'Peace', members: 1900, type: 'Public', city: 'San Francisco', country: 'USA', description: 'Humanity in the digital age.', lastActivity: '12m ago', reflections: [] },
     { id: 'c8', name: 'The Purpose Lab', belief: 'Secular', theme: 'Purpose', members: 2800, type: 'Public', city: 'Berlin', country: 'Germany', description: 'Practical steps toward a meaningful life.', lastActivity: '2h ago', reflections: [] },
     { id: 'c9', name: 'Stoic Stillness', belief: 'Secular', theme: 'Peace', members: 780, type: 'Public', city: 'Austin', country: 'USA', description: 'Ancient philosophy for modern calm.', lastActivity: '5m ago', reflections: [] },
-    // ... adding more to reach 30
+    { id: 'se1', name: 'Ethical Humanism', belief: 'Secular', theme: 'Love', members: 2400, type: 'Public', city: 'Oslo', country: 'Norway', description: 'A better world through human action.', lastActivity: '1h ago', reflections: [] },
+    { id: 'se2', name: 'Rational Reflections', belief: 'Secular', theme: 'Wisdom', members: 3100, type: 'Public', city: 'Oxford', country: 'UK', description: 'Logic, science, and the search for meaning.', lastActivity: '45m ago', reflections: [] },
+    { id: 'se3', name: 'Minimalist Collective', belief: 'Secular', theme: 'Gratitude', members: 12000, type: 'Public', city: 'Tokyo', country: 'Japan', description: 'Focusing on what truly matters.', lastActivity: '2m ago', reflections: [] },
+    { id: 'se4', name: 'Peak Performance Mindset', belief: 'Secular', theme: 'Strength', members: 4500, type: 'Public', city: 'Palo Alto', country: 'USA', description: 'The psychology of thriving.', lastActivity: '10m ago', reflections: [] },
+    { id: 'se5', name: 'Secular Parenting', belief: 'Secular', theme: 'Love', members: 920, type: 'Public', city: 'Melbourne', country: 'Australia', description: 'Raising kind humans without dogma.', lastActivity: '3h ago', reflections: [] },
+    { id: 'se6', name: 'Art of Critical Thinking', belief: 'Secular', theme: 'Wisdom', members: 670, type: 'Public', city: 'Paris', country: 'France', description: 'Sharpening the mind for clarity.', lastActivity: '2h ago', reflections: [] },
+    { id: 'se7', name: 'Global Citizens Forum', belief: 'Secular', theme: 'Purpose', members: 8900, type: 'Public', city: 'Online', country: 'Global', description: 'Solving local problems with global wisdom.', lastActivity: '55m ago', reflections: [] },
+
+    // --- EXPLORING CIRCLES ---
+    { id: 'ex1', name: 'The Great Questioning', belief: 'Exploring', theme: 'Wisdom', members: 3400, type: 'Public', city: 'Online', country: 'Global', description: 'A safe space to doubt and wonder.', lastActivity: '5m ago', reflections: [] },
+    { id: 'ex2', name: 'Between Worlds', belief: 'Exploring', theme: 'Peace', members: 1200, type: 'Public', city: 'Montreal', country: 'Canada', description: 'Living in the tension of multiple beliefs.', lastActivity: '1h ago', reflections: [] },
+    { id: 'ex3', name: 'Truth Seekers Anonymous', belief: 'Exploring', theme: 'Purpose', members: 5600, type: 'Public', city: 'Online', country: 'Global', description: 'No judgment, just searching.', lastActivity: '12m ago', reflections: [] },
+    { id: 'ex4', name: 'Ancient Paths, Modern Feet', belief: 'Exploring', theme: 'Wisdom', members: 950, type: 'Public', city: 'Athens', country: 'Greece', description: 'Exploring old truths for new times.', lastActivity: '45m ago', reflections: [] },
+    { id: 'ex5', name: 'Interfaith Dialogue', belief: 'Exploring', theme: 'Love', members: 2100, type: 'Public', city: 'Nairobi', country: 'Kenya', description: 'Finding the common threads of humanity.', lastActivity: '22m ago', reflections: [] },
+    { id: 'ex6', name: 'Soul Apprentices', belief: 'Exploring', theme: 'Purpose', members: 670, type: 'Public', city: 'Vienna', country: 'Austria', description: 'Studying the masters of every tradition.', lastActivity: '3h ago', reflections: [] },
+    { id: 'ex7', name: 'The Unaffiliated', belief: 'Exploring', theme: 'Peace', members: 1100, type: 'Public', city: 'Portland', country: 'USA', description: 'Spiritual but not religious explorers.', lastActivity: '1h ago', reflections: [] },
+    { id: 'ex8', name: 'Digital Nomads Spiritual', belief: 'Exploring', theme: 'Wisdom', members: 450, type: 'Public', city: 'Chiang Mai', country: 'Thailand', description: 'Finding ground while on the move.', lastActivity: '2h ago', reflections: [] },
+    { id: 'ex9', name: 'Seeker\'s Library', belief: 'Exploring', theme: 'Wisdom', members: 7800, type: 'Public', city: 'Online', country: 'Global', description: 'Reviewing the world\'s sacred texts.', lastActivity: '8m ago', reflections: [] },
+    { id: 'ex10', name: 'The Mystery Collective', belief: 'Exploring', theme: 'Love', members: 1400, type: 'Public', city: 'Prague', country: 'Czech Republic', description: 'Embracing what we cannot know.', lastActivity: '55m ago', reflections: [] },
+
+    // --- OPEN CIRCLES ---
     { id: 'c10', name: 'Sleepless Parents', belief: 'Open', theme: 'Strength', members: 1240, type: 'Public', city: 'Nairobi', country: 'Kenya', description: 'A refuge for the beautiful chaos of parenthood.', lastActivity: '2m ago', reflections: [] },
     { id: 'c11', name: 'Career Pivot Support', belief: 'Open', theme: 'Purpose', members: 850, type: 'Public', city: 'London', country: 'UK', description: 'Finding your true north in the professional world.', lastActivity: '15m ago', reflections: [] },
     { id: 'c12', name: 'Creative Slump Recovery', belief: 'Open', theme: 'Wisdom', members: 420, type: 'Public', city: 'Berlin', country: 'Germany', description: 'Rekindling the spark when the well runs dry.', lastActivity: '1h ago', reflections: [] },
     { id: 'c13', name: 'Grief & Healing', belief: 'Open', theme: 'Peace', members: 880, type: 'Public', city: 'Toronto', country: 'Canada', description: 'Walking through the shadows into the light.', lastActivity: '1h ago', reflections: [] },
     { id: 'c14', name: 'Anxiety Management', belief: 'Open', theme: 'Peace', members: 4500, type: 'Public', city: 'Global', country: 'Online', description: 'Breathe in, find your center.', lastActivity: '3m ago', reflections: [] },
-    { id: 'c15', name: 'Self-Love Sanctuary', belief: 'Open', theme: 'Love', members: 4100, type: 'Public', city: 'Los Angeles', country: 'USA', description: 'Your most important relationship.', lastActivity: '6m ago', reflections: [] },
-    { id: 'c16', name: 'Morning Devoted', belief: 'Christian', theme: 'Gratitude', members: 5600, type: 'Public', city: 'Dallas', country: 'USA', description: 'Scripture and sunrise.', lastActivity: '8m ago', reflections: [] },
-    { id: 'c17', name: 'Ramadan Daily Reflections', belief: 'Muslim', theme: 'Purpose', members: 12000, type: 'Public', city: 'Cairo', country: 'Egypt', description: 'Spiritual growth during the holy month.', lastActivity: '1m ago', reflections: [] },
-    { id: 'c18', name: 'Minimalist Minds', belief: 'Secular', theme: 'Wisdom', members: 3100, type: 'Public', city: 'Tokyo', country: 'Japan', description: 'Less stuff, more soul.', lastActivity: '20m ago', reflections: [] },
-    { id: 'c19', name: 'Solo Travelers Haven', belief: 'Open', theme: 'Wisdom', members: 940, type: 'Public', city: 'Bali', country: 'Indonesia', description: 'Connecting while wandering.', lastActivity: '4h ago', reflections: [] },
-    { id: 'c20', name: 'Adulting 101', belief: 'Open', theme: 'Purpose', members: 2100, type: 'Public', city: 'New York', country: 'USA', description: 'Figuring it out together.', lastActivity: '12m ago', reflections: [] },
-    { id: 'c21', name: 'Navigating Divorce', belief: 'Open', theme: 'Peace', members: 670, type: 'Public', city: 'Sydney', country: 'Australia', description: 'Grace through transition.', lastActivity: '3h ago', reflections: [] },
-    { id: 'c22', name: 'Chronic Pain Circle', belief: 'Open', theme: 'Strength', members: 1100, type: 'Public', city: 'Cape Town', country: 'South Africa', description: 'Support for the physical journey.', lastActivity: '25m ago', reflections: [] },
-    { id: 'c23', name: 'Empty Nesters', belief: 'Open', theme: 'Purpose', members: 540, type: 'Public', city: 'Phoenix', country: 'USA', description: 'The next chapter starts now.', lastActivity: '2h ago', reflections: [] },
-    { id: 'c24', name: 'Grad School Grinds', belief: 'Open', theme: 'Wisdom', members: 920, type: 'Public', city: 'Boston', country: 'USA', description: 'Sanity for scholars.', lastActivity: '45m ago', reflections: [] },
-    { id: 'c25', name: 'The Art of Ordinary Joy', belief: 'Secular', theme: 'Gratitude', members: 5200, type: 'Public', city: 'Paris', country: 'France', description: 'Finding truth in the mundane.', lastActivity: '4m ago', reflections: [] },
-    { id: 'c26', name: 'Mercy & Love', belief: 'Christian', theme: 'Love', members: 3800, type: 'Public', city: 'Manila', country: 'Philippines', description: 'Extending grace to all.', lastActivity: '14m ago', reflections: [] },
-    { id: 'c27', name: 'Sisters in Faith', belief: 'Muslim', theme: 'Love', members: 4500, type: 'Public', city: 'London', country: 'UK', description: 'A sacred space for Muslim women.', lastActivity: '22m ago', reflections: [] },
-    { id: 'c28', name: 'Business Ethics Lab', belief: 'Secular', theme: 'Wisdom', members: 1400, type: 'Public', city: 'Dublin', country: 'Ireland', description: 'Integrity in the marketplace.', lastActivity: '55m ago', reflections: [] },
-    { id: 'c29', name: 'Grief Recovery (Biblical)', belief: 'Christian', theme: 'Peace', members: 930, type: 'Public', city: 'Chicago', country: 'USA', description: 'Comfort from the word.', lastActivity: '1h ago', reflections: [] },
-    { id: 'c30', name: 'New Muslim Support', belief: 'Muslim', theme: 'Wisdom', members: 1700, type: 'Public', city: 'Online', country: 'Global', description: 'Welcome to the Ummah.', lastActivity: '18m ago', reflections: [] },
-    // New Belief Circles
+    { id: 'c15', name: 'Self Love Sanctuary', belief: 'Open', theme: 'Love', members: 4100, type: 'Public', city: 'Los Angeles', country: 'USA', description: 'Your most important relationship.', lastActivity: '6m ago', reflections: [] },
+    { id: 'o1', name: 'World Peace Prayer', belief: 'Open', theme: 'Peace', members: 12000, type: 'Public', city: 'Online', country: 'Global', description: 'Collective intention for global harmony.', lastActivity: '12m ago', reflections: [] },
+    { id: 'o2', name: 'Daily Gratitude Club', belief: 'Open', theme: 'Gratitude', members: 5600, type: 'Public', city: 'Online', country: 'Global', description: 'Sharing one good thing every day.', lastActivity: '5m ago', reflections: [] },
+    { id: 'o3', name: 'Morning Affirmations', belief: 'Open', theme: 'Love', members: 8900, type: 'Public', city: 'Online', country: 'Global', description: 'Starting the day with clarity and love.', lastActivity: '3m ago', reflections: [] },
+    { id: 'o4', name: 'Life Transitions Hub', belief: 'Open', theme: 'Strength', members: 2100, type: 'Public', city: 'Cape Town', country: 'South Africa', description: 'Support for the big shifts in life.', lastActivity: '45m ago', reflections: [] },
+
+    // --- OTHER BELIEF CIRCLES ---
     { id: 'c31', name: 'Sikh Seva Society', belief: 'Sikh', theme: 'Strength', members: 890, type: 'Public', city: 'Amritsar', country: 'India', description: 'Serving humanity with humility.', lastActivity: '5m ago', reflections: [] },
+    { id: 'si1', name: 'Khalsa Spirit', belief: 'Sikh', theme: 'Purpose', members: 2400, type: 'Public', city: 'Punjab', country: 'India', description: 'Living the values of the gurus.', lastActivity: '12m ago', reflections: [] },
+    { id: 'si2', name: 'Simran & Stillness', belief: 'Sikh', theme: 'Peace', members: 1100, type: 'Public', city: 'Vancouver', country: 'Canada', description: 'Meditation on the divine name.', lastActivity: '1h ago', reflections: [] },
+    { id: 'si3', name: 'Global Langar Initiative', belief: 'Sikh', theme: 'Love', members: 5600, type: 'Public', city: 'Online', country: 'Global', description: 'Ending hunger through collective action.', lastActivity: '30m ago', reflections: [] },
+
     { id: 'c32', name: 'Dharma Path', belief: 'Hindu', theme: 'Wisdom', members: 1200, type: 'Public', city: 'Varanasi', country: 'India', description: 'Studying the scriptures together.', lastActivity: '1h ago', reflections: [] },
+    { id: 'hi1', name: 'Bhakti Yoga Lounge', belief: 'Hindu', theme: 'Love', members: 3400, type: 'Public', city: 'Mumbai', country: 'India', description: 'Devotion through chant and prayer.', lastActivity: '15m ago', reflections: [] },
+    { id: 'hi2', name: 'Vedantic Insights', belief: 'Hindu', theme: 'Wisdom', members: 1800, type: 'Public', city: 'Rishikesh', country: 'India', description: 'The philosophy of non duality.', lastActivity: '45m ago', reflections: [] },
+    { id: 'hi3', name: 'Karma & Kindness', belief: 'Hindu', theme: 'Purpose', members: 920, type: 'Public', city: 'Online', country: 'Global', description: 'Action that uplifts the world.', lastActivity: '1h ago', reflections: [] },
+
     { id: 'c33', name: 'Mindful Sangha', belief: 'Buddhist', theme: 'Peace', members: 2100, type: 'Public', city: 'Chiang Mai', country: 'Thailand', description: 'Walking the path of awareness.', lastActivity: '30m ago', reflections: [] },
+    { id: 'bu1', name: 'Zen Seekers', belief: 'Buddhist', theme: 'Peace', members: 4500, type: 'Public', city: 'Kyoto', country: 'Japan', description: 'Simplicity and presence.', lastActivity: '8m ago', reflections: [] },
+    { id: 'bu2', name: 'Metta Meditation', belief: 'Buddhist', theme: 'Love', members: 3200, type: 'Public', city: 'Colombo', country: 'Sri Lanka', description: 'Cultivating loving kindness for all.', lastActivity: '20m ago', reflections: [] },
+    { id: 'bu3', name: 'The Middle Way', belief: 'Buddhist', theme: 'Wisdom', members: 1400, type: 'Public', city: 'Online', country: 'Global', description: 'Balance in an extreme world.', lastActivity: '1h ago', reflections: [] },
+
     { id: 'c34', name: 'Torah Study Group', belief: 'Jewish', theme: 'Wisdom', members: 750, type: 'Public', city: 'Jerusalem', country: 'Israel', description: 'Weekly portion discussions.', lastActivity: '2h ago', reflections: [] },
-    { id: 'c35', name: 'Global Sikh Youth', belief: 'Sikh', theme: 'Purpose', members: 1500, type: 'Public', city: 'Toronto', country: 'Canada', description: 'Connecting the next generation.', lastActivity: '10m ago', reflections: [] },
-    { id: 'c36', name: 'Yoga & Vedanta', belief: 'Hindu', theme: 'Peace', members: 3000, type: 'Public', city: 'Rishikesh', country: 'India', description: 'Union of breath and truth.', lastActivity: '45m ago', reflections: [] },
-    { id: 'c37', name: 'Compassion (Karuna)', belief: 'Buddhist', theme: 'Love', members: 1800, type: 'Public', city: 'Kyoto', country: 'Japan', description: 'Cultivating a heart of gold.', lastActivity: '15m ago', reflections: [] },
-    { id: 'c38', name: 'Shabbat Table', belief: 'Jewish', theme: 'Peace', members: 1100, type: 'Public', city: 'New York', country: 'USA', description: 'Preparing for the holy rest.', lastActivity: '3h ago', reflections: [] },
+    { id: 'je1', name: 'Shabbat Shalom Collective', belief: 'Jewish', theme: 'Peace', members: 2100, type: 'Public', city: 'Tel Aviv', country: 'Israel', description: 'Finding rest in the sacred cycle.', lastActivity: '3h ago', reflections: [] },
+    { id: 'je2', name: 'Mitzvah Makers', belief: 'Jewish', theme: 'Love', members: 1800, type: 'Public', city: 'Brooklyn', country: 'USA', description: 'Acts of kindness rooted in tradition.', lastActivity: '25m ago', reflections: [] },
+    { id: 'je3', name: 'Tikkun Olam Network', belief: 'Jewish', theme: 'Purpose', members: 5600, type: 'Public', city: 'Online', country: 'Global', description: 'Repairing the world, one step at a time.', lastActivity: '12m ago', reflections: [] },
 ];
 
 // --- Spiritual Brain: Platform Identity ---
@@ -536,6 +612,14 @@ import { useStore } from '../store';
 
 // ... (existing helper functions and constants)
 
+export const isGhostWorkingHour = (): boolean => {
+    const now = new Date();
+    const hour = now.getHours();
+    // Ghost workers start at 7 AM. 
+    // They work throughout the day, let's say until 11 PM for natural fall-off.
+    return hour >= 7 && hour <= 23;
+};
+
 export const contentAgentService = {
     generateReflection: async (circleId: string, customBelief?: BeliefType, customTheme?: string): Promise<GhostReflection> => {
         const circle = LIFE_CIRCLES.find(c => c.id === circleId);
@@ -565,6 +649,8 @@ export const contentAgentService = {
             }
         }
 
+        const moderation = await ModeratorAgentService.scanContent(content);
+
         return {
             id: Math.random().toString(36).substr(2, 9),
             userName: user,
@@ -572,7 +658,9 @@ export const contentAgentService = {
             time: 'Just now',
             blessings: Math.floor(Math.random() * 50) + 5,
             theme: theme,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            isFlagged: !moderation.isSafe,
+            flagReason: moderation.reason
         };
     },
 
@@ -583,12 +671,23 @@ export const contentAgentService = {
     },
 
     initializeCircles: async () => {
-        // Keep initialization local/fast for now, or parallelize
-        // For performance, we might want to stick to templates for bulk/init
-        return LIFE_CIRCLES.map(circle => ({
+        const initialCircles = LIFE_CIRCLES.map(circle => ({
             ...circle,
-            reflections: [] // Start empty or use a separate "fill" function later to avoid massive Spiritual Intelligence calls on startup
+            reflections: [] as GhostReflection[]
         }));
+
+        // Give each circle some starting reflections if it's working hours
+        if (isGhostWorkingHour()) {
+            for (const circle of initialCircles) {
+                const reflectionCount = Math.floor(Math.random() * 3) + 2; // 2-4 starter reflections
+                for (let i = 0; i < reflectionCount; i++) {
+                    const reflection = await contentAgentService.generateReflection(circle.id, circle.belief, circle.theme);
+                    circle.reflections.push(reflection);
+                }
+            }
+        }
+
+        return initialCircles;
     },
 
     getDailyAdvice: async (username: string, belief: BeliefType, themes: string[], journalInput?: string): Promise<string> => {

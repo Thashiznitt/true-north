@@ -1068,8 +1068,8 @@ export const OnboardingScreen = () => {
                         style={[styles.securityCard, setupBiometrics && styles.securityCardActive]}
                         onPress={async () => {
                             if (!setupBiometrics) {
-                                // Mock activation on simulator
-                                if (Platform.OS === 'ios' && !Constants.isDevice) {
+                                // Mock activation on simulator ONLY if mock services are enabled
+                                if (env.useMockServices && !Constants.isDevice) {
                                     setLoading(true);
                                     setTimeout(() => {
                                         setLoading(false);
@@ -1185,13 +1185,6 @@ export const OnboardingScreen = () => {
                             </TouchableOpacity>
                         </View>
 
-                        <TouchableOpacity
-                            style={[styles.nextButton, (!locationCountry || !locationCity) && { opacity: 0.5, backgroundColor: theme.colors.border }]}
-                            onPress={nextStep}
-                            disabled={!locationCountry || !locationCity}
-                        >
-                            <Text style={styles.nextButtonText}>Continue</Text>
-                        </TouchableOpacity>
                     </View>
                 </FadeIn>
             </StepContainer>
@@ -1414,27 +1407,27 @@ export const OnboardingScreen = () => {
                 </FadeIn>
             </View>
 
-            {step !== 0 && step !== 4 && step !== 9 && step !== 10 && step !== 11 && (
+            {step !== 0 && step !== 4 && step !== 11 && (
                 <View style={styles.footer}>
                     <TouchableOpacity
                         style={[
                             styles.nextButton,
                             step === 5 && !email && { opacity: 0.5 },
                             step === 6 && password.length < 6 && { opacity: 0.5 },
-                            step === 7 && !username && { opacity: 0.5 }
+                            step === 7 && !username && { opacity: 0.5 },
+                            step === 10 && (!locationCountry || !locationCity) && { opacity: 0.5 }
                         ]}
                         // Disable if requirements not met
                         disabled={
                             (step === 5 && !email) ||
                             (step === 6 && password.length < 6) ||
                             (step === 7 && !username) ||
-                            step === 9 ||
-                            step === 10
+                            (step === 10 && (!locationCountry || !locationCity))
                         }
                         onPress={nextStep}
                     >
-                        <Text style={styles.nextButtonText}>{(step === 9 || step === 10) ? "" : "Continue"}</Text>
-                        {(step !== 9 && step !== 10) && <ArrowRight size={20} color={theme.colors.inverseText} />}
+                        <Text style={styles.nextButtonText}>Continue</Text>
+                        <ArrowRight size={20} color={theme.colors.inverseText} />
                     </TouchableOpacity>
                 </View>
             )}

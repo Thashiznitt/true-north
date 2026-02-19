@@ -13,6 +13,7 @@ import * as Linking from 'expo-linking';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { FadeIn } from '../../components/FadeIn';
 import { contentAgentService, LIFE_CIRCLES, GhostReflection } from '../../services/ContentAgentService';
+import { ModeratorAgentService } from '../../services/ModeratorAgentService';
 import { useStore, BeliefType, CircleEvent, Reflection, TicketTier } from '../../store';
 import { supabase } from '../../services/supabase';
 import { paymentService, PaymentMethod } from '../../services/PaymentService';
@@ -95,12 +96,13 @@ export const CircleDetailScreen = () => {
             id: r.id,
             user: r.userName || r.user,
             userId: r.userId || r.user || '',
-
             type: 'Reflection',
             content: r.content,
             image: r.image,
             blessings: r.blessings,
-            time: r.time
+            time: r.time,
+            isFlagged: r.isFlagged,
+            flagReason: r.flagReason
         }));
 
     const [isSharing, setIsSharing] = useState(false);
@@ -166,6 +168,16 @@ export const CircleDetailScreen = () => {
 
         if (paymentKeywords.some(regex => regex.test(newPostContent))) {
             Alert.alert("Fraud Protection", "True North is a sacred space for reflection. Financial requests or payment mentions are automatically flagged to protect our members.");
+            return;
+        }
+
+        const moderation = await ModeratorAgentService.scanContent(newPostContent, true);
+        if (!moderation.isSafe) {
+            Alert.alert(
+                "Sacred Space Policy",
+                `Our Spiritual Intelligence has flagged this content as ${moderation.flaggedCategory}. ${moderation.reason}. Please keep your reflections aligned with the sanctuary's mission.`,
+                [{ text: "I Understand" }]
+            );
             return;
         }
 
@@ -628,13 +640,20 @@ export const CircleDetailScreen = () => {
 
     const PostItem = React.memo(({ item, onBless, onReport, isAdminPost }: { item: any, onBless: () => void, onReport: () => void, isAdminPost: boolean }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         const userName = item.userName || item.user || 'Anonymous';
+        const isFlagged = item.isFlagged;
+
         return (
-            <View style={styles.postCard}>
+            <View style={[styles.postCard, isFlagged && styles.flaggedPost]}>
+                {isFlagged && (
+                    <View style={styles.flaggedHeader}>
+                        <Flag size={14} color={palette.error} />
+                        <Text style={styles.flaggedText}>This content is under review</Text>
+                    </View>
+                )}
                 <View style={styles.postHeader}>
                     <TouchableOpacity
                         style={styles.userInfo}
                         onPress={() => (navigation as { navigate: (s: string, p: object) => void }).navigate('UserProfile', {
-
                             userId: item.userId,
                             userName: userName
                         })}
@@ -657,20 +676,22 @@ export const CircleDetailScreen = () => {
                         <MoreVertical size={18} color={theme.colors.secondaryText} />
                     </TouchableOpacity>
                 </View>
-                <Text style={styles.postContent}>{item.content}</Text>
-                {item.image && (
+                <Text style={[styles.postContent, isFlagged && styles.flaggedContent]}>
+                    {isFlagged ? "Harmful content detected and hidden from view." : item.content}
+                </Text>
+                {item.image && !isFlagged && (
                     <Image source={{ uri: item.image }} style={styles.postImage} resizeMode="cover" />
                 )}
                 <View style={styles.postFooter}>
-                    <TouchableOpacity style={styles.blessButton} onPress={onBless}>
-                        <Heart size={18} color={palette.softGold} fill={palette.softGold} />
+                    <TouchableOpacity style={styles.blessButton} onPress={onBless} disabled={isFlagged}>
+                        <Heart size={18} color={isFlagged ? theme.colors.border : palette.softGold} fill={isFlagged ? 'transparent' : palette.softGold} />
                         <MotiView
                             key={item.blessings}
                             from={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ type: 'spring', damping: 10 }}
                         >
-                            <Text style={styles.blessCount}>{item.blessings} Blessings</Text>
+                            <Text style={[styles.blessCount, isFlagged && { color: theme.colors.border }]}>{item.blessings} Blessings</Text>
                         </MotiView>
                     </TouchableOpacity>
                 </View>
@@ -1469,5 +1490,30 @@ const styles = StyleSheet.create({
         fontFamily: theme.typography.sansBold,
         fontSize: 13,
         color: palette.softGold,
+    },
+    flaggedPost: {
+        borderColor: palette.error + '40',
+        backgroundColor: palette.error + '05',
+    },
+    flaggedHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: 12,
+        paddingBottom: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: palette.error + '20',
+    },
+    flaggedText: {
+        fontFamily: theme.typography.sansBold,
+        fontSize: 12,
+        color: palette.error,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    flaggedContent: {
+        color: theme.colors.secondaryText,
+        fontStyle: 'italic',
+        fontSize: 14,
     }
 });
