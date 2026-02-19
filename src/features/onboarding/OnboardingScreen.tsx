@@ -1230,6 +1230,7 @@ export const OnboardingScreen = () => {
                                             padding: 20, borderRadius: 24,
                                             backgroundColor: active ? palette.white : 'rgba(255,255,255,0.08)',
                                             borderWidth: 2, borderColor: active ? palette.softGold : 'rgba(255,255,255,0.1)',
+                                            width: '90%', alignSelf: 'center'
                                         }}
                                         onPress={() => setTier(tierId)}
                                     >
@@ -1272,6 +1273,7 @@ export const OnboardingScreen = () => {
                                             padding: 20, borderRadius: 24,
                                             backgroundColor: active ? palette.white : 'rgba(255,255,255,0.08)',
                                             borderWidth: 2, borderColor: active ? palette.softGold : 'rgba(255,255,255,0.1)',
+                                            width: '90%', alignSelf: 'center'
                                         }}
                                         onPress={() => setTier(t.id as any)}
                                     >
@@ -1311,6 +1313,7 @@ export const OnboardingScreen = () => {
                                 padding: 20, borderRadius: 24,
                                 backgroundColor: tier === 'free' ? palette.white : 'rgba(255,255,255,0.08)',
                                 borderWidth: 2, borderColor: tier === 'free' ? palette.softGold : 'rgba(255,255,255,0.1)',
+                                width: '90%', alignSelf: 'center'
                             }}
                             onPress={() => setTier('free')}
                         >
@@ -1333,11 +1336,7 @@ export const OnboardingScreen = () => {
                         </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity style={{ paddingVertical: 24, alignItems: 'center' }} onPress={finishOnboarding} disabled={isPurchasing}>
-                        <Text style={{ fontFamily: theme.typography.sansMedium, fontSize: 15, color: palette.ivory, opacity: 0.7, textDecorationLine: 'underline' }}>Maybe Later (Continue Free)</Text>
-                    </TouchableOpacity>
-
-                    <Text style={[styles.disclaimerText, { color: palette.ivory, opacity: 0.4, textAlign: 'center', marginBottom: 40 }]}>
+                    <Text style={[styles.disclaimerText, { color: palette.ivory, opacity: 0.4, textAlign: 'center', marginBottom: 40, marginTop: 24 }]}>
                         No commitment. Cancel anytime in settings.
                     </Text>
                 </ScrollView>
