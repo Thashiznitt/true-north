@@ -30,6 +30,7 @@ const CopyIcon = Copy;
 const AdviceIcon = MessageSquare;
 const CloseIcon = X;
 const GuideIcon = BookOpen;
+const WalkthroughIcon = Sparkles;
 
 
 const BACKGROUNDS = [
@@ -253,12 +254,20 @@ export const AffirmationScreen = () => {
                     />
                     <FadeIn delay={100} from="top" style={{ zIndex: 100, position: 'absolute', top: 0, left: 0, right: 0 }}>
                         <View style={[styles.headerOverlay, { top: insets.top + 10 }]}>
-                            <TouchableOpacity
-                                style={styles.guideButton}
-                                onPress={() => navigation.navigate('UserGuide')}
-                            >
-                                <GuideIcon color={palette.ivory} size={24} />
-                            </TouchableOpacity>
+                            <View style={styles.headerButtons}>
+                                <TouchableOpacity
+                                    style={styles.guideButton}
+                                    onPress={() => navigation.navigate('UserGuide')}
+                                >
+                                    <GuideIcon color={palette.ivory} size={24} />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.guideButton}
+                                    onPress={() => navigation.navigate('Walkthrough')}
+                                >
+                                    <WalkthroughIcon color={palette.softGold} size={24} />
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </FadeIn>
                 </ImageBackground>
@@ -372,6 +381,11 @@ const styles = StyleSheet.create({
     guideButton: {
         width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.15)',
         alignItems: 'center', justifyContent: 'center'
+    },
+    headerButtons: {
+        flexDirection: 'row',
+        gap: 12,
+        alignItems: 'center'
     }
 });
 
