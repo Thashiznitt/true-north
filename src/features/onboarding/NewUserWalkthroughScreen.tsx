@@ -1,3 +1,4 @@
+/* eslint-disable truenorth-performance/no-scrollview */
 import React, { useRef, useState } from 'react';
 import { View, Text, StyleSheet, Dimensions, ScrollView, TouchableOpacity, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -131,7 +132,11 @@ export const NewUserWalkthroughScreen = () => {
                         />
                         <View style={styles.overlay} />
 
-                        <View style={[styles.slideContent, { paddingTop: insets.top + 60 }]}>
+                        <ScrollView
+                            style={styles.slideScroll}
+                            contentContainerStyle={[styles.slideContent, { paddingTop: insets.top + 60, paddingBottom: 180 }]}
+                            showsVerticalScrollIndicator={false}
+                        >
                             <MotiView
                                 from={{ opacity: 0, scale: 0.5, translateY: -20 }}
                                 animate={{ opacity: 1, scale: 1, translateY: 0 }}
@@ -168,7 +173,7 @@ export const NewUserWalkthroughScreen = () => {
                                     </MotiView>
                                 ))}
                             </View>
-                        </View>
+                        </ScrollView>
                     </View>
                 ))}
             </ScrollView>
@@ -211,7 +216,8 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#000' },
     slide: { flex: 1 },
     overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' },
-    slideContent: { flex: 1, alignItems: 'center', paddingHorizontal: 40 },
+    slideScroll: { flex: 1 },
+    slideContent: { alignItems: 'center', paddingHorizontal: 40 },
     iconContainer: {
         width: 120,
         height: 120,

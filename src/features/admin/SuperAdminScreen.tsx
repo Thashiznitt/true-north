@@ -6,8 +6,32 @@ import { theme, palette } from '../../theme';
 import { ChevronLeft, Shield, Users, Flag, Cpu, Search, MoreVertical, DollarSign, TrendingUp, Megaphone, Plus, ExternalLink, Newspaper } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { SpiritualIntelligenceService, AIProvider } from '../../services/SpiritualIntelligenceService';
+import { supabase } from '../../services/supabase';
 
 type Tab = 'content' | 'users' | 'spirit' | 'sales' | 'news';
+
+interface SalesData {
+    revenue: { total: string; monthly: string; growth: string };
+    subscriptions: {
+        active: number;
+        breakdown: {
+            free: number;
+            compass: number;
+            true_north: number;
+            zenith: number;
+        };
+        trials: number;
+        cancelled: number;
+    };
+    transactions: Array<{
+        id: string;
+        user: string;
+        amount: string;
+        tier: string;
+        date: string;
+        status: string;
+    }>;
+}
 
 const MOCK_FLAGS = [
     { id: '1', type: 'Reflection', content: 'Trying to sell crypto here...', user: 'CryptoKing', time: '2h ago', status: 'pending' },
@@ -46,6 +70,17 @@ export const SuperAdminScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const [activeTab, setActiveTab] = useState<Tab>('content');
+    const [isLoadingSales, setIsLoadingSales] = useState(false);
+    const [salesData, setSalesData] = useState<SalesData>({
+        revenue: { total: '$0', monthly: '$0', growth: '0%' },
+        subscriptions: {
+            active: 0,
+            breakdown: { free: 0, compass: 0, true_north: 0, zenith: 0 },
+            trials: 0,
+            cancelled: 0
+        },
+        transactions: []
+    });
 
     // Spiritual Guidance Settings State
     const [aiModel, setAiModel] = useState('Compass v2 (Stable)');
@@ -60,8 +95,90 @@ export const SuperAdminScreen = () => {
     useFocusEffect(
         React.useCallback(() => {
             loadSettings();
+            fetchSalesData();
         }, [])
     );
+
+    const fetchSalesData = async () => {
+        setIsLoadingSales(true);
+        try {
+            // 1. Fetch User Tiers
+            const { data: users, error: usersError } = await supabase
+                .from('users')
+                .select('subscription_tier');
+
+            if (usersError) throw usersError;
+
+            const breakdown = { free: 0, compass: 0, true_north: 0, zenith: 0 };
+            users?.forEach(u => {
+                const tier = (u.subscription_tier || 'free') as keyof typeof breakdown;
+                if (breakdown[tier] !== undefined) breakdown[tier]++;
+                else breakdown.free++;
+            });
+
+            // 2. Calculate Revenue (Estimates based on active tiers)
+            const monthlyRevenue = (breakdown.compass * 6.99) + (breakdown.true_north * 12.99) + (breakdown.zenith * 19.99);
+
+            // 3. Fetch Ticket Transactions (Recent ones)
+            const { data: tickets, error: ticketsError } = await supabase
+                .from('tickets')
+                .select(`
+                    id,
+                    purchase_date,
+                    status,
+                    event_id,
+                    user_id,
+                    events (
+                        title,
+                        price,
+                        currency
+                    ),
+                    users (
+                        username
+                    )
+                `)
+                .order('purchase_date', { ascending: false })
+                .limit(10);
+
+            if (ticketsError) throw ticketsError;
+
+            // Calculate total ticket revenue (rough estimate from all time)
+            const { data: allTickets, error: allTicketsError } = await supabase
+                .from('tickets')
+                .select('events(price)');
+
+            if (allTicketsError) throw allTicketsError;
+            const ticketRevenue = (allTickets as any[])?.reduce((sum, t) => sum + (t.events?.price || 0), 0) || 0;
+
+            const transactions = (tickets as any[])?.map((t) => ({
+                id: t.id,
+                user: t.users?.username || 'Unknown',
+                amount: `${t.events?.price || 0} ${t.events?.currency || 'USD'}`,
+                tier: 'TICKET',
+                date: new Date(t.purchase_date).toLocaleDateString(),
+                status: t.status === 'valid' ? 'Success' : 'Used'
+            })) || [];
+
+            setSalesData({
+                revenue: {
+                    total: `$${(ticketRevenue + (monthlyRevenue * 12)).toFixed(2)}`, // Rough total est
+                    monthly: `$${monthlyRevenue.toFixed(2)}`,
+                    growth: '+0%' // Static for now unless we store history
+                },
+                subscriptions: {
+                    active: breakdown.compass + breakdown.true_north + breakdown.zenith,
+                    breakdown,
+                    trials: 0, // Need trials table if we track them
+                    cancelled: 0
+                },
+                transactions
+            });
+        } catch (error) {
+            console.error("Error fetching sales data:", error);
+        } finally {
+            setIsLoadingSales(false);
+        }
+    };
 
     const loadSettings = async () => {
         const provider = await SpiritualIntelligenceService.getProvider();
@@ -323,31 +440,31 @@ export const SuperAdminScreen = () => {
         <ScrollView style={styles.tabContent}>
             <View style={styles.statRow}>
                 <View style={[styles.statCard, { borderColor: palette.softGold }]}>
-                    <Text style={[styles.statNumber, { color: palette.softGold }]}>{MOCK_SALES.revenue.total}</Text>
-                    <Text style={styles.statLabel}>Total Revenue</Text>
+                    <Text style={[styles.statNumber, { color: palette.softGold }]}>{salesData.revenue.total}</Text>
+                    <Text style={styles.statLabel}>Est. Total Value</Text>
                 </View>
                 <View style={styles.statCard}>
-                    <Text style={styles.statNumber}>{MOCK_SALES.revenue.monthly}</Text>
-                    <Text style={styles.statLabel}>This Month</Text>
+                    <Text style={styles.statNumber}>{salesData.revenue.monthly}</Text>
+                    <Text style={styles.statLabel}>Est. MRR</Text>
                 </View>
             </View>
 
             <View style={styles.sectionCard}>
                 <View style={styles.cardHeader}>
                     <TrendingUp size={20} color={theme.colors.text} />
-                    <Text style={styles.cardTitle}>Tier Breakdown</Text>
+                    <Text style={styles.cardTitle}>Subscription Tiers</Text>
                 </View>
                 <View style={styles.tierStats}>
                     <View style={styles.tierStatItem}>
-                        <Text style={styles.tierStatValue}>{MOCK_SALES.subscriptions.breakdown.compass}</Text>
+                        <Text style={styles.tierStatValue}>{salesData.subscriptions.breakdown.compass}</Text>
                         <Text style={styles.tierStatLabel}>Compass</Text>
                     </View>
                     <View style={styles.tierStatItem}>
-                        <Text style={styles.tierStatValue}>{MOCK_SALES.subscriptions.breakdown.true_north}</Text>
+                        <Text style={styles.tierStatValue}>{salesData.subscriptions.breakdown.true_north}</Text>
                         <Text style={styles.tierStatLabel}>True North</Text>
                     </View>
                     <View style={styles.tierStatItem}>
-                        <Text style={styles.tierStatValue}>{MOCK_SALES.subscriptions.breakdown.zenith}</Text>
+                        <Text style={styles.tierStatValue}>{salesData.subscriptions.breakdown.zenith}</Text>
                         <Text style={styles.tierStatLabel}>Zenith</Text>
                     </View>
                 </View>
@@ -360,24 +477,29 @@ export const SuperAdminScreen = () => {
                 </View>
                 <View style={styles.healthStats}>
                     <View style={styles.healthItem}>
-                        <Text style={styles.healthValue}>{MOCK_SALES.subscriptions.active}</Text>
+                        <Text style={styles.healthValue}>{salesData.subscriptions.active}</Text>
                         <Text style={styles.healthLabel}>Total Active</Text>
                     </View>
                     <View style={styles.divider} />
                     <View style={styles.healthItem}>
-                        <Text style={styles.healthValue}>{MOCK_SALES.subscriptions.trials}</Text>
-                        <Text style={styles.healthLabel}>Trials</Text>
+                        <Text style={styles.healthValue}>{salesData.subscriptions.breakdown.free}</Text>
+                        <Text style={styles.healthLabel}>Free Users</Text>
                     </View>
                     <View style={styles.divider} />
                     <View style={styles.healthItem}>
-                        <Text style={[styles.healthValue, { color: '#E57373' }]}>{MOCK_SALES.subscriptions.cancelled}</Text>
+                        <Text style={[styles.healthValue, { color: '#E57373' }]}>{salesData.subscriptions.cancelled}</Text>
                         <Text style={styles.healthLabel}>Churned</Text>
                     </View>
                 </View>
             </View>
 
-            <Text style={[styles.sectionTitle, { marginTop: theme.spacing.xl }]}>Recent Transactions</Text>
-            {MOCK_SALES.transactions.map(tx => (
+            <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Recent Asset Sales</Text>
+                <TouchableOpacity onPress={fetchSalesData}>
+                    <Cpu size={18} color={palette.softGold} />
+                </TouchableOpacity>
+            </View>
+            {salesData.transactions.length > 0 ? salesData.transactions.map(tx => (
                 <View key={tx.id} style={styles.userCard}>
                     <View style={styles.userInfo}>
                         <View style={[styles.avatar, { backgroundColor: palette.softGold + '20' }]}>
@@ -394,7 +516,11 @@ export const SuperAdminScreen = () => {
                         <Text style={[styles.userEmail, { color: tx.status === 'Success' ? '#137333' : '#C5221F' }]}>{tx.status}</Text>
                     </View>
                 </View>
-            ))}
+            )) : (
+                <View style={styles.statCard}>
+                    <Text style={styles.userEmail}>No recent transactions found.</Text>
+                </View>
+            )}
         </ScrollView>
     );
 
