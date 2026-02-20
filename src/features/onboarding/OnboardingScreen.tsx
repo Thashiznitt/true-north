@@ -1263,7 +1263,9 @@ export const OnboardingScreen = () => {
                                             </View>
                                             <View style={{ alignItems: 'flex-end' }}>
                                                 <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 22, color: active ? theme.colors.text : palette.ivory }}>{product.priceString}</Text>
-                                                <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: active ? theme.colors.secondaryText : palette.softGold, opacity: 0.8 }}>/ month</Text>
+                                                <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: active ? theme.colors.secondaryText : palette.softGold, opacity: 0.8 }}>
+                                                    {pkg.packageType.toLowerCase().includes('annual') ? '/ year' : '/ month'}
+                                                </Text>
                                             </View>
                                         </View>
 
