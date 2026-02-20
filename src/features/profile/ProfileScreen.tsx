@@ -344,6 +344,11 @@ export const ProfileScreen = () => {
                         onPress={() => navigation.navigate('HelpCenter')}
                     />
                     <MenuItem
+                        icon={Sparkles}
+                        label="Play Walkthrough"
+                        onPress={() => navigation.navigate('Walkthrough')}
+                    />
+                    <MenuItem
                         icon={Shield}
                         label="Privacy Policy"
                         onPress={() => navigation.navigate('PrivacyPolicy')}

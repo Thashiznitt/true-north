@@ -26,6 +26,7 @@ import { SubscriptionScreen } from '../features/profile/SubscriptionScreen';
 import { CreateCircleScreen } from '../features/community/CreateCircleScreen';
 import { SuperAdminDashboard } from '../features/admin/SuperAdminDashboard';
 import { AskNurScreen } from '../features/nur/AskNurScreen';
+import { NewUserWalkthroughScreen } from '../features/onboarding/NewUserWalkthroughScreen';
 import { notificationService } from '../services/notifications';
 import { TermsOfServiceScreen } from '../features/profile/TermsOfServiceScreen';
 import { NotificationSettingsScreen } from '../features/profile/NotificationSettingsScreen';
@@ -239,6 +240,7 @@ export const RootNavigator = () => {
                         <Stack.Screen name="HelpCenter" component={HelpCenterScreen} />
                         <Stack.Screen name="UserProfile" component={UserProfileScreen} />
                         <Stack.Screen name="TicketScanner" component={TicketScannerScreen} />
+                        <Stack.Screen name="Walkthrough" component={NewUserWalkthroughScreen} />
                     </Stack.Group>
 
                 )}
