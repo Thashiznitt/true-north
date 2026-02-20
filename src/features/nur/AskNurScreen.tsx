@@ -29,7 +29,61 @@ export const AskNurScreen = () => {
     const isSubscriber = subscriptionTier === 'true_north' || subscriptionTier === 'zenith';
 
     if (!isSubscriber) {
-        return <SubscriptionScreen />;
+        return (
+            <View style={styles.container}>
+                <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <ChevronLeft size={28} color={theme.colors.text} />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Ask Nur</Text>
+                    <View style={{ width: 40 }} />
+                </View>
+
+                <View style={styles.lockedContainer}>
+                    <MotiView
+                        from={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ type: 'timing', duration: 1000 }}
+                        style={styles.lockedIconContainer}
+                    >
+                        <Lock size={40} color={palette.softGold} />
+                        <View style={styles.lockedSparkle}>
+                            <Sparkles size={16} color={palette.softGold} />
+                        </View>
+                    </MotiView>
+
+                    <Text style={styles.lockedTitle}>Premium Access Required</Text>
+                    <Text style={styles.lockedSubtitle}>
+                        Ask Nur is a sacred spiritual companion reserved for our True North and Zenith travelers.
+                    </Text>
+
+                    <View style={styles.lockedBenefits}>
+                        <View style={styles.benefitItem}>
+                            <Sparkles size={18} color={palette.softGold} />
+                            <Text style={styles.benefitItemText}>Personalized Spiritual Guidance</Text>
+                        </View>
+                        <View style={styles.benefitItem}>
+                            <Sparkles size={18} color={palette.softGold} />
+                            <Text style={styles.benefitItemText}>Daily Reality Checks & Alignment</Text>
+                        </View>
+                        <View style={styles.benefitItem}>
+                            <Sparkles size={18} color={palette.softGold} />
+                            <Text style={styles.benefitItemText}>AI-Powered Community Analysis</Text>
+                        </View>
+                    </View>
+
+                    <TouchableOpacity
+                        style={styles.unlockButton}
+                        onPress={() => navigation.navigate('Subscription')}
+                    >
+                        <Text style={styles.unlockButtonText}>Join the Journey</Text>
+                        <ArrowRight size={20} color={palette.charcoal} />
+                    </TouchableOpacity>
+
+                    <Text style={styles.lockedFooter}>Unlock your full spiritual potential today.</Text>
+                </View>
+            </View>
+        );
     }
 
     // Daily Reset & Greeting Logic
@@ -287,18 +341,18 @@ export const AskNurScreen = () => {
                     <Text style={styles.introTitle}>Salam, {username || 'Traveler'}</Text>
                     <Text style={styles.introSubtitle}>
                         I am Nur, your spiritual companion.{"\n"}
-                        I'm here to listen, reflect, and help you align with your True North.
+                        I&apos;m here to listen, reflect, and help you align with your True North.
                     </Text>
 
                     <View style={styles.suggestionContainer}>
                         <TouchableOpacity style={styles.suggestionButton} onPress={() => handleSuggestion("I feel overwhelmed today.")}>
-                            <Text style={styles.suggestionText}>"I feel overwhelmed today."</Text>
+                            <Text style={styles.suggestionText}>&quot;I feel overwhelmed today.&quot;</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.suggestionButton} onPress={() => handleSuggestion("Help me plan my spiritual goals.")}>
-                            <Text style={styles.suggestionText}>"Help me plan my spiritual goals."</Text>
+                            <Text style={styles.suggestionText}>&quot;Help me plan my spiritual goals.&quot;</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.suggestionButton} onPress={() => handleSuggestion("Give me a reality check on my habits.")}>
-                            <Text style={styles.suggestionText}>"Give me a reality check."</Text>
+                            <Text style={styles.suggestionText}>&quot;Give me a reality check.&quot;</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -530,5 +584,94 @@ const styles = StyleSheet.create({
         fontFamily: theme.typography.sansBold,
         fontSize: 12,
         color: palette.softGold
+    },
+    // Locked Gating Styles
+    lockedContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 40,
+        backgroundColor: theme.colors.background
+    },
+    lockedIconContainer: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: palette.softGold + '15',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 32,
+        position: 'relative'
+    },
+    lockedSparkle: {
+        position: 'absolute',
+        top: -10,
+        right: -10,
+        width: 32,
+        height: 32,
+        backgroundColor: theme.colors.surface,
+        borderRadius: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: theme.colors.border
+    },
+    lockedTitle: {
+        fontFamily: theme.typography.serifBold,
+        fontSize: 26,
+        color: theme.colors.text,
+        marginBottom: 16,
+        textAlign: 'center'
+    },
+    lockedSubtitle: {
+        fontFamily: theme.typography.sans,
+        fontSize: 16,
+        color: theme.colors.secondaryText,
+        textAlign: 'center',
+        lineHeight: 24,
+        marginBottom: 40
+    },
+    lockedBenefits: {
+        width: '100%',
+        marginBottom: 48,
+        gap: 16
+    },
+    benefitItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12
+    },
+    benefitItemText: {
+        fontFamily: theme.typography.sansMedium,
+        fontSize: 15,
+        color: theme.colors.text
+    },
+    unlockButton: {
+        backgroundColor: palette.softGold,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 18,
+        paddingHorizontal: 32,
+        borderRadius: 30,
+        width: '100%',
+        gap: 10,
+        shadowColor: palette.softGold,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        elevation: 4
+    },
+    unlockButtonText: {
+        fontFamily: theme.typography.sansBold,
+        fontSize: 18,
+        color: palette.charcoal
+    },
+    lockedFooter: {
+        fontFamily: theme.typography.sans,
+        fontSize: 13,
+        color: theme.colors.secondaryText,
+        marginTop: 24,
+        opacity: 0.6
     }
 });
