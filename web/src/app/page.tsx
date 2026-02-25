@@ -20,6 +20,22 @@ import Link from "next/link";
 import Image from "next/image";
 
 export default function LandingPage() {
+  const [storeUrl, setStoreUrl] = React.useState("https://apps.apple.com/app/true-north/id6741755850");
+
+  React.useEffect(() => {
+    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+    if (/android/i.test(userAgent)) {
+      setStoreUrl("https://play.google.com/store/apps/details?id=com.truenorth.app"); // Placeholder for Play Store
+    }
+  }, []);
+
+  const scrollToFeatures = () => {
+    const featuresSection = document.getElementById('features');
+    if (featuresSection) {
+      featuresSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 font-sans">
       {/* Navigation */}
@@ -42,9 +58,11 @@ export default function LandingPage() {
             <Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-primary transition-colors">Terms</Link>
           </div>
-          <Button className="rounded-full px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/20">
-            Download
-          </Button>
+          <a href={storeUrl} target="_blank" rel="noopener noreferrer">
+            <Button className="rounded-full px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/20">
+              Download
+            </Button>
+          </a>
         </div>
       </nav>
 
@@ -73,10 +91,12 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-24">
-              <Button size="lg" className="h-14 px-10 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg font-bold w-full sm:w-auto shadow-xl shadow-primary/20">
-                <Download className="mr-2 w-5 h-5" /> Get on App Store
-              </Button>
-              <Button size="lg" variant="outline" className="h-14 px-10 rounded-full border-black/10 hover:bg-black/5 text-lg font-medium w-full sm:w-auto">
+              <a href={storeUrl} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                <Button size="lg" className="h-14 px-10 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg font-bold w-full shadow-xl shadow-primary/20">
+                  <Download className="mr-2 w-5 h-5" /> Get the App
+                </Button>
+              </a>
+              <Button onClick={scrollToFeatures} size="lg" variant="outline" className="h-14 px-10 rounded-full border-black/10 hover:bg-black/5 text-lg font-medium w-full sm:w-auto">
                 Explore Features
               </Button>
             </div>
@@ -153,9 +173,11 @@ export default function LandingPage() {
           <p className="text-lg text-muted-foreground mb-12 opacity-80 decoration-primary underline-offset-4 font-serif italic">
             "Your journey is sacred. Your sanctuary is here."
           </p>
-          <Button size="lg" className="h-16 px-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground text-xl font-bold shadow-2xl shadow-primary/20">
-            Download True North
-          </Button>
+          <a href={storeUrl} target="_blank" rel="noopener noreferrer">
+            <Button size="lg" className="h-16 px-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground text-xl font-bold shadow-2xl shadow-primary/20">
+              Download True North
+            </Button>
+          </a>
         </div>
       </section>
 
@@ -191,7 +213,6 @@ export default function LandingPage() {
               <h4 className="font-bold text-[10px] uppercase tracking-[0.3em] mb-8 text-foreground/40">Connect</h4>
               <ul className="space-y-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                 <li><a href="#" className="hover:text-primary transition-colors">Instagram</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors flex items-center gap-2"><Github className="w-4 h-4" /> GitHub</a></li>
               </ul>
             </div>
           </div>
