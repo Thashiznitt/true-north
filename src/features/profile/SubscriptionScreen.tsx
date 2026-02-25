@@ -11,6 +11,7 @@ import { PurchasesOffering } from 'react-native-purchases';
 import { env } from '../../services/env';
 import { FadeIn } from '../../components/FadeIn';
 import { Popup } from '../../components/Popup';
+import { SubscriptionLegal } from '../../components/SubscriptionLegal';
 
 type Tier = 'free' | 'compass' | 'true_north' | 'zenith';
 
@@ -222,6 +223,7 @@ export const SubscriptionScreen = () => {
                     <>
                         {renderTierList()}
                         <Text style={styles.footerNote}>Secured and encrypted. Cancel anytime.</Text>
+                        <SubscriptionLegal />
                     </>
                 }
             />
@@ -269,8 +271,9 @@ export const SubscriptionScreen = () => {
                     </View>
                     <Text style={styles.successTitle}>Vision Aligned</Text>
                     <Text style={styles.successDesc}>
-                        Your path is now set to <Text style={{ fontFamily: theme.typography.sansBold, color: palette.softGold }}>{selectedTier.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</Text>.
-                        May your journey be filled with divine light and clarity.
+                        Your path is now set to <Text style={{ fontFamily: theme.typography.sansBold, color: palette.softGold }}>{selectedTier.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</Text>.{'\n'}
+                        May your journey be filled with divine light and clarity.{'\n\n'}
+                        <Text style={{ fontFamily: theme.typography.sansMedium, color: palette.softGold }}>✨ You can now select multiple Daily Reflection themes!</Text>
                     </Text>
                     <TouchableOpacity
                         style={styles.praiseButton}

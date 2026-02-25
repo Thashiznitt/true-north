@@ -108,7 +108,7 @@ export const AskNurScreen = () => {
                     // In a real scenario, DailyRitualService.getDailyAffirmation() would return the *current* one.
                     const dailyAffirmation = "Faith is taking the first step even when you don't see the whole staircase.";
 
-                    const greetingText = NurAIService.getDailyGreeting(username, dailyAffirmation);
+                    const greetingText = NurAIService.getDailyGreeting(username, beliefType, dailyAffirmation);
 
                     const initialGreeting: ChatMessage = {
                         id: 'init-' + Date.now(),
@@ -123,7 +123,7 @@ export const AskNurScreen = () => {
                 }
             } else if (nurChats.length === 0) {
                 // Fallback if empty but same day (unlikely unless manually cleared)
-                const greetingText = NurAIService.getDailyGreeting(username);
+                const greetingText = NurAIService.getDailyGreeting(username, beliefType, undefined);
                 const initialGreeting: ChatMessage = {
                     id: 'init-' + Date.now(),
                     role: 'assistant',

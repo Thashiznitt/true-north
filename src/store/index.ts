@@ -193,9 +193,11 @@ interface UserState {
     communityNews: CommunityNews[];
     nurChats: ChatMessage[];
     isSessionUnlocked: boolean;
+    hasSeenUserGuide: boolean;
 
     setOnboarded: (value: boolean) => Promise<void>;
     setOnboardingStep: (step: number) => void;
+    setHasSeenUserGuide: (value: boolean) => void;
     setSubscriptionTier: (tier: 'free' | 'compass' | 'true_north' | 'zenith') => Promise<void>;
     setUsername: (username: string) => void;
     setEmail: (email: string | null) => void;
@@ -312,11 +314,13 @@ export const useStore = create<UserState>()(
             communityNews: [],
             nurChats: [],
             isSessionUnlocked: false,
+            hasSeenUserGuide: false,
             setOnboarded: async (isOnboarded: boolean) => {
                 set({ isOnboarded });
                 if (isOnboarded) set({ onboardingStep: 0 }); // Reset on completion
             },
             setOnboardingStep: (onboardingStep: number) => set({ onboardingStep }),
+            setHasSeenUserGuide: (hasSeenUserGuide: boolean) => set({ hasSeenUserGuide }),
             reset: () => {
                 set({
                     isOnboarded: false,
@@ -359,6 +363,7 @@ export const useStore = create<UserState>()(
                     },
                     communityNews: [],
                     nurChats: [],
+                    hasSeenUserGuide: false,
                 });
 
             },

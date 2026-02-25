@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, TextInput, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { useStore } from '../../store';
@@ -11,9 +11,10 @@ import { Typography } from '../../components/Typography';
 
 export const LoginScreen = () => {
     const insets = useSafeAreaInsets();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const navigation = useNavigation<any>();
-    const { reset } = useStore();
+    const { reset, beliefType } = useStore();
+    const sanctuaryName = ['Catholic', 'Christian', 'Protestant'].includes(beliefType || '') ? 'Sanctuary' : 'Sacred Space';
+
     const [loading, setLoading] = useState(false);
     const [mode, setMode] = useState<'options' | 'email'>('options');
     const [email, setEmail] = useState('');
@@ -22,7 +23,7 @@ export const LoginScreen = () => {
     const handleLogin = async (provider: AuthProvider) => {
         setLoading(true);
         try {
-            await authService.login(provider);
+            await authService.login(provider, provider === 'Email' ? email : undefined, provider === 'Email' ? password : undefined);
 
             // Allow state to update
             setTimeout(() => {
@@ -37,7 +38,7 @@ export const LoginScreen = () => {
             }, 100);
 
         } catch (error) {
-            Alert.alert("Login Failed", "Unable to access the sanctuary at this time.");
+            Alert.alert("Login Failed", `Unable to access the ${sanctuaryName.toLowerCase()} at this time. Please check your credentials.`);
         } finally {
             setLoading(false);
         }
@@ -76,14 +77,14 @@ export const LoginScreen = () => {
                             <ShieldCheck size={40} color={palette.softGold} />
                         </View>
                         <Typography variant="header" align="center" style={{ marginBottom: 12 }}>Welcome Back</Typography>
-                        <Typography variant="body" align="center" color={theme.colors.secondaryText}>Enter your sanctuary to continue your journey of reflection.</Typography>
+                        <Typography variant="body" align="center" color={theme.colors.secondaryText}>Enter your {sanctuaryName.toLowerCase()} to continue your journey of reflection.</Typography>
                     </View>
                 </FadeIn>
 
                 {loading ? (
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color={palette.softGold} />
-                        <Text style={styles.loadingText}>Opening Sanctuary...</Text>
+                        <Text style={styles.loadingText}>Opening {sanctuaryName}...</Text>
                     </View>
                 ) : mode === 'options' ? (
                     <FadeIn delay={300} from="bottom">
@@ -139,7 +140,7 @@ export const LoginScreen = () => {
                         </View>
 
                         <TouchableOpacity style={styles.loginButton} onPress={() => handleLogin('Email')}>
-                            <Text style={styles.loginButtonText}>Enter Sanctuary</Text>
+                            <Text style={styles.loginButtonText}>Enter {sanctuaryName}</Text>
                             <ArrowRight size={20} color={palette.ivory} />
                         </TouchableOpacity>
                     </KeyboardAvoidingView>
@@ -151,6 +152,17 @@ export const LoginScreen = () => {
                     <TouchableOpacity onPress={handleRestartOnboarding}>
                         <Text style={styles.restartText}>Need to start over? <Text style={styles.restartLink}>Restart Onboarding</Text></Text>
                     </TouchableOpacity>
+
+                    <View style={styles.legalFooter}>
+                        <Text style={styles.legalText}>By continuing, you agree to our </Text>
+                        <TouchableOpacity onPress={() => Linking.openURL('https://truenorth.you/terms')}>
+                            <Text style={styles.legalLink}>Terms of Service</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.legalText}> and </Text>
+                        <TouchableOpacity onPress={() => Linking.openURL('https://truenorth.you/privacy')}>
+                            <Text style={styles.legalLink}>Privacy Policy</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </FadeIn>
         </View>
@@ -199,5 +211,8 @@ const styles = StyleSheet.create({
     loginButtonText: { color: palette.ivory, fontFamily: theme.typography.sansBold, fontSize: 17 },
     footer: { paddingVertical: 24, alignItems: 'center' },
     restartText: { fontFamily: theme.typography.sans, fontSize: 14, color: theme.colors.secondaryText },
-    restartLink: { color: palette.softGold, fontFamily: theme.typography.sansBold }
+    restartLink: { color: palette.softGold, fontFamily: theme.typography.sansBold },
+    legalFooter: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 16, paddingHorizontal: 20 },
+    legalText: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText },
+    legalLink: { fontFamily: theme.typography.sansMedium, fontSize: 12, color: palette.softGold, textDecorationLine: 'underline' }
 });

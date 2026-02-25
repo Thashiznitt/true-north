@@ -11,6 +11,9 @@ True North is a React Native application built with the Expo SDK 52.
 - **Styling**: Vanilla CSS-in-JS (Theme-based)
 - **Animations**: React Native Reanimated + Moti
 - **Icons**: Lucide React Native
+- **Backend API**: Node.js (Express)
+- **Caching**: Redis
+- **Infra**: Docker + Docker Compose
 
 ## Project Structure
 
@@ -39,6 +42,7 @@ The `ContentAgentService` simulates active communities and reflections for a "li
 - **Database**: Supabase integration for user data, community posts, and multi-tier events with relational ticket mapping.
 - **Ticketing**: Functional QR code generation using `react-native-qrcode-svg` for secure, verifiable community access.
 - **ORM**: Prisma schema is defined and ready for client generation.
+- **Backend Infrastructure**: Optimized containerized setup using Docker Compose, integrating Node.js for API logic and Redis for AI reflection pre-caching. See [BACKEND_DEPLOYMENT.md](file:///Users/rn/Github/true-north/docs/BACKEND_DEPLOYMENT.md) for details.
 
 ### Admin Module
 A dedicated `src/features/admin` module encapsulates the Superadmin logic, ensuring separation of concerns from the main user flow.

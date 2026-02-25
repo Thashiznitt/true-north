@@ -114,9 +114,12 @@ export const SpiritualIntelligenceService = {
                     return "No response from Spirit Guide.";
                 }
 
-            } catch (error) {
-                console.error("Gemini Generation Error:", error);
-                throw error;
+            } catch (error: any) {
+                console.warn("Gemini Generation Error:", error.message);
+                if (error.message?.includes('429')) {
+                    return "The sanctuary is currently experiencing a high volume of seekers. Please pause, breathe, and reflect on this moment. Your guide will be available shortly.";
+                }
+                return "I am currently taking a moment of silence. Please try again soon.";
             }
         }
 

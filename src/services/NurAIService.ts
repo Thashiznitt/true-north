@@ -99,8 +99,23 @@ STRICT TOPIC RESTRICTIONS:
     },
 
     // 4. Daily Greeting Generator
-    getDailyGreeting: (username: string, affirmation?: string): string => {
-        const greeting = `Salam, ${username || 'Traveler'}.`;
+    getDailyGreeting: (username: string, belief?: BeliefType | null, affirmation?: string): string => {
+        let greeting = `Salam, ${username || 'Traveler'}.`;
+
+        if (belief === 'Christian' || belief === 'Catholic' || belief === 'Protestant') {
+            greeting = `Peace be with you, ${username || 'Traveler'}.`;
+        } else if (belief === 'Jewish') {
+            greeting = `Shalom, ${username || 'Traveler'}.`;
+        } else if (belief === 'Hindu') {
+            greeting = `Namaste, ${username || 'Traveler'}.`;
+        } else if (belief === 'Buddhist') {
+            greeting = `Peace and mindful blessings, ${username || 'Traveler'}.`;
+        } else if (belief === 'Sikh') {
+            greeting = `Sat Sri Akal, ${username || 'Traveler'}.`;
+        } else if (belief === 'Spiritual' || belief === 'Exploring') {
+            greeting = `Warm greetings, ${username || 'Seeker'}.`;
+        }
+
         if (affirmation) {
             return `${greeting}\n\nToday's wisdom was: "${affirmation}"\n\nHow does this resonance with your heart right now?`;
         }

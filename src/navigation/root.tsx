@@ -171,12 +171,7 @@ export const RootNavigator = () => {
             const data = response.notification.request.content.data;
 
             if (data?.screen === 'Journal') {
-                const userTier = useStore.getState().subscriptionTier;
-                if (userTier !== 'free') {
-                    navigate('Journal');
-                } else {
-                    navigate('Subscription');
-                }
+                navigate('Journal');
             } else if (data?.screen === 'Affirmation') {
                 navigate('Affirmation');
             } else if (data?.screen === 'AskNur') {
@@ -191,6 +186,14 @@ export const RootNavigator = () => {
         if (isOnboarded) {
             notificationService.scheduleEveningGratitude();
             notificationService.scheduleNurEventReminder();
+
+            // Check if they need to see the walkthrough
+            const store = useStore.getState();
+            if (!store.hasSeenUserGuide) {
+                store.setHasSeenUserGuide(true);
+                // Slight timeout ensures navigation is ready after the stack switch
+                setTimeout(() => navigate('Walkthrough'), 500);
+            }
         }
     }, [isOnboarded]);
 
@@ -232,8 +235,6 @@ export const RootNavigator = () => {
                             component={SuperAdminDashboard}
                             options={{ headerShown: false }}
                         />
-                        <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
-                        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
                         <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
 
                         <Stack.Screen name="PrivacySettings" component={PrivacySettingsScreen} />
@@ -242,13 +243,18 @@ export const RootNavigator = () => {
                         <Stack.Screen name="TicketScanner" component={TicketScannerScreen} />
                         <Stack.Screen name="Walkthrough" component={NewUserWalkthroughScreen} />
                     </Stack.Group>
-
                 )}
-                <Stack.Screen
-                    name="UserGuide"
-                    component={UserGuideScreen}
-                    options={{ headerShown: false }}
-                />
+
+                {/* Common Screens accessible anywhere */}
+                <Stack.Group screenOptions={{ presentation: 'card' }}>
+                    <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
+                    <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+                    <Stack.Screen
+                        name="UserGuide"
+                        component={UserGuideScreen}
+                        options={{ headerShown: false }}
+                    />
+                </Stack.Group>
             </Stack.Navigator>
             {isOnboarded && isLoggedIn && <DailyWisdomModal />}
         </>

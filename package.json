@@ -15,7 +15,8 @@
   "lint-staged": {
     "*.{ts,tsx}": [
       "eslint --fix",
-      "bash -c 'tsc --noEmit'"
+      "bash -c 'tsc --noEmit'",
+      "./scripts/check-subscription-compliance.sh"
     ]
   },
   "dependencies": {
@@ -31,6 +32,8 @@
     "@supabase/supabase-js": "^2.95.3",
     "@tanstack/react-query": "^5.0.0",
     "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
     "expo": "^54.0.33",
     "expo-apple-authentication": "~8.0.8",
     "expo-asset": "~12.0.12",
@@ -53,6 +56,8 @@
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
     "expo-updates": "^29.0.16",
+    "express": "^4.21.0",
+    "ioredis": "^5.4.1",
     "lucide-react-native": "^0.453.0",
     "moti": "^0.30.0",
     "pg": "^8.18.0",
@@ -78,7 +83,6 @@
     "@types/react": "^19.0.0",
     "@typescript-eslint/eslint-plugin": "^8.55.0",
     "@typescript-eslint/parser": "^8.55.0",
-    "dotenv": "^17.3.1",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-native": "^5.0.0",

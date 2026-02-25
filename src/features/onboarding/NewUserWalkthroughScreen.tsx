@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView, AnimatePresence } from 'moti';
+import { useStore } from '../../store';
 import {
     Sparkles,
     BookOpen,
@@ -94,6 +95,8 @@ export const NewUserWalkthroughScreen = () => {
     const navigation = useNavigation<any>();
     const scrollRef = useRef<ScrollView>(null);
     const [activeIndex, setActiveIndex] = useState(0);
+    const beliefType = useStore((state) => state.beliefType);
+    const sanctuaryName = ['Catholic', 'Christian', 'Protestant'].includes(beliefType || '') ? 'Sanctuary' : 'Sacred Space';
 
     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const x = event.nativeEvent.contentOffset.x;
@@ -178,7 +181,7 @@ export const NewUserWalkthroughScreen = () => {
                 ))}
             </ScrollView>
 
-            <View style={[styles.footer, { bottom: insets.bottom + 40 }]}>
+            <View style={[styles.footer, { bottom: insets.bottom + 15 }]}>
                 <View style={styles.pagination}>
                     {SLIDES.map((_, i) => (
                         <View
@@ -196,7 +199,7 @@ export const NewUserWalkthroughScreen = () => {
                     onPress={nextSlide}
                 >
                     <Text style={styles.nextButtonText}>
-                        {activeIndex === SLIDES.length - 1 ? 'Enter Sanctuary' : 'Next'}
+                        {activeIndex === SLIDES.length - 1 ? `Enter ${sanctuaryName}` : 'Next'}
                     </Text>
                     <ArrowRight size={20} color={palette.charcoal} />
                 </TouchableOpacity>

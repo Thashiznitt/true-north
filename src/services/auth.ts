@@ -239,7 +239,7 @@ class AuthService {
                 console.log(`[Auth] Creating new profile for user ${userId}...`);
 
                 // 1. Create User Record
-                const { error: userError } = await supabase
+                let { error: userError } = await supabase
                     .from('users')
                     .insert({
                         id: userId,
@@ -250,6 +250,23 @@ class AuthService {
                         created_at: new Date().toISOString(),
                         updated_at: new Date().toISOString(),
                     });
+
+                // Fallback for residual 'users' rows that weren't cascadingly deleted, causing a unique email constraint error
+                if (userError && userError.code === '23505' && userError.message?.includes('users_email_key')) {
+                    console.warn(`[Auth] Duplicate email constraint hit for ${email}. Using fallback to ensure profile creation.`);
+                    const fallbackResult = await supabase
+                        .from('users')
+                        .insert({
+                            id: userId,
+                            email: `${userId}@rescued-profile.local`,
+                            username: username || 'Sacred Voyager',
+                            role: 'member',
+                            subscription_tier: 'free',
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                        });
+                    userError = fallbackResult.error;
+                }
 
                 if (userError) throw userError;
 

@@ -24,7 +24,12 @@ export const notificationService = {
     },
 
     scheduleDailyAffirmation: async (tier: 'free' | 'compass' | 'true_north' | 'zenith') => {
-        await Notifications.cancelAllScheduledNotificationsAsync();
+        const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+        for (const notif of scheduled) {
+            if (notif.content.title?.includes("True North")) {
+                await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+            }
+        }
 
         const hour = 7;
         const minute = 30;
@@ -64,6 +69,13 @@ export const notificationService = {
     },
 
     scheduleEveningGratitude: async () => {
+        const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+        for (const notif of scheduled) {
+            if (notif.content.title === "Evening Reflection") {
+                await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+            }
+        }
+
         // Schedule for 8:00 PM
         const hour = 20;
         const minute = 0;
@@ -85,12 +97,21 @@ export const notificationService = {
 
     scheduleDailyJournaling: async (tier: 'free' | 'compass' | 'true_north' | 'zenith') => {
         const isPaid = tier !== 'free';
+        const title = isPaid ? "Morning Reflection" : "Daily Growth";
+
+        const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+        for (const notif of scheduled) {
+            if (notif.content.title === title) {
+                await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+            }
+        }
+
         const hour = isPaid ? 8 : 9;
         const minute = isPaid ? 30 : 0;
 
         await Notifications.scheduleNotificationAsync({
             content: {
-                title: isPaid ? "Morning Reflection" : "Daily Growth",
+                title,
                 body: isPaid
                     ? "Time to journal. Your morning reflection awaits to keep you aligned."
                     : "Journal your experiences today. Sharing helps us provide better personalized advice!",
@@ -127,7 +148,14 @@ export const notificationService = {
 
         if (!hasRelevantEvents) return;
 
-        // 3. Schedule for 12:00 PM
+        // 3. Find and cancel existing notification if any, then schedule for 12:00 PM
+        const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+        for (const notif of scheduled) {
+            if (notif.content.title === "Spiritual Gatherings") {
+                await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+            }
+        }
+
         const hour = 12;
         const minute = 0;
 

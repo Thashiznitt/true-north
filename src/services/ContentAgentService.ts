@@ -2,6 +2,7 @@ import { BeliefType } from '../types';
 import { AppTheme } from '../types/themes';
 import { CircleEvent } from '../store';
 import { ModeratorAgentService } from './ModeratorAgentService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface GhostReflection {
     id: string;
@@ -671,6 +672,13 @@ export const contentAgentService = {
     },
 
     initializeCircles: async () => {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const cacheKey = `@TN:DailyCircles:${todayStr}`;
+        try {
+            const cached = await AsyncStorage.getItem(cacheKey);
+            if (cached) return JSON.parse(cached);
+        } catch (e) { /* ignore */ }
+
         const initialCircles = LIFE_CIRCLES.map(circle => ({
             ...circle,
             reflections: [] as GhostReflection[]
@@ -686,6 +694,10 @@ export const contentAgentService = {
                 }
             }
         }
+
+        try {
+            await AsyncStorage.setItem(cacheKey, JSON.stringify(initialCircles));
+        } catch (e) { /* ignore */ }
 
         return initialCircles;
     },
@@ -769,6 +781,13 @@ export const contentAgentService = {
             }
             return advice;
         } else {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const cacheKey = `@TN:DailyAdvice:${todayStr}:${belief}:${username}`;
+            try {
+                const cached = await AsyncStorage.getItem(cacheKey);
+                if (cached) return cached;
+            } catch (e) { /* ignore */ }
+
             try {
                 const userGoals = useStore.getState().userGoals;
                 const systemPrompt = await constructSystemPrompt(belief, `Provide personalized, compassionate advice for a seeker focusing on ${theme}.`, tier, username, userGoals, dateOfBirth, astrologyEnabled);
@@ -776,7 +795,13 @@ export const contentAgentService = {
                 if (journalInput) {
                     userPrompt += ` Recent insights: "${journalInput}".`;
                 }
-                return await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
+                const generated = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
+
+                try {
+                    await AsyncStorage.setItem(cacheKey, generated);
+                } catch (e) { /* ignore */ }
+
+                return generated;
             } catch {
                 console.warn('Spiritual Intelligence daily advice failed');
                 return "Take a moment to breathe. Your answers are within.";
@@ -856,6 +881,13 @@ export const contentAgentService = {
                 };
             }
         } else {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const cacheKey = `@TN:DailyPrayer:${todayStr}:${belief}:${username}`;
+            try {
+                const cached = await AsyncStorage.getItem(cacheKey);
+                if (cached) return JSON.parse(cached);
+            } catch (e) { /* ignore */ }
+
             try {
                 const userGoals = useStore.getState().userGoals;
                 const type = isReligious ? (belief === 'Christian' ? 'Prayer' : 'Dua') : 'Quote/Wisdom';
@@ -863,11 +895,17 @@ export const contentAgentService = {
                 const userPrompt = `Seeker: ${username}. Belief Path: ${belief}. Task: Generate a daily ${type}.`;
                 const content = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
 
-                return {
+                const result = {
                     title: isReligious ? (belief === 'Christian' ? "Daily Prayer" : "Daily Du'a") : "Daily Wisdom",
                     content,
                     buttonLabel: isReligious ? (belief === 'Christian' ? "Amen" : "Ameen") : "Reflect"
                 };
+
+                try {
+                    await AsyncStorage.setItem(cacheKey, JSON.stringify(result));
+                } catch (e) { /* ignore */ }
+
+                return result;
             } catch {
                 return { title: "Daily Wisdom", content: "Peace be with you today.", buttonLabel: "Reflect" };
             }
@@ -1110,6 +1148,13 @@ export const contentAgentService = {
             const dayIndex = now.getDate() % list.length;
             return list[dayIndex];
         } else {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const cacheKey = `@TN:DailyAffirmation:${todayStr}:${belief}:${theme}`;
+            try {
+                const cached = await AsyncStorage.getItem(cacheKey);
+                if (cached) return JSON.parse(cached);
+            } catch (e) { /* ignore */ }
+
             try {
                 const userGoals = useStore.getState().userGoals;
                 const username = useStore.getState().username;
@@ -1118,9 +1163,13 @@ export const contentAgentService = {
                 const jsonStr = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
                 try {
                     const parsed = JSON.parse(jsonStr);
-                    return { text: parsed.text, verse: parsed.verse };
+                    const result = { text: parsed.text, verse: parsed.verse };
+                    try { await AsyncStorage.setItem(cacheKey, JSON.stringify(result)); } catch (e) { /* ignore */ }
+                    return result;
                 } catch {
-                    return { text: jsonStr };
+                    const result = { text: jsonStr };
+                    try { await AsyncStorage.setItem(cacheKey, JSON.stringify(result)); } catch (e) { /* ignore */ }
+                    return result;
                 }
             } catch {
                 // Return a belief-specific fallback instead of a generic one

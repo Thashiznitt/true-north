@@ -128,29 +128,6 @@ export const CommunityScreen = () => {
         };
 
         loadCircles();
-
-        // Simulated Cron: Randomly add a reflection every 30 seconds for higher activity
-        const interval = setInterval(async () => {
-            if (!isGhostWorkingHour()) return;
-
-            const currentCircles = circlesRef.current;
-            if (currentCircles.length === 0) return;
-
-            const randomIndex = Math.floor(Math.random() * currentCircles.length);
-            const circle = currentCircles[randomIndex];
-
-            const belief = circle.belief || 'Open';
-            const theme = circle.theme || 'Wisdom';
-
-            try {
-                const newReflection = await contentAgentService.generateReflection(circle.id, belief, theme);
-                useStore.getState().addCircleReflection(circle.id, newReflection);
-            } catch (err) {
-                console.warn('Cron failed to generate reflection:', err);
-            }
-        }, 30000);
-
-        return () => clearInterval(interval);
     }, [createdCircles]);
 
     const filteredCircles = circles

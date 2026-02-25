@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, ImageBackground, Keyboard } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { OptimizedImage } from '../../components/performance/OptimizedImage';
@@ -26,6 +26,7 @@ import { COUNTRIES, COUNTRIES_DATA } from '../../data/locations';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { Search, MapPin, X, Globe } from 'lucide-react-native';
 import { BottomSheet } from '../../components/BottomSheet';
+import { SubscriptionLegal } from '../../components/SubscriptionLegal';
 import { APP_THEMES, THEME_ICONS_MAP, AppTheme } from '../../types/themes';
 
 
@@ -196,7 +197,7 @@ export const OnboardingScreen = () => {
             </View>
             <View style={{ flex: 1 }}>
                 <TrueNorthFlashList
-                    data={type === 'country' ? filteredCountries : filteredCities}
+                    data={(type === 'country' ? filteredCountries : filteredCities) as any[]}
                     keyExtractor={memoizedLocationKeyExtractor}
                     renderItem={type === 'country' ? renderCountryItem : renderCityItem}
                     estimatedItemSize={60}
@@ -346,6 +347,7 @@ export const OnboardingScreen = () => {
                 return;
             }
             if (!dateOfBirth) {
+                Keyboard.dismiss();
                 setShowDatePicker(true);
                 return;
             }
@@ -966,6 +968,8 @@ export const OnboardingScreen = () => {
                                 autoCapitalize="none"
                                 autoCorrect={false}
                                 onChangeText={setUsername}
+                                returnKeyType="done"
+                                onSubmitEditing={() => Keyboard.dismiss()}
                             />
                             {isCheckingUsername && (
                                 <ActivityIndicator
@@ -1014,7 +1018,10 @@ export const OnboardingScreen = () => {
                         <Text style={styles.label}>Date of Birth</Text>
                         <TouchableOpacity
                             style={styles.input}
-                            onPress={() => setShowDatePicker(true)}
+                            onPress={() => {
+                                Keyboard.dismiss();
+                                setShowDatePicker(true);
+                            }}
                         >
                             <Text style={{
                                 color: dateOfBirth ? theme.colors.text : theme.colors.secondaryText,
@@ -1354,9 +1361,13 @@ export const OnboardingScreen = () => {
                         </TouchableOpacity>
                     </View>
 
-                    <Text style={[styles.disclaimerText, { color: palette.ivory, opacity: 0.4, textAlign: 'center', marginBottom: 40, marginTop: 24 }]}>
+                    <Text style={[styles.disclaimerText, { color: palette.ivory, opacity: 0.4, textAlign: 'center', marginBottom: 12, marginTop: 24 }]}>
                         No commitment. Cancel anytime in settings.
                     </Text>
+
+                    <View style={{ paddingHorizontal: 20, paddingBottom: 40 }}>
+                        <SubscriptionLegal light />
+                    </View>
                 </ScrollView>
 
                 {/* ALWAYS FLOATING BUTTON */}
