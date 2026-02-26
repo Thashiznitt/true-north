@@ -20,7 +20,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 export default function LandingPage() {
-  const [storeUrl, setStoreUrl] = React.useState("https://apps.apple.com/app/true-north/id6741755850");
+  const [storeUrl, setStoreUrl] = React.useState("https://apps.apple.com/app/true-north-life-compass/id6759246707");
 
   React.useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
