@@ -14,6 +14,7 @@ import { Popup } from '../../components/Popup';
 import { SubscriptionLegal } from '../../components/SubscriptionLegal';
 
 type Tier = 'free' | 'compass' | 'true_north' | 'zenith';
+type SelectedOption = Tier | string; // Tier for mock/fallback, pkg.identifier for real RC packages
 
 const TIER_ICONS: Record<string, any> = {
     free: Heart,
@@ -46,6 +47,9 @@ export const SubscriptionScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<any>();
     const [selectedTier, setSelectedTier] = useState<Tier>('true_north');
+    // For real RC packages, we track the package identifier directly to avoid
+    // mis-mapping when multiple packages share a similar packageType string.
+    const [selectedPkgIdentifier, setSelectedPkgIdentifier] = useState<string | null>(null);
     const [offering, setOffering] = useState<PurchasesOffering | null>(null);
     const [loading, setLoading] = useState(!env.useMockServices);
     const [purchasing, setPurchasing] = useState(false);
@@ -77,15 +81,17 @@ export const SubscriptionScreen = () => {
                 await subscriptionService.subscribe(selectedTier as any);
                 setShowSuccessModal(true);
             } else if (offering) {
-                console.log("[Subscription] Proceeding to purchase with package for tier:", selectedTier);
-                // Find the package that matches the selected tier
-                const pkg = offering.availablePackages.find(p => p.packageType.toLowerCase().includes(selectedTier)) || offering.availablePackages[0];
+                // Use the exact package identifier that was selected — never fall back to index 0
+                const pkg = selectedPkgIdentifier
+                    ? offering.availablePackages.find(p => p.identifier === selectedPkgIdentifier)
+                    : undefined;
 
                 if (!pkg) {
-                    console.error("[Subscription] No package found for tier:", selectedTier);
+                    console.error("[Subscription] No package found for identifier:", selectedPkgIdentifier);
                     setPurchasing(false);
                     return;
                 }
+                console.log("[Subscription] Proceeding to purchase package:", pkg.identifier);
 
                 const success = await subscriptionService.purchasePackage(pkg);
                 if (success) {
@@ -124,27 +130,34 @@ export const SubscriptionScreen = () => {
             ) : offering ? (
                 offering.availablePackages.map((pkg: any, index: number) => {
                     const product = pkg.product || pkg.storeProduct;
-                    const productId = product.identifier.toLowerCase();
+                    const productId = (product.identifier || '').toLowerCase();
+                    const pkgTypeLC = (pkg.packageType || '').toLowerCase();
 
-                    let tierId: Tier = 'true_north';
-                    if (productId.includes('compass')) tierId = 'compass';
-                    else if (productId.includes('zenith')) tierId = 'zenith';
-                    else if (pkg.packageType.toLowerCase().includes('annual')) tierId = 'compass';
-                    else if (pkg.packageType.toLowerCase().includes('monthly')) tierId = 'true_north';
+                    // Map to a display tier for metadata/icons only — selection uses pkg.identifier
+                    let displayTier: Tier = 'true_north';
+                    if (productId.includes('compass')) displayTier = 'compass';
+                    else if (productId.includes('zenith')) displayTier = 'zenith';
+                    else if (productId.includes('true_north') || productId.includes('truenorth')) displayTier = 'true_north';
+                    else if (pkgTypeLC.includes('annual') || pkgTypeLC.includes('yearly')) displayTier = 'compass';
 
-                    const meta = TIER_METADATA[tierId] || TIER_METADATA.true_north;
+                    const meta = TIER_METADATA[displayTier] || TIER_METADATA.true_north;
+
+                    const isSelected = selectedPkgIdentifier === pkg.identifier;
 
                     return (
                         <FadeIn key={pkg.identifier} delay={200 + index * 100} from="bottom">
                             <TierCard
                                 name={product.title}
                                 price={product.priceString}
-                                period={pkg.packageType.toLowerCase().includes('annual') ? '/ year' : '/ month'}
+                                period={pkgTypeLC.includes('annual') || pkgTypeLC.includes('yearly') ? '/ year' : '/ month'}
                                 subtext={product.description}
                                 benefits={meta.benefits}
-                                icon={TIER_ICONS[tierId] || Star}
-                                isSelected={selectedTier === tierId}
-                                onSelect={() => setSelectedTier(tierId as Tier)}
+                                icon={TIER_ICONS[displayTier] || Star}
+                                isSelected={isSelected}
+                                onSelect={() => {
+                                    setSelectedPkgIdentifier(pkg.identifier);
+                                    setSelectedTier(displayTier);
+                                }}
                                 isPopular={meta.isPopular}
                             />
                         </FadeIn>
