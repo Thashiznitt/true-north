@@ -9,9 +9,9 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/white-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#C8A95A"
     },
     "ios": {
       "supportsTablet": true,
@@ -38,8 +38,8 @@
     "android": {
       "package": "com.thashiznitt.truenorth",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/white-icon.png",
+        "backgroundColor": "#C8A95A"
       },
       "permissions": [
         "ACCESS_COARSE_LOCATION",
