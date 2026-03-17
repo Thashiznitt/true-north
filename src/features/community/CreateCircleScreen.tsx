@@ -296,8 +296,8 @@ export const CreateCircleScreen = () => {
                 <View style={{ flex: 1 }}>
                     <TrueNorthFlashList
                         data={filteredItems}
-                        keyExtractor={(item) => item}
-                        renderItem={renderPickerItem}
+                        keyExtractor={(item: any) => item}
+                        renderItem={renderPickerItem as any}
                         estimatedItemSize={60}
                     />
                 </View>

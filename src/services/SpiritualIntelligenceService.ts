@@ -87,7 +87,7 @@ export const SpiritualIntelligenceService = {
             // Use Google Generative Spiritual Intelligence REST API
             // For simplicity, we'll use the v1beta/models/gemini-pro:generateContent endpoint
             // Note: 'model' from storage might be 'gpt-4o-mini', so we force a gemini model if it's mismatched
-            const geminiModel = 'gemini-2.0-flash'; // Optimized for performance and intelligence
+            const geminiModel = 'gemini-1.5-flash'; // Stable and highly capable model
             endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`;
 
             try {
@@ -114,9 +114,10 @@ export const SpiritualIntelligenceService = {
                     return "No response from Spirit Guide.";
                 }
 
-            } catch (error: any) {
-                console.warn("Gemini Generation Error:", error.message);
-                if (error.message?.includes('429')) {
+            } catch (error: unknown) {
+                const message = error instanceof Error ? error.message : String(error);
+                console.warn("Gemini Generation Error:", message);
+                if (message.includes('429')) {
                     return "The sanctuary is currently experiencing a high volume of seekers. Please pause, breathe, and reflect on this moment. Your guide will be available shortly.";
                 }
                 return "I am currently taking a moment of silence. Please try again soon.";

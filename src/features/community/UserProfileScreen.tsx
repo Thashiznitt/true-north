@@ -414,10 +414,10 @@ export const UserProfileScreen = () => {
     return (
         <View style={styles.container}>
             <FixedHeader />
-            <TrueNorthFlashList<Reflection>
+            <TrueNorthFlashList
                 data={showReflections ? reflections : []}
-                renderItem={renderReflectionItem}
-                keyExtractor={(item) => item.id}
+                renderItem={renderReflectionItem as any}
+                keyExtractor={(item: any) => item.id}
                 estimatedItemSize={120}
                 ListHeaderComponent={<ProfileHero />}
                 ListFooterComponent={<ProfileFooter />}

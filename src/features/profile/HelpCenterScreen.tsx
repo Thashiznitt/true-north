@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { ChevronLeft, ChevronDown, Mail, Book } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+// LayoutAnimation is handled automatically in the New Architecture for simple transitions,
+// or use 'moti'/'reanimated' for more complex ones.
 
 export const HelpCenterScreen = () => {
     const insets = useSafeAreaInsets();
@@ -108,7 +107,7 @@ export const HelpCenterScreen = () => {
             <TrueNorthFlashList
                 data={['content']}
                 renderItem={renderContent}
-                keyExtractor={(item: string) => item}
+                keyExtractor={(item: unknown) => String(item)}
                 estimatedItemSize={600}
                 contentContainerStyle={styles.content}
             />

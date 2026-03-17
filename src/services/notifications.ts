@@ -43,12 +43,11 @@ export const notificationService = {
                     data: { screen: 'Affirmation' },
                 },
                 trigger: {
-                    type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
                     hour,
                     minute,
                     weekday: 2,
                     repeats: true,
-                } as Notifications.CalendarTriggerInput,
+                } as Notifications.NotificationTriggerInput,
             });
         } else {
             // Compass, True North, and Zenith get daily affirmations
@@ -59,11 +58,10 @@ export const notificationService = {
                     data: { screen: 'Affirmation' },
                 },
                 trigger: {
-                    type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
                     hour,
                     minute,
                     repeats: true,
-                } as Notifications.CalendarTriggerInput,
+                } as Notifications.NotificationTriggerInput,
             });
         }
     },
@@ -87,11 +85,10 @@ export const notificationService = {
                 data: { screen: 'Journal' },
             },
             trigger: {
-                type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
                 hour,
                 minute,
                 repeats: true,
-            } as Notifications.CalendarTriggerInput,
+            } as Notifications.NotificationTriggerInput,
         });
     },
 
@@ -118,11 +115,10 @@ export const notificationService = {
                 data: { screen: 'Journal' },
             },
             trigger: {
-                type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
                 hour,
                 minute,
                 repeats: true,
-            } as Notifications.CalendarTriggerInput,
+            } as Notifications.NotificationTriggerInput,
         });
     },
 
@@ -166,11 +162,10 @@ export const notificationService = {
                 data: { screen: 'AskNur', showEvents: true },
             },
             trigger: {
-                type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
                 hour,
                 minute,
                 repeats: true,
-            } as Notifications.CalendarTriggerInput,
+            } as Notifications.NotificationTriggerInput,
         });
 
         // 4. Ideally, we mark it as notified when they TAP it or when we schedule it?

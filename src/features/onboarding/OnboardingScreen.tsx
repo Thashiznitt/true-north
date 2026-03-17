@@ -199,7 +199,7 @@ export const OnboardingScreen = () => {
                 <TrueNorthFlashList
                     data={(type === 'country' ? filteredCountries : filteredCities) as any[]}
                     keyExtractor={memoizedLocationKeyExtractor}
-                    renderItem={type === 'country' ? renderCountryItem : renderCityItem}
+                    renderItem={(type === 'country' ? renderCountryItem : renderCityItem) as any}
                     estimatedItemSize={60}
                     keyboardShouldPersistTaps="handled"
                 />
