@@ -137,7 +137,7 @@ export const SubscriptionScreen = () => {
                     let displayTier: Tier = 'true_north';
                     if (productId.includes('compass')) displayTier = 'compass';
                     else if (productId.includes('zenith')) displayTier = 'zenith';
-                    else if (productId.includes('true_north') || productId.includes('truenorth')) displayTier = 'true_north';
+                    else if (productId.includes('true_north') || productId.includes('truenorth') || productId.includes('true-north')) displayTier = 'true_north';
                     else if (pkgTypeLC.includes('annual') || pkgTypeLC.includes('yearly')) displayTier = 'compass';
 
                     const meta = TIER_METADATA[displayTier] || TIER_METADATA.true_north;
