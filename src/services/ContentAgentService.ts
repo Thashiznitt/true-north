@@ -633,7 +633,8 @@ export const contentAgentService = {
         const provider = await SpiritualIntelligenceService.getProvider();
 
         let content = '';
-        if (provider === 'LocalMock') {
+        if (provider === 'LocalMock' || !useStore.getState().subscriptionTier || useStore.getState().subscriptionTier === 'free') {
+            // Default to templates for free tier and mock
             const defaultTemplates = GENERIC_TEMPLATES;
             const themeTemplates = REFLECTION_TEMPLATES[belief as BeliefType]?.[theme];
             const templates = themeTemplates || defaultTemplates;
@@ -684,13 +685,26 @@ export const contentAgentService = {
             reflections: [] as GhostReflection[]
         }));
 
-        // Give each circle some starting reflections if it's working hours
+        // Seed circles with templates initially to avoid heavy AI load
         if (isGhostWorkingHour()) {
             for (const circle of initialCircles) {
-                const reflectionCount = Math.floor(Math.random() * 3) + 2; // 2-4 starter reflections
+                const reflectionCount = Math.floor(Math.random() * 3) + 2; 
                 for (let i = 0; i < reflectionCount; i++) {
-                    const reflection = await contentAgentService.generateReflection(circle.id, circle.belief, circle.theme);
-                    circle.reflections.push(reflection);
+                    const belief = circle.belief as BeliefType;
+                    const theme = circle.theme;
+                    const templates = REFLECTION_TEMPLATES[belief]?.[theme] || GENERIC_TEMPLATES;
+                    const content = templates[Math.floor(Math.random() * templates.length)];
+                    const names = GHOST_USERS[belief] || GHOST_USERS.Open;
+                    
+                    circle.reflections.push({
+                        id: Math.random().toString(36).substr(2, 9),
+                        userName: names[Math.floor(Math.random() * names.length)],
+                        content: content,
+                        time: `${Math.floor(Math.random() * 59) + 1}m ago`,
+                        blessings: Math.floor(Math.random() * 50) + 5,
+                        theme: theme,
+                        createdAt: Date.now() - (i * 3600000)
+                    });
                 }
             }
         }
@@ -796,14 +810,13 @@ export const contentAgentService = {
                     userPrompt += ` Recent insights: "${journalInput}".`;
                 }
                 const generated = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
-
-                try {
-                    await AsyncStorage.setItem(cacheKey, generated);
-                } catch (e) { /* ignore */ }
-
+                
+                // Strict caching for daily advice
+                await AsyncStorage.setItem(cacheKey, generated);
+                
                 return generated;
-            } catch {
-                console.warn('Spiritual Intelligence daily advice failed');
+            } catch (error) {
+                console.warn('Spiritual Intelligence daily advice failed', error);
                 return "Take a moment to breathe. Your answers are within.";
             }
         }

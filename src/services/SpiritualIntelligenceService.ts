@@ -15,6 +15,8 @@ const STORAGE_KEY_PROVIDER = 'ai_provider_preference';
 const STORAGE_KEY_CUSTOM_ENDPOINT = 'ai_custom_endpoint';
 const STORAGE_KEY_MODEL = 'ai_selected_model';
 const SECURE_KEY_PREFIX = 'ai_api_key_';
+const STORAGE_KEY_DAILY_QUOTA = 'ai_daily_quota_stats';
+const MAX_DAILY_CALLS = 20; // Hard cap to save money
 
 export const SpiritualIntelligenceService = {
     // --- Configuration Management ---
@@ -58,6 +60,21 @@ export const SpiritualIntelligenceService = {
     // --- Inference ---
 
     generateText: async (systemPrompt: string, userPrompt: string): Promise<string> => {
+        // --- Quota Check ---
+        const today = new Date().toISOString().split('T')[0];
+        const quotaDataStr = await AsyncStorage.getItem(STORAGE_KEY_DAILY_QUOTA);
+        let quotaData = quotaDataStr ? JSON.parse(quotaDataStr) : { date: today, count: 0 };
+
+        // Reset if new day
+        if (quotaData.date !== today) {
+            quotaData = { date: today, count: 0 };
+        }
+
+        if (quotaData.count >= MAX_DAILY_CALLS) {
+            console.warn(`Spiritual Intelligence Quota Exceeded for ${today}.`);
+            return "The sanctuary is currently resting to preserve its energy. Your guide will return with fresh insights tomorrow morning. In the meantime, find stillness in your current reflections.";
+        }
+
         const provider = await SpiritualIntelligenceService.getProvider();
 
         // Check if using default/system provider (Gemini via Env) or local mock
@@ -109,7 +126,13 @@ export const SpiritualIntelligenceService = {
 
                 const data = await response.json();
                 if (data.candidates && data.candidates.length > 0 && data.candidates[0].content && data.candidates[0].content.parts.length > 0) {
-                    return data.candidates[0].content.parts[0].text;
+                    const result = data.candidates[0].content.parts[0].text;
+
+                    // Increment Quota on successful call
+                    quotaData.count += 1;
+                    await AsyncStorage.setItem(STORAGE_KEY_DAILY_QUOTA, JSON.stringify(quotaData));
+
+                    return result;
                 } else {
                     return "No response from Spirit Guide.";
                 }
@@ -177,7 +200,13 @@ export const SpiritualIntelligenceService = {
             }
 
             const data = await response.json();
-            return data.choices[0].message.content.trim();
+            const result = data.choices[0].message.content.trim();
+
+            // Increment Quota on successful call
+            quotaData.count += 1;
+            await AsyncStorage.setItem(STORAGE_KEY_DAILY_QUOTA, JSON.stringify(quotaData));
+
+            return result;
 
         } catch (error) {
             console.error('SpiritualIntelligenceService Generation Error:', error);
