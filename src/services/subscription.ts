@@ -116,6 +116,7 @@ export const subscriptionService = {
 
                 if (productId.includes('compass')) newTier = 'compass';
                 else if (productId.includes('zenith')) newTier = 'zenith';
+                else if (productId.includes('true_north') || productId.includes('truenorth')) newTier = 'true_north';
 
                 console.log(`[Subscription] Mapping product ${productId} to tier ${newTier}`);
 
