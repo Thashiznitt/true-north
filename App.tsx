@@ -51,9 +51,13 @@ export default function App() {
     }
 
     if (Platform.OS === 'ios' && iosApiKey) {
+      console.log("[RevenueCat] Configuring for iOS with key:", iosApiKey.substring(0, 8) + '...');
       Purchases.configure({ apiKey: iosApiKey });
     } else if (Platform.OS === 'android' && androidApiKey) {
+      console.log("[RevenueCat] Configuring for Android with key:", androidApiKey.substring(0, 8) + '...');
       Purchases.configure({ apiKey: androidApiKey });
+    } else {
+      console.warn("[RevenueCat] No API key found for platform:", Platform.OS);
     }
   }, []);
 

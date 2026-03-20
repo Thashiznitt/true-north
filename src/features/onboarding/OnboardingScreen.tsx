@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, ImageBackground, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, ImageBackground, Keyboard, FlatList } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { OptimizedImage } from '../../components/performance/OptimizedImage';
@@ -18,7 +18,7 @@ import { Check, ArrowRight, ChevronLeft, Plus, Shield, Heart, Sparkles, Compass,
 import { subscriptionService } from '../../services/subscription';
 import { authService } from '../../services/auth';
 import { supabase } from '../../services/supabase';
-import PAYWALL_BG from '../../../assets/journal_paywall_bg.png';
+import PAYWALL_BG from '../../../assets/journal_paywall_bg.jpg';
 import * as Location from 'expo-location';
 import { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 import { env } from '../../services/env';
@@ -72,7 +72,7 @@ const TIER_BENEFITS: Record<string, string[]> = {
     zenith: ["Elite Spiritual Mentoring", "Deep Community Analysis", "Unlimited Circle Creation"],
 };
 
-const INTRO_BG = require('../../../assets/onboarding_intro_bg.png'); // eslint-disable-line
+const INTRO_BG = require('../../../assets/onboarding_intro_bg.jpg'); // eslint-disable-line
 
 const GOAL_KEYS = [
     'spirituality', 'spouse', 'career', 'business',
@@ -146,6 +146,8 @@ export const OnboardingScreen = () => {
     const filteredCountries = COUNTRIES.filter(c => c.toLowerCase().includes(searchQuery.toLowerCase()));
     const filteredCities = (COUNTRIES_DATA[locationCountry] || []).filter(c => c.toLowerCase().includes(searchQuery.toLowerCase()));
 
+    console.log(`[LocationPicker] type=${showCountryPicker ? 'country' : showCityPicker ? 'city' : 'none'} countries=${filteredCountries.length} cities=${filteredCities.length} query="${searchQuery}"`);
+
     const renderPickerItem = React.useCallback(({ item, type }: { item: string, type: 'country' | 'city' }) => (
         <TouchableOpacity
             style={styles.pickerItem}
@@ -195,14 +197,22 @@ export const OnboardingScreen = () => {
                     autoFocus
                 />
             </View>
-            <View style={{ flex: 1 }}>
-                <TrueNorthFlashList
-                    data={(type === 'country' ? filteredCountries : filteredCities) as any[]}
-                    keyExtractor={memoizedLocationKeyExtractor}
-                    renderItem={(type === 'country' ? renderCountryItem : renderCityItem) as any}
-                    estimatedItemSize={60}
-                    keyboardShouldPersistTaps="handled"
-                />
+            <View style={{ flex: 1, minHeight: 400 }}>
+                {((type === 'country' ? filteredCountries : filteredCities).length === 0) ? (
+                    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+                        <Text style={{ color: theme.colors.secondaryText, textAlign: 'center' }}>
+                            {searchQuery ? 'No results found' : 'Loading locations...'}
+                        </Text>
+                    </View>
+                ) : (
+                    <FlatList
+                        data={(type === 'country' ? filteredCountries : filteredCities)}
+                        keyExtractor={memoizedLocationKeyExtractor}
+                        renderItem={(type === 'country' ? renderCountryItem : renderCityItem) as any}
+                        keyboardShouldPersistTaps="handled"
+                        contentContainerStyle={{ paddingBottom: 20 }}
+                    />
+                )}
             </View>
         </BottomSheet>
     );
@@ -1404,10 +1414,11 @@ export const OnboardingScreen = () => {
 
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={[styles.container, step !== 0 && step !== 4 && step !== 11 && { paddingTop: insets.top + 20, paddingBottom: insets.bottom }]}
-        >
+        <View style={styles.container}>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={[styles.container, step !== 0 && step !== 4 && step !== 11 && { paddingTop: insets.top + 20, paddingBottom: insets.bottom }, { backgroundColor: 'transparent' }]}
+            >
             {step !== 0 && step !== 4 && step !== 11 && (
                 <View style={styles.nav}>
                     {step > 0 && !loading && (
@@ -1459,9 +1470,12 @@ export const OnboardingScreen = () => {
                     </TouchableOpacity>
                 </View>
             )}
-            {renderLocationPickerModal(showCountryPicker, () => setShowCountryPicker(false), 'country')}
-            {renderLocationPickerModal(showCityPicker, () => setShowCityPicker(false), 'city')}
-        </KeyboardAvoidingView >
+            </KeyboardAvoidingView >
+            {renderLocationPickerModal(showCountryPicker || showCityPicker, () => {
+                setShowCountryPicker(false);
+                setShowCityPicker(false);
+            }, showCountryPicker ? 'country' : 'city')}
+        </View>
     );
 };
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
 import { theme, palette } from '../theme';
-import { Lock, ChevronRight, Heart, Users, Moon, BookOpen, Leaf, Sun, Compass } from 'lucide-react-native';
+import { Lock, ChevronRight, Heart, Users, Moon, BookOpen, Leaf, Sun, Compass, HelpCircle as Cross } from 'lucide-react-native';
 
 interface CircleCardProps {
     id: string;
@@ -19,7 +19,7 @@ interface CircleCardProps {
 
 const getBeliefIcon = (belief?: string) => {
     switch (belief) {
-        case 'Christian': return BookOpen;
+        case 'Christian': return Cross;
         case 'Muslim': return Moon;
         case 'Secular': return Leaf;
         case 'Open': return Sun;

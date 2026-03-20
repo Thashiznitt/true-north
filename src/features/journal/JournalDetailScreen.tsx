@@ -9,6 +9,7 @@ import { useStore } from '../../store';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { contentAgentService } from '../../services/ContentAgentService';
 import { SanctuaryLock } from '../../components/SanctuaryLock';
+import { notificationService } from '../../services/notifications';
 
 
 
@@ -165,6 +166,7 @@ export const JournalDetailScreen = () => {
             updateJournalEntry(entryId, entryData);
         } else {
             addJournalEntry(entryData);
+            notificationService.cancelSecondaryGratitudeReminder();
         }
         navigation.goBack();
     };
@@ -228,8 +230,8 @@ export const JournalDetailScreen = () => {
                         <Text style={styles.dateText}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
 
                         <View style={styles.tagsContainer}>
-                            {tags.map(tag => (
-                                <View key={tag} style={styles.tag}>
+                            {tags.map((tag, i) => (
+                                <View key={i.toString()} style={styles.tag}>
                                     <Tag size={12} color={palette.softGold} style={styles.tagIcon} />
                                     <Text style={styles.tagText}>{tag}</Text>
                                     <TouchableOpacity onPress={() => removeTag(tag)}>

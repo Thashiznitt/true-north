@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, Modal, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Text, DimensionValue, TextInput } from 'react-native';
+import React, { PropsWithChildren } from 'react';
+import { View, StyleSheet, Modal, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Text, DimensionValue, TextInput, Animated, Dimensions } from 'react-native';
 import { theme, palette } from '../theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
@@ -8,13 +8,15 @@ interface BottomSheetProps {
     visible: boolean;
     onClose: () => void;
     title?: string;
-    children: React.ReactNode;
     actionLabel?: string;
     onAction?: () => void;
     height?: DimensionValue;
+    key?: string | number;
 }
 
-const BottomSheetComponent: React.FC<BottomSheetProps> = ({
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+const BottomSheetComponent = ({
     visible,
     onClose,
     title,
@@ -22,50 +24,90 @@ const BottomSheetComponent: React.FC<BottomSheetProps> = ({
     actionLabel,
     onAction,
     height = 'auto'
-}) => {
+}: PropsWithChildren<BottomSheetProps>) => {
     const insets = useSafeAreaInsets();
+    const translateY = React.useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+    
+    React.useEffect(() => {
+        if (visible) {
+            console.log(`[BottomSheet] Showing sheet: ${title}`);
+            Animated.timing(translateY, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }).start();
+        } else {
+            Animated.timing(translateY, {
+                toValue: SCREEN_HEIGHT,
+                duration: 250,
+                useNativeDriver: true,
+            }).start();
+        }
+    }, [visible, title, translateY]);
+
+    if (!visible) return null;
 
     return (
         <Modal
             visible={visible}
-            animationType="slide"
-            transparent
+            transparent={true}
+            animationType="none"
+            statusBarTranslucent={true}
             onRequestClose={onClose}
         >
-            <TouchableWithoutFeedback onPress={onClose}>
-                <View style={styles.overlay}>
-                    <TouchableWithoutFeedback>
-                        <KeyboardAvoidingView
-                            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                            style={[
-                                styles.contentContainer,
-                                { paddingBottom: insets.bottom + 20, height }
-                            ]}
-                        >
-                            <View style={styles.header}>
-                                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                                    <X size={24} color={theme.colors.text} />
-                                </TouchableOpacity>
-
-                                {title && (
-                                    <Text style={styles.title}>{title}</Text>
-                                )}
-
-                                {actionLabel && onAction ? (
-                                    <TouchableOpacity onPress={onAction}>
-                                        <Text style={styles.actionLabel}>{actionLabel}</Text>
+            <View style={{ flex: 1 }}>
+                <TouchableWithoutFeedback onPress={onClose}>
+                    <Animated.View 
+                        style={[
+                            styles.overlay,
+                            {
+                                opacity: translateY.interpolate({
+                                    inputRange: [0, SCREEN_HEIGHT],
+                                    outputRange: [1, 0]
+                                })
+                            }
+                        ]}
+                    >
+                        <TouchableWithoutFeedback>
+                            <Animated.View
+                                style={[
+                                    styles.contentContainer,
+                                    { 
+                                        paddingBottom: insets.bottom + 20, 
+                                        height,
+                                        transform: [{ translateY }]
+                                    },
+                                    height !== 'auto' && { flex: 1 }
+                                ]}
+                            >
+                                <View style={styles.header}>
+                                    <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                                        <X size={24} color={theme.colors.text} />
                                     </TouchableOpacity>
-                                ) : (
-                                    <View style={styles.placeholder} />
-                                )}
-                            </View>
-                            <View style={[styles.body, height !== 'auto' && { flex: 1 }]}>
-                                {children}
-                            </View>
-                        </KeyboardAvoidingView>
-                    </TouchableWithoutFeedback>
-                </View>
-            </TouchableWithoutFeedback>
+    
+                                    {title && (
+                                        <Text style={styles.title}>{title}</Text>
+                                    )}
+    
+                                    {actionLabel && onAction ? (
+                                        <TouchableOpacity onPress={onAction}>
+                                            <Text style={styles.actionLabel}>{actionLabel}</Text>
+                                        </TouchableOpacity>
+                                    ) : (
+                                        <View style={styles.placeholder} />
+                                    )}
+                                </View>
+                                <KeyboardAvoidingView 
+                                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                                    style={[styles.body, height !== 'auto' ? { flex: 1 } : { flex: 0 }]}
+                                >
+                                    {children}
+                                </KeyboardAvoidingView>
+                            </Animated.View>
+                        </TouchableWithoutFeedback>
+                    </Animated.View>
+                </TouchableWithoutFeedback>
+            </View>
         </Modal>
     );
 };
@@ -82,7 +124,7 @@ const BottomSheetTextInput = (props: React.ComponentProps<typeof TextInput>) => 
 
 export const BottomSheet = Object.assign(BottomSheetComponent, {
     TextInput: BottomSheetTextInput
-});
+}) as React.FC<BottomSheetProps> & { TextInput: typeof BottomSheetTextInput };
 
 const styles = StyleSheet.create({
     overlay: {
@@ -96,6 +138,7 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 24,
         maxHeight: '90%',
         paddingHorizontal: 20,
+        width: '100%',
     },
     header: {
         flexDirection: 'row',
@@ -141,5 +184,6 @@ const styles = StyleSheet.create({
     },
     body: {
         width: '100%',
+        flexDirection: 'column',
     }
 });

@@ -17,4 +17,8 @@ export const env = {
 
     // Spiritual Intelligence
     geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY,
+    // Google OAuth
+    googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    googleAndroidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
 };

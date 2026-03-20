@@ -256,7 +256,7 @@ export const RootNavigator = () => {
                     />
                 </Stack.Group>
             </Stack.Navigator>
-            {isOnboarded && isLoggedIn && <DailyWisdomModal />}
+            {/* {isOnboarded && isLoggedIn && <DailyWisdomModal />} */}
         </>
     );
 };

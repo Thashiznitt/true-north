@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
-import { Users, Lock, ChevronRight, Heart, Search, Plus, Bell, BookOpen, Moon, Leaf, Sun, Compass } from 'lucide-react-native';
+import { Users, Lock, ChevronRight, Heart, Search, Plus, Bell, BookOpen, Moon, Leaf, Sun, Compass, HelpCircle as Cross } from 'lucide-react-native';
 import { contentAgentService, GhostCircle, isGhostWorkingHour } from '../../services/ContentAgentService';
 import { useStore } from '../../store';
 import { FaithNews } from '../../components/FaithNews';
@@ -20,7 +20,7 @@ import { Users2 } from 'lucide-react-native';
 
 const getBeliefIcon = (belief: string) => {
     switch (belief) {
-        case 'Christian': return BookOpen;
+        case 'Christian': return Cross || BookOpen;
         case 'Muslim': return Moon;
         case 'Secular': return Leaf;
         case 'Open': return Sun;
@@ -120,7 +120,7 @@ export const CommunityScreen = () => {
     useEffect(() => {
         const loadCircles = async () => {
             const rawCircles = await contentAgentService.initializeCircles();
-            const initialGhostCircles = rawCircles.map(c => ({
+            const initialGhostCircles = rawCircles.map((c: any) => ({
                 ...c,
                 reflections: contentAgentService.cleanupOldReflections(c.reflections)
             }));
@@ -198,7 +198,7 @@ export const CommunityScreen = () => {
                 >
                     <ImageBackground
                         /* eslint-disable-next-line @typescript-eslint/no-require-imports */
-                        source={require('../../../assets/journal_paywall_bg.png')}
+                        source={require('../../../assets/journal_paywall_bg.jpg')}
                         style={styles.paywallBg}
                         imageStyle={{ borderRadius: theme.borderRadius.lg }}
                     >
@@ -234,6 +234,7 @@ export const CommunityScreen = () => {
                 error={bioError}
                 title="Sacred Circles"
                 subtitle="Your communal sanctuaries are protected by biometric security."
+                buttonText="Unlock Circles"
             />
         );
     }

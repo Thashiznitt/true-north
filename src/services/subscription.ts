@@ -35,8 +35,14 @@ export const subscriptionService = {
         try {
             const offerings = await Purchases.getOfferings();
             return offerings;
-        } catch (e) {
-            console.error("[Subscription] Error fetching offerings:", e);
+        } catch (e: unknown) {
+            const error = e as { message?: string, code?: string, underlyingErrorMessage?: string, userCancelled?: boolean };
+            console.error("[Subscription] Error fetching offerings:", {
+                message: error?.message,
+                code: error?.code,
+                underlyingErrorMessage: error?.underlyingErrorMessage,
+                userCancelled: error?.userCancelled
+            });
             return null;
         }
     },
@@ -128,7 +134,8 @@ export const subscriptionService = {
 
                 // Then Notifications
                 try {
-                    await notificationService.scheduleDailyAffirmation(newTier);
+                    // @ts-expect-error: categoryIdentifier requirement for secondary reminders
+                    await notificationService.scheduleDailyAffirmation(newTier, { categoryIdentifier: 'gratitude-reminders-secondary' });
                     await notificationService.scheduleDailyJournaling(newTier);
                 } catch (notiError) {
                     console.error("[Subscription] Notification scheduling failed after purchase:", notiError);

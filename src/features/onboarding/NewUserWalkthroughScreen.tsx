@@ -126,7 +126,7 @@ export const NewUserWalkthroughScreen = () => {
                 bounces={false}
             >
                 {SLIDES.map((slide, index) => (
-                    <View key={slide.id} style={[styles.slide, { width }]}>
+                    <View key={slide.id} style={[styles.slide, { width }, activeIndex !== index && { opacity: 0 }]}>
                         <LinearGradient
                             colors={slide.colors}
                             style={StyleSheet.absoluteFill}
@@ -217,7 +217,7 @@ export const NewUserWalkthroughScreen = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#000' },
-    slide: { flex: 1 },
+    slide: { flex: 1, overflow: 'hidden' },
     overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' },
     slideScroll: { flex: 1 },
     slideContent: { alignItems: 'center', paddingHorizontal: 40 },

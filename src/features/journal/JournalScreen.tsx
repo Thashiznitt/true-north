@@ -27,7 +27,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ImageBackground } from 'react-native';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const JOURNAL_BG = require('../../../assets/journal_paywall_bg.png'); // Need to ensure it's copied there
+const JOURNAL_BG = require('../../../assets/journal_paywall_bg.jpg'); // Need to ensure it's copied there
 
 export const JournalScreen = () => {
     const insets = useSafeAreaInsets();
@@ -40,6 +40,7 @@ export const JournalScreen = () => {
     const securityPin = useStore(state => state.securityPin);
     const isSessionUnlocked = useStore(state => state.isSessionUnlocked);
     const setSessionUnlocked = useStore(state => state.setSessionUnlocked);
+    const onboardedAt = useStore(state => state.onboardedAt);
 
     const journalEntries = useStore(state => state.journalEntries);
     const [searchQuery, setSearchQuery] = useState('');
@@ -162,7 +163,7 @@ export const JournalScreen = () => {
                         {item.tags && item.tags.length > 0 && (
                             <View style={styles.entryTags}>
                                 {item.tags.map((tag: string, i: number) => (
-                                    <View key={i} style={styles.entryTag}>
+                                    <View key={i.toString()} style={styles.entryTag}>
                                         <Tag size={10} color={palette.softGold} style={{ marginRight: 4 }} />
                                         <Text style={styles.entryTagText}>{tag}</Text>
                                     </View>
@@ -189,7 +190,9 @@ export const JournalScreen = () => {
     };
 
 
-    if (subscriptionTier === 'free') {
+    const isTrialActive = onboardedAt ? (Date.now() - onboardedAt) < (14 * 24 * 60 * 60 * 1000) : true;
+
+    if (subscriptionTier === 'free' && !isTrialActive) {
         const handleUnlock = () => {
             navigation.navigate('Subscription');
         };

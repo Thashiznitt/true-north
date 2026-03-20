@@ -104,7 +104,7 @@ export const SpiritualIntelligenceService = {
             // Use Google Generative Spiritual Intelligence REST API
             // For simplicity, we'll use the v1beta/models/gemini-pro:generateContent endpoint
             // Note: 'model' from storage might be 'gpt-4o-mini', so we force a gemini model if it's mismatched
-            const geminiModel = 'gemini-flash-latest'; // Verified working with current key
+            const geminiModel = 'gemini-flash-latest'; // Latest and fastest
             endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`;
 
             try {

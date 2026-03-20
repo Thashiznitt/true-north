@@ -497,7 +497,7 @@ const getZodiacSign = async (dobString: string | null) => {
 
 import { UserGoals } from '../store';
 
-const constructSystemPrompt = async (belief: BeliefType, context: string, tier: SubscriptionTier = 'free', username?: string, userGoals?: UserGoals, dateOfBirth?: string | null, astrologyEnabled?: boolean) => {
+const constructSystemPrompt = async (belief: BeliefType, context: string, tier: SubscriptionTier = 'free', username?: string, userGoals?: UserGoals, dateOfBirth?: string | null, astrologyEnabled?: boolean, selectedThemes?: string[]) => {
     let dna = `You are the True North Spiritual Guide. Your voice is a sanctuary of ${SPIRITUAL_BRAIN_IDENTITY.vocabulary.slice(0, 4).join(', ').toLowerCase()}. Your tone is ${SPIRITUAL_BRAIN_IDENTITY.tone}. You are wise, compassionate, and deeply aware of the seeker's sacred markers (Birthdays, Holidays, and Cosmic Alignments).`;
 
     // Holiday & Birthday Logic
@@ -600,6 +600,7 @@ ${SPIRITUAL_BRAIN_IDENTITY.principles.map(p => `- ${p}`).join('\n')}
 
 SEEKER CONTEXT:
 The seeker follows a ${belief} path. ${beliefNuance[belief] || beliefNuance.Open}
+${selectedThemes && selectedThemes.length > 0 ? `The seeker's primary focuses are: ${selectedThemes.join(', ')}.` : ''}
 ${username ? `The seeker's name is ${username}.` : ''}${goalContext}
 
 TASK CONTEXT:
@@ -925,9 +926,9 @@ export const contentAgentService = {
         }
     },
 
-    getSpiritualAnalysis: async (content: string, belief: BeliefType): Promise<{ title: string, message: string, action: string }> => {
+    getSpiritualAnalysis: async (content: string, belief: BeliefType, selectedThemes?: string[]): Promise<{ title: string, message: string, action: string }> => {
         const provider = await SpiritualIntelligenceService.getProvider();
-        const { subscriptionTier: tier, dateOfBirth, astrologyEnabled } = useStore.getState();
+        const { subscriptionTier: tier, dateOfBirth, astrologyEnabled, username, userGoals, journalEntries } = useStore.getState();
 
         if (provider === 'LocalMock') {
             const text = content.toLowerCase();
@@ -1063,10 +1064,25 @@ export const contentAgentService = {
             return { title, message, action };
         } else {
             try {
-                const userGoals = useStore.getState().userGoals;
-                const username = useStore.getState().username;
-                const systemPrompt = await constructSystemPrompt(belief, `Analyze the seeker's recent journey. Provide a compassionate insight and a simple action step. Output strictly in JSON with keys: title, message, action.`, tier, username, userGoals, dateOfBirth, astrologyEnabled);
-                const userPrompt = `Seeker Journey: "${content}"`;
+                const recentJournal = journalEntries.slice(0, 3).map(e => `${e.title}: ${e.content}`).join(' | ');
+                
+                const instructions = `
+You are a profound Spiritual Counselor. 
+TASK:
+1. Provide a sacred text quote (e.g., from the Bible, Quran, Gita, Torah, etc.) strictly aligned with the user's belief system (${belief}).
+2. Expound on the quote in the context of the user's current affirmation: "${content}".
+3. Deeply weave in their life themes (${selectedThemes?.join(', ') || 'personal growth'}) and align the advice with their goals (${JSON.stringify(userGoals)}).
+4. Mirror the emotional state found in their recent reflections (${recentJournal || 'no recent entries'}).
+
+FORMAT: 
+Output strictly JSON with keys: 
+- title: A sacred, comforting title.
+- message: The religious quote followed by your deep exposition.
+- action: A single, practical, small soul-step to take today.
+`.trim();
+
+                const systemPrompt = await constructSystemPrompt(belief, instructions, tier, username, userGoals, dateOfBirth, astrologyEnabled, selectedThemes);
+                const userPrompt = `Guide me based on my current path and recent sanctuary reflections.`;
                 const jsonStr = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
 
                 // Try to parse JSON, if fails, fallback
@@ -1169,9 +1185,9 @@ export const contentAgentService = {
             } catch (e) { /* ignore */ }
 
             try {
-                const userGoals = useStore.getState().userGoals;
-                const username = useStore.getState().username;
-                const systemPrompt = await constructSystemPrompt(belief, `Generate a short, powerful, and poetic daily affirmation for a seeker. Ensure it is resonant with their path (${belief}) and profoundly targets their listed life goals. Focus: ${theme}. Return JSON with "text" and "verse" (optional).`, tier, username, userGoals, dateOfBirth, astrologyEnabled);
+                const { subscriptionTier: tier, dateOfBirth, astrologyEnabled, username, userGoals, journalEntries } = useStore.getState();
+                const recentJournal = journalEntries.slice(0, 3).map(e => `${e.title}: ${e.content}`).join(' | ');
+                const systemPrompt = await constructSystemPrompt(belief, `Generate a short, powerful, and poetic daily affirmation for a seeker. Ensure it is resonant with their path (${belief}) and profoundly targets their listed life goals. Focus: ${theme}. ${recentJournal ? `Consider their recent reflections: ${recentJournal}` : ''} Return JSON with "text" and "verse" (optional).`, tier, username, userGoals, dateOfBirth, astrologyEnabled, [theme]);
                 const userPrompt = `Generate a daily sanctuary affirmation for a ${belief} seeker focusing on ${theme}.`;
                 const jsonStr = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
                 try {

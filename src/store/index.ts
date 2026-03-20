@@ -194,6 +194,7 @@ interface UserState {
     nurChats: ChatMessage[];
     isSessionUnlocked: boolean;
     hasSeenUserGuide: boolean;
+    onboardedAt: number | null;
 
     setOnboarded: (value: boolean) => Promise<void>;
     setOnboardingStep: (step: number) => void;
@@ -315,8 +316,12 @@ export const useStore = create<UserState>()(
             nurChats: [],
             isSessionUnlocked: false,
             hasSeenUserGuide: false,
+            onboardedAt: null,
             setOnboarded: async (isOnboarded: boolean) => {
-                set({ isOnboarded });
+                set((state) => ({ 
+                    isOnboarded,
+                    onboardedAt: (isOnboarded && !state.onboardedAt) ? Date.now() : state.onboardedAt
+                }));
                 if (isOnboarded) set({ onboardingStep: 0 }); // Reset on completion
             },
             setOnboardingStep: (onboardingStep: number) => set({ onboardingStep }),

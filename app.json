@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "scheme": "truenorth",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/white-icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {

@@ -89,9 +89,11 @@ export const LoginScreen = () => {
                 ) : mode === 'options' ? (
                     <FadeIn delay={300} from="bottom">
                         <View style={styles.optionsContainer}>
-                            <TouchableOpacity style={styles.socialButton} onPress={() => handleLogin('Apple')}>
-                                <Text style={styles.socialButtonText}>Continue with Apple</Text>
-                            </TouchableOpacity>
+                            {Platform.OS === 'ios' && (
+                                <TouchableOpacity style={styles.socialButton} onPress={() => handleLogin('Apple')}>
+                                    <Text style={styles.socialButtonText}>Continue with Apple</Text>
+                                </TouchableOpacity>
+                            )}
                             <TouchableOpacity style={[styles.socialButton, styles.googleButton]} onPress={() => handleLogin('Google')}>
                                 <Text style={[styles.socialButtonText, styles.googleButtonText]}>Continue with Google</Text>
                             </TouchableOpacity>

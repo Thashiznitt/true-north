@@ -69,27 +69,51 @@ export const notificationService = {
     scheduleEveningGratitude: async () => {
         const scheduled = await Notifications.getAllScheduledNotificationsAsync();
         for (const notif of scheduled) {
-            if (notif.content.title === "Evening Reflection") {
+            // @ts-ignore
+            if (notif.content.title === "Evening Reflection" || notif.content.categoryIdentifier === 'gratitude-reminders') {
                 await Notifications.cancelScheduledNotificationAsync(notif.identifier);
             }
         }
 
-        // Schedule for 8:00 PM
-        const hour = 20;
-        const minute = 0;
-
+        // 1st Reminder: 7:00 PM (Always)
         await Notifications.scheduleNotificationAsync({
             content: {
                 title: "Evening Reflection",
                 body: "What are you grateful for today?",
                 data: { screen: 'Journal' },
+                categoryIdentifier: 'gratitude-reminders',
             },
             trigger: {
-                hour,
-                minute,
+                hour: 19,
+                minute: 0,
                 repeats: true,
             } as Notifications.NotificationTriggerInput,
         });
+
+        // 2nd Reminder: 9:00 PM (Conditional - we schedule it but can cancel it daily)
+        await Notifications.scheduleNotificationAsync({
+            content: {
+                title: "Evening Reflection",
+                body: "Your sanctuary awaits. What brought you peace today?",
+                data: { screen: 'Journal' },
+                // @ts-expect-error: categoryIdentifier is not in the base content type
+                categoryIdentifier: 'gratitude-reminders-secondary',
+            },
+            trigger: {
+                hour: 21,
+                minute: 0,
+                repeats: true,
+            } as Notifications.NotificationTriggerInput,
+        });
+    },
+
+    cancelSecondaryGratitudeReminder: async () => {
+        const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+        for (const notif of scheduled) {
+            if (notif.content.categoryIdentifier === 'gratitude-reminders-secondary') {
+                await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+            }
+        }
     },
 
     scheduleDailyJournaling: async (tier: 'free' | 'compass' | 'true_north' | 'zenith') => {

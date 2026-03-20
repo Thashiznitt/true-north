@@ -15,8 +15,9 @@ class AuthService {
     constructor() {
         // Initialize Google Sign-In
         GoogleSignin.configure({
-            webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-            iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+            webClientId: env.googleWebClientId,
+            iosClientId: env.googleIosClientId,
+            offlineAccess: true,
         });
     }
 
@@ -158,9 +159,19 @@ class AuthService {
             const errorMsg = err.message || "Unknown error";
             const errorCode = err.code || "No code";
 
+            let userFriendlyMsg = `Could not complete Google Sign-In (${errorCode}).\n\nDetail: ${errorMsg}`;
+
+            if (Platform.OS === 'android') {
+                if (errorCode === 'DEVELOPER_ERROR') {
+                    userFriendlyMsg += "\n\nTip: This often means the Android SHA-1 fingerprint is not registered in the Google Cloud Console, or the Client ID is incorrect.";
+                } else if (errorCode === '7') {
+                    userFriendlyMsg += "\n\nTip: Network error. Please check your internet connection.";
+                }
+            }
+
             Alert.alert(
                 "Sign In Error",
-                `Could not complete Google Sign-In (${errorCode}).\n\nDetail: ${errorMsg}\n\nPlease ensure your configuration is correct.`
+                `${userFriendlyMsg}\n\nPlease ensure your configuration is correct.`
             );
             return false;
         }

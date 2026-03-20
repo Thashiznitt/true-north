@@ -16,7 +16,7 @@
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://ihgttfmthsfbussgcegm.supabase.co",
         "EXPO_PUBLIC_SUPABASE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImloZ3R0Zm10aHNmYnVzc2djZWdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzMjM1OTQsImV4cCI6MjA4Njg5OTU5NH0._aOUNszEMjUz2M74v2MyUJoWWCJwanF6fdy7OTzfVLo",
-        "EXPO_PUBLIC_GEMINI_API_KEY": "AIzaSyAGnVJteWAPXTkmL9HpcDY0eogJViy4bNg",
+        "EXPO_PUBLIC_GEMINI_API_KEY": "AIzaSyCfnHd2IBa2pNMwtx6AES1w79i7jzM_YNA",
         "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "862052704275-hoap4ue6hbvhuo7c4co9bjbimdmp2adv.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "862052704275-64h0rdf93c0futbap8h4r70klf0ql233.apps.googleusercontent.com",
         "EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD": "appl_XkmqCwmuRnOaxhvHAtIczSdJbsd",
