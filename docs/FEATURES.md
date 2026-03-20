@@ -10,7 +10,8 @@ Users can join existing "Ghost Circles" or create their own.
 A sacred space for users to record their daily reflections.
 - **Premium Feature**: Journaling requires a subscription.
 - **Search**: Users can search through their past entries.
-- **Spiritual Intelligence Analysis**: Get personalized spiritual guidance, scripture, and action steps based on your journal entry and belief system.
+- **Spiritual Advice (Free)**: Accessible on the Affirmation screen, offering personalized spiritual guidance, sacred text quotes (Bible, Quran, etc.), and action steps based on your current state, themes, goals, and journal entries.
+- **SI Analysis (Premium)**: Advanced journaling analysis and the "Ask Nur" AI companion require a subscription.
 
 ## 3. Affirmations
 Daily inspiration based on the user's selected belief system and current theme.
