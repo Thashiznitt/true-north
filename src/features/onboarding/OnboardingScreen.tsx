@@ -1120,14 +1120,30 @@ export const OnboardingScreen = () => {
 
                                 const hasHardware = await LocalAuthentication.hasHardwareAsync();
                                 if (!hasHardware) {
-                                    Alert.alert("Unavailable", "Biometric hardware not found.");
+                                    Alert.alert("Unavailable", "Biometric hardware not found on this device.");
                                     return;
                                 }
-                                const result = await LocalAuthentication.authenticateAsync({
-                                    promptMessage: 'Enable Biometrics for True North',
-                                });
-                                if (result.success) {
-                                    setSetupBiometrics(true);
+
+                                const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+                                if (!isEnrolled) {
+                                    Alert.alert(
+                                        "Not Enrolled", 
+                                        "No biometrics (Fingerprint/Face) are enrolled on this device. Please set them up in your phone settings first."
+                                    );
+                                    return;
+                                }
+
+                                try {
+                                    const result = await LocalAuthentication.authenticateAsync({
+                                        promptMessage: 'Enable Biometrics for True North',
+                                        fallbackLabel: 'Use Passcode',
+                                    });
+                                    if (result.success) {
+                                        setSetupBiometrics(true);
+                                    }
+                                } catch (error) {
+                                    console.error("[Biometrics] Auth error:", error);
+                                    Alert.alert("Error", "Could not initialize biometric prompt.");
                                 }
                             } else {
                                 setSetupBiometrics(false);

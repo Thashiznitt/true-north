@@ -16,7 +16,9 @@ interface NurContext {
     };
     journal: {
         recentEntries: JournalEntry[];
-        sentiment: 'positive' | 'neutral' | 'negative' | 'mixed'; // Placeholder simple sentiment
+        sentiment: 'positive' | 'neutral' | 'negative' | 'mixed';
+        historySummary?: string;
+        totalCount: number;
     };
     community: {
         circles: string[];
@@ -28,9 +30,10 @@ export const NurAIService = {
     // 1. Context Builder
     buildContext: (): NurContext => {
         const state = useStore.getState();
-        const recentJournal = state.journalEntries
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-            .slice(0, 5);
+        // Get more entries for better longitudinal memory
+        const allEntries = [...state.journalEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const recentJournal = allEntries.slice(0, 10); // Recent detailed context
+        const olderSummary = allEntries.slice(10, 50).map(e => `[${e.date}] ${e.title}`).join(', '); // Broad history (expanded to 50)
 
         return {
             identity: {
@@ -46,7 +49,9 @@ export const NurAIService = {
             },
             journal: {
                 recentEntries: recentJournal,
-                sentiment: 'neutral' // In a real app, this would be calculated
+                sentiment: 'neutral',
+                historySummary: olderSummary,
+                totalCount: allEntries.length
             },
             community: {
                 circles: state.createdCircles.map(c => c.name)
@@ -69,7 +74,8 @@ HYPER-PERSONALIZATION RULES:
 2. GOAL AUDIT: If the user asks for advice, always tie it back to their core goals (${JSON.stringify(context.goals.longTerm)}). If their actions/feelings contradict their goals, offer a gentle Mirror/Accountability check.
 3. PERSONALIZED VOCABULARY: Use the user's name (${context.identity.name}) naturally.
 4. BELIEF RESONANCE: Use terminology, scriptures, or concepts strictly from their ${context.identity.belief || 'Spiritual'} path.
-5. CONTINUITY: Reference past reflections to show you are "listening constantly".
+5. CONTINUITY: Reference past reflections to show you are "listening constantly". Use the provided history summary to identify recurring themes or progress over time.
+6. LONG-TERM MEMORY: You have access to a summary of older entries: ${context.journal.historySummary || 'None yet'}. Use this to reinforce their growth.
 
 Your Persona:
 - Warm, empathetic, yet intellectually sharp.
@@ -91,26 +97,30 @@ STRICT TOPIC RESTRICTIONS:
 
     // 4. Daily Greeting Generator
     getDailyGreeting: (username: string, belief?: BeliefType | null, affirmation?: string): string => {
-        let greeting = `Salam, ${username || 'Traveler'}.`;
+        let greeting = `${username ? `Salam, ${username}` : 'Salam, Seeker'}.`;
 
         if (belief === 'Christian' || belief === 'Catholic' || belief === 'Protestant') {
-            greeting = `Peace be with you, ${username || 'Traveler'}.`;
+            greeting = `${username ? `Peace be with you, ${username}` : 'Peace be with you, Seeker'}.`;
         } else if (belief === 'Jewish') {
-            greeting = `Shalom, ${username || 'Traveler'}.`;
+            greeting = `${username ? `Shalom, ${username}` : 'Shalom, Seeker'}.`;
         } else if (belief === 'Hindu') {
-            greeting = `Namaste, ${username || 'Traveler'}.`;
+            greeting = `${username ? `Namaste, ${username}` : 'Namaste, Seeker'}.`;
         } else if (belief === 'Buddhist') {
-            greeting = `Peace and mindful blessings, ${username || 'Traveler'}.`;
+            greeting = `${username ? `Peace and mindful blessings, ${username}` : 'Peace and mindful blessings, Seeker'}.`;
         } else if (belief === 'Sikh') {
-            greeting = `Sat Sri Akal, ${username || 'Traveler'}.`;
+            greeting = `${username ? `Sat Sri Akal, ${username}` : 'Sat Sri Akal, Seeker'}.`;
         } else if (belief === 'Spiritual' || belief === 'Exploring') {
-            greeting = `Warm greetings, ${username || 'Seeker'}.`;
+            greeting = `${username ? `Warm greetings, ${username}` : 'Warm greetings, Seeker'}.`;
         }
 
+        const personalizationSuffix = !username ? "\n\nMay I ask what name you would like to be called in this sanctuary?" : "";
+        const wellbeingCheck = "\n\nI have been reflecting on your journey, and I want you to know that I am here for you. How is your heart and well-being today?";
+        const memoryAssurance = "\n\nPlease rest assured that everything we have shared before is held safely in my memory, and we can revisit any of your past reflections whenever you feel ready.";
+
         if (affirmation) {
-            return `${greeting}\n\nToday's wisdom was: "${affirmation}"\n\nHow does this resonance with your heart right now?`;
+            return `${greeting}${wellbeingCheck}${memoryAssurance}\n\nToday's wisdom was: "${affirmation}"\n\nHow does this resonance with your heart right now?${personalizationSuffix}`;
         }
-        return `${greeting}\n\nI am here to listen and reflect. How is your heart today?`;
+        return `${greeting}${wellbeingCheck}${memoryAssurance}${personalizationSuffix}`;
     },
 
     // 3. Simulated Response Generator (The "Brain" for now)

@@ -40,6 +40,9 @@ export const CommunityScreen = () => {
     const { createdCircles, bookmarkedCircleIds, subscriptionTier, dailyGoals, beliefType, biometricsEnabled, securityPin, blockedCircleIds, isSessionUnlocked, setSessionUnlocked } = useStore();
     const isSubscribed = subscriptionTier !== 'free';
 
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [isNavigating, setIsNavigating] = useState(false);
+
     const [bioError, setBioError] = useState(false);
 
     useEffect(() => {
@@ -60,21 +63,27 @@ export const CommunityScreen = () => {
         const isEnrolled = await LocalAuthentication.isEnrolledAsync();
 
         if (hasHardware && isEnrolled) {
-            const result = await LocalAuthentication.authenticateAsync({
-                promptMessage: 'Unlock your sanctuaries',
-                fallbackLabel: 'Use PIN',
-            });
+            try {
+                const result = await LocalAuthentication.authenticateAsync({
+                    promptMessage: 'Unlock your sanctuaries',
+                    fallbackLabel: 'Use PIN',
+                });
 
-            if (result.success) {
-                setSessionUnlocked(true);
-                setBioError(false);
-            } else {
+                if (result.success) {
+                    setSessionUnlocked(true);
+                    setBioError(false);
+                } else {
+                    setBioError(true);
+                }
+            } catch (error) {
+                console.error("[Biometrics] Auth error:", error);
                 setBioError(true);
                 if (securityPin) promptPin();
             }
         } else if (securityPin) {
             promptPin();
         } else {
+            // Fallback for devices without biometrics if enabled in store but not on device
             setSessionUnlocked(true);
         }
     };
@@ -194,7 +203,9 @@ export const CommunityScreen = () => {
             return (
                 <TouchableOpacity
                     style={styles.paywallCard}
-                    onPress={() => navigation.navigate('Subscription')}
+                    onPress={() => {
+                        navigation.navigate('Subscription');
+                    }}
                 >
                     <ImageBackground
                         /* eslint-disable-next-line @typescript-eslint/no-require-imports */
@@ -226,11 +237,29 @@ export const CommunityScreen = () => {
         );
     }, [bookmarkedCircleIds, navigation, isSubscribed, filteredCircles]);
 
+    // Paywall gating for the whole screen if not subscribed
+    // This matches the user's request to see subscription tiers when clicking "Unlock"
+    if (!isSubscribed) {
+        return (
+            <SanctuaryLock
+                onUnlock={() => {
+                    navigation.navigate('Subscription');
+                }}
+                loading={false}
+                onBack={() => navigation.navigate('Affirmation')}
+                title="Sacred Circles"
+                subtitle="Join or create circles of faith. Authenticate to protect your community."
+                buttonText="Unlock Circles"
+                icon={Users}
+            />
+        );
+    }
+
     if (!isSessionUnlocked && (biometricsEnabled || securityPin)) {
         return (
             <SanctuaryLock
                 onUnlock={authenticate}
-                onBack={() => navigation.goBack()}
+                onBack={() => navigation.navigate('Affirmation')}
                 error={bioError}
                 title="Sacred Circles"
                 subtitle="Your communal sanctuaries are protected by biometric security."

@@ -35,7 +35,7 @@ The app uses a `navigationRef` in `src/navigation/root.tsx` to enable navigation
 - **Vertical Rhythm**: standardized 32px spacing established across all core sanctuary screens (Affirmation, Community, Detail).
 
 ### Ghost Communities & Content Agent
-The `ContentAgentService` simulates active communities and reflections for a "lived-in" feel, while allowing users to create their own real communities. It also handles the "Spiritual Analysis" logic for journal feedback.
+The `ContentAgentService` simulates active communities and reflections for a "lived-in" feel, while allowing users to create their own real communities. It also handles the "Spiritual Analysis" logic for journal feedback, now hyper-personalized by integrating the user's belief system, selected life themes, and recent journal history into a unified SI context.
 
 ### Persistence & Backend
 - **State**: Persisted using Zustand's `persist` middleware with `@react-native-async-storage/async-storage`.

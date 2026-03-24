@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { NurChatService } from '../services/NurChatService';
 
 export type UserRole = 'member' | 'moderator' | 'admin' | 'platform_admin' | 'validator';
 import { BeliefType } from '../types';
@@ -250,6 +251,7 @@ interface UserState {
     deleteCommunityNews: (id: string) => void;
     addNurMessage: (message: ChatMessage) => void;
     clearNurChat: () => void;
+    syncNurChats: () => Promise<void>;
     setSessionUnlocked: (unlocked: boolean) => void;
     reset: () => void;
     logout: () => void;
@@ -693,11 +695,29 @@ export const useStore = create<UserState>()(
             deleteCommunityNews: (id) => set((state) => ({
                 communityNews: state.communityNews.filter(n => n.id !== id)
             })),
-            addNurMessage: (message) => set((state) => ({
-                nurChats: [...state.nurChats, message]
-            })),
+            addNurMessage: (message) => set((state) => {
+                const newChats = [...state.nurChats, message];
+                if (state.isLoggedIn && state.userId) {
+                    NurChatService.pushMessage(state.userId, message);
+                }
+                return { nurChats: newChats };
+            }),
             setSessionUnlocked: (isSessionUnlocked) => set({ isSessionUnlocked }),
-            clearNurChat: () => set({ nurChats: [] }),
+            clearNurChat: () => set((state) => {
+                if (state.isLoggedIn && state.userId) {
+                    NurChatService.clearHistory(state.userId);
+                }
+                return { nurChats: [] };
+            }),
+            syncNurChats: async () => {
+                const state = useStore.getState();
+                if (state.isLoggedIn && state.userId) {
+                    const cloudChats = await NurChatService.pullHistory(state.userId);
+                    if (cloudChats && cloudChats.length > 0) {
+                        set({ nurChats: cloudChats });
+                    }
+                }
+            },
             logout: () => set({ isLoggedIn: false, userId: null, subscriptionTier: 'free', username: '', profilePicture: null, dateOfBirth: null, astrologyEnabled: false, isSessionUnlocked: false }),
         }),
         {

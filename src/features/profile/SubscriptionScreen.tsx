@@ -122,12 +122,22 @@ export const SubscriptionScreen = () => {
         </View>
     );
 
+    const cleanTitle = (title: string) => {
+        if (!title) return '';
+        // Remove everything in parentheses and trailing descriptors
+        return title.split('(')[0].trim()
+            .replace(' Monthly', '')
+            .replace(' Annual', '')
+            .replace(' Yearly', '')
+            .replace(' Subscription', '');
+    };
+
     const renderTierList = () => (
         <View style={styles.tierContainer}>
 
             {loading ? (
                 <ActivityIndicator color={palette.softGold} size="large" style={{ marginTop: 40 }} />
-            ) : offering ? (
+            ) : (offering && offering.availablePackages.length > 0) ? (
                 offering.availablePackages.map((pkg: any, index: number) => {
                     const product = pkg.product || pkg.storeProduct;
                     const productId = (product.identifier || '').toLowerCase();
@@ -143,14 +153,15 @@ export const SubscriptionScreen = () => {
                     const meta = TIER_METADATA[displayTier] || TIER_METADATA.true_north;
 
                     const isSelected = selectedPkgIdentifier === pkg.identifier;
+                    const isAnnual = pkgTypeLC.includes('annual') || pkgTypeLC.includes('yearly') || productId.includes('annual');
 
                     return (
                         <FadeIn key={pkg.identifier} delay={200 + index * 100} from="bottom">
                             <TierCard
-                                name={product.title}
+                                name={cleanTitle(product.title)}
                                 price={product.priceString}
-                                period={pkgTypeLC.includes('annual') || pkgTypeLC.includes('yearly') ? '/ year' : '/ month'}
-                                subtext={product.description}
+                                period={isAnnual ? '/ year' : '/ month'}
+                                subtext={isAnnual || displayTier === 'compass' ? 'Paid Annually' : (displayTier === 'zenith' ? 'Elite Experience' : 'Monthly Alignment')}
                                 benefits={meta.benefits}
                                 icon={TIER_ICONS[displayTier] || Star}
                                 isSelected={isSelected}
@@ -164,6 +175,7 @@ export const SubscriptionScreen = () => {
                     );
                 })
             ) : (
+                // Fallback UI if offerings are null or failing to load
                 <>
                     <FadeIn delay={100} from="bottom">
                         <TierCard
@@ -255,9 +267,9 @@ export const SubscriptionScreen = () => {
                                 <Text style={styles.ctaButtonText}>
                                     {selectedTier === 'free'
                                         ? "Continue with Free"
-                                        : offering
-                                            ? `Start Journey`
-                                            : (selectedTier === 'compass' ? 'Start Annual Journey' : 'Begin Monthly Alignment')
+                                        : (selectedPkgIdentifier?.toLowerCase().includes('annual') || selectedTier === 'compass' || selectedTier === 'zenith') 
+                                            ? 'Start Annual Journey' 
+                                            : 'Start Monthly Journey'
                                     }
                                 </Text>
                                 {!offering && selectedTier !== 'free' && (
@@ -319,7 +331,7 @@ const TierCard = ({ name, price, period, subtext, benefits, icon: Icon, isSelect
         )}
         <View style={styles.tierHeader}>
             <View style={[styles.tierIcon, isSelected && styles.tierIconSelected]}>
-                <Icon size={24} color={isSelected ? palette.ivory : palette.softGold} />
+                <Icon size={22} color={palette.softGold} />
             </View>
             <View style={styles.flex1}>
                 <Text style={[styles.tierName, isSelected && styles.tierNameTextSelected]}>{name}</Text>
@@ -362,28 +374,29 @@ const styles = StyleSheet.create({
         marginBottom: 12, overflow: 'hidden'
     },
     tierCardSelected: {
-        borderColor: palette.softGold, backgroundColor: palette.softGold + '08',
-        shadowColor: palette.softGold, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 4
+        borderColor: palette.softGold,
+        borderWidth: 2,
+        shadowColor: palette.softGold, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 2
     },
     popularBadge: {
         position: 'absolute', top: 0, right: 0, backgroundColor: palette.softGold,
         paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 1
     },
     popularText: { fontFamily: theme.typography.sansBold, fontSize: 10, color: palette.ivory, letterSpacing: 0.5 },
-    tierHeader: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-    flex1: { flex: 1 },
+    tierHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    flex1: { flex: 1, marginRight: 8 },
     tierIcon: {
-        width: 52, height: 52, borderRadius: 14, backgroundColor: theme.colors.background,
+        width: 44, height: 44, borderRadius: 22, backgroundColor: theme.colors.background,
         alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border
     },
-    tierIconSelected: { backgroundColor: palette.softGold, borderColor: palette.softGold },
-    tierName: { fontFamily: theme.typography.serifBold, fontSize: 22, color: theme.colors.text },
+    tierIconSelected: { borderColor: palette.softGold },
+    tierName: { fontFamily: theme.typography.serifBold, fontSize: 20, color: theme.colors.text },
     tierNameTextSelected: { color: palette.softGold },
-    tierSubtext: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText },
-    priceContainer: { alignItems: 'flex-end' },
-    tierPrice: { fontFamily: theme.typography.serifBold, fontSize: 24, color: theme.colors.text, textAlign: 'right' },
+    tierSubtext: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText },
+    priceContainer: { alignItems: 'flex-end', minWidth: 80 },
+    tierPrice: { fontFamily: theme.typography.serifBold, fontSize: 22, color: theme.colors.text, textAlign: 'right' },
     tierPriceSelected: { color: palette.softGold },
-    tierPeriod: { fontFamily: theme.typography.sans, fontSize: 13, color: theme.colors.secondaryText, textAlign: 'right' },
+    tierPeriod: { fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText, textAlign: 'right' },
     benefitContainer: { marginTop: 20, overflow: 'hidden' },
     divider: { height: 1, backgroundColor: theme.colors.border, marginBottom: 16, opacity: 0.5 },
     benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },

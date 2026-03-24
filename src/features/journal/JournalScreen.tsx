@@ -45,6 +45,7 @@ export const JournalScreen = () => {
     const journalEntries = useStore(state => state.journalEntries);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
+    const [isNavigating, setIsNavigating] = useState(false);
     const [bioError, setBioError] = useState(false);
 
     const navigation = useNavigation<any>(); // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -63,32 +64,31 @@ export const JournalScreen = () => {
             return;
         }
 
-        // Handle Simulator Mock Success
-        if (Platform.OS === 'ios' && !LocalAuthentication.hasHardwareAsync()) {
-            setSessionUnlocked(true);
-            setBioError(false);
-            return;
-        }
-
         const hasHardware = await LocalAuthentication.hasHardwareAsync();
         const isEnrolled = await LocalAuthentication.isEnrolledAsync();
 
         if (hasHardware && isEnrolled) {
-            const result = await LocalAuthentication.authenticateAsync({
-                promptMessage: 'Unlock your private journal',
-                fallbackLabel: 'Use PIN',
-            });
+            try {
+                const result = await LocalAuthentication.authenticateAsync({
+                    promptMessage: 'Unlock your private journal',
+                    fallbackLabel: 'Use PIN',
+                });
 
-            if (result.success) {
-                setSessionUnlocked(true);
-                setBioError(false);
-            } else {
+                if (result.success) {
+                    setSessionUnlocked(true);
+                    setBioError(false);
+                } else {
+                    setBioError(true);
+                }
+            } catch (error) {
+                console.error("[Biometrics] Journal Auth error:", error);
                 setBioError(true);
                 if (securityPin) promptPin();
             }
         } else if (securityPin) {
             promptPin();
         } else {
+            // Fallback for devices without biometrics if enabled in store but not on device
             setSessionUnlocked(true);
         }
     };
@@ -192,19 +192,19 @@ export const JournalScreen = () => {
 
     const isTrialActive = onboardedAt ? (Date.now() - onboardedAt) < (14 * 24 * 60 * 60 * 1000) : true;
 
-    if (subscriptionTier === 'free' && !isTrialActive) {
-        const handleUnlock = () => {
-            navigation.navigate('Subscription');
-        };
-
+    // Paywall gating for the whole screen if not subscribed
+    // This matches the user's request to see subscription tiers when clicking "Unlock"
+    if (!isSubscribed) {
         return (
             <SanctuaryLock
-                onUnlock={handleUnlock}
-                onBack={() => navigation.goBack()}
-                error={false}
+                onUnlock={() => {
+                    navigation.navigate('Subscription');
+                }}
+                loading={false}
+                onBack={() => navigation.navigate('Affirmation')}
                 title="Sacred Journal"
                 subtitle={getBeliefSubtitle()}
-                buttonText="Upgrade to Access"
+                buttonText="View Subscription Tiers"
                 icon={LucideLock}
             />
         );
@@ -214,8 +214,9 @@ export const JournalScreen = () => {
         return (
             <SanctuaryLock
                 onUnlock={authenticate}
-                onBack={() => navigation.goBack()}
+                onBack={() => navigation.navigate('Affirmation')}
                 error={bioError}
+                buttonText="Unlock Journal"
             />
         );
     }

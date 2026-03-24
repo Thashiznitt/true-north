@@ -124,7 +124,7 @@ const BottomSheetTextInput = (props: React.ComponentProps<typeof TextInput>) => 
 
 export const BottomSheet = Object.assign(BottomSheetComponent, {
     TextInput: BottomSheetTextInput
-}) as React.FC<BottomSheetProps> & { TextInput: typeof BottomSheetTextInput };
+}) as React.FC<React.PropsWithChildren<BottomSheetProps>> & { TextInput: typeof BottomSheetTextInput };
 
 const styles = StyleSheet.create({
     overlay: {

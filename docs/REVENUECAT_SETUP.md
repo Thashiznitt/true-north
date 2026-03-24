@@ -44,16 +44,19 @@ RevenueCat needs a **Service Account** to communicate with Google Play:
 1. Navigate to **Entitlements** in your RevenueCat project.
 2. Create a new entitlement with the ID: `premium`.
 
+> [!NOTE]
+> **Entitlement Discovery (v24+)**: While `premium` is the primary ID, the app now uses "Discovery Mode." It will check for ANY active entitlement (e.g., `pro`, `compass`, `zenith`) and map them to the correct internal tier. This ensures users never lose access due to a naming mismatch in the dashboard.
+
 ### Create Offerings
 1. Navigate to **Offerings**.
 2. Create a new Offering (e.g., `default_offering`).
 3. Add three **Packages** to this offering:
-   - **Compass**: Link to `tn_annual_compass_7188`.
+   - **Compass**: Link to `tn_annual_compass_7188`. (Ensure this is set as **Annual** in the store).
    - **True North**: Link to `tn_monthly_alignment_1299`.
    - **Zenith**: Link to `tn_monthly_zenith_1999`.
 
 ### Attach Entitlements to Products
-1. In the **Products** section, ensure all three products are attached to the `premium` entitlement.
+1. In the **Products** section, ensure all products are attached to an entitlement (ideally `premium`).
 
 ## 4. API Key & Credentials (iOS/Android)
 

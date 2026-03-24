@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { theme, palette } from '../theme';
 import { Fingerprint } from 'lucide-react-native';
 
@@ -18,11 +18,12 @@ export const SanctuaryLock = ({
     onUnlock,
     onBack,
     error,
+    loading,
     title = "Sanctuary Locked",
     subtitle = "Your reflections are protected by your security settings.",
     buttonText = "Unlock Journal",
     icon: Icon = Fingerprint
-}: SanctuaryLockProps) => {
+}: SanctuaryLockProps & { loading?: boolean }) => {
     return (
         <View style={styles.lockContainer}>
             <View style={styles.lockContent}>
@@ -36,11 +37,19 @@ export const SanctuaryLock = ({
                     <Text style={styles.bioErrorText}>Authentication failed. Please try again.</Text>
                 )}
 
-                <TouchableOpacity style={styles.unlockButton} onPress={onUnlock}>
-                    <Text style={styles.unlockButtonText}>{buttonText}</Text>
+                <TouchableOpacity 
+                    style={[styles.unlockButton, loading && { opacity: 0.7 }]} 
+                    onPress={onUnlock}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator color={palette.ivory} />
+                    ) : (
+                        <Text style={styles.unlockButtonText}>{buttonText}</Text>
+                    )}
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.backButton} onPress={onBack}>
+                <TouchableOpacity style={styles.backButton} onPress={onBack} disabled={loading}>
                     <Text style={styles.backButtonText}>Go Back</Text>
                 </TouchableOpacity>
             </View>

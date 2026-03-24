@@ -16,7 +16,7 @@ const STORAGE_KEY_CUSTOM_ENDPOINT = 'ai_custom_endpoint';
 const STORAGE_KEY_MODEL = 'ai_selected_model';
 const SECURE_KEY_PREFIX = 'ai_api_key_';
 const STORAGE_KEY_DAILY_QUOTA = 'ai_daily_quota_stats';
-const MAX_DAILY_CALLS = 20; // Hard cap to save money
+const MAX_DAILY_CALLS = 100; // Increased for thorough testing
 
 export const SpiritualIntelligenceService = {
     // --- Configuration Management ---
@@ -98,14 +98,13 @@ export const SpiritualIntelligenceService = {
             apiKey = storedKey || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 
             if (!apiKey) {
+                console.error("[Gemini] No API Key found in Store or Env");
                 throw new Error("Missing Gemini API Key. Please check your configuration.");
             }
 
-            // Use Google Generative Spiritual Intelligence REST API
-            // For simplicity, we'll use the v1beta/models/gemini-pro:generateContent endpoint
-            // Note: 'model' from storage might be 'gpt-4o-mini', so we force a gemini model if it's mismatched
-            const geminiModel = 'gemini-flash-latest'; // Latest and fastest
-            endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`;
+            // Use Google Generative AI REST API (v1 for stability)
+            const geminiModel = 'gemini-1.5-flash-latest';
+            endpoint = `https://generativelanguage.googleapis.com/v1/models/${geminiModel}:generateContent?key=${apiKey}`;
 
             try {
                 const response = await fetch(endpoint, {
@@ -113,15 +112,22 @@ export const SpiritualIntelligenceService = {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{
-                            role: 'user',
-                            parts: [{ text: `${systemPrompt}\n\nUser: ${userPrompt}` }] // Gemini doesn't have system role in simple API, often prepended
-                        }]
+                            parts: [{ text: `${systemPrompt}\n\nUser: ${userPrompt}` }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            topK: 40,
+                            topP: 0.95,
+                            maxOutputTokens: 1024,
+                        }
                     })
                 });
 
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Gemini API Error (${response.status}) for ${geminiModel}: ${errorText}`);
+                    const errorJson = await response.json().catch(() => ({}));
+                    const errorMsg = errorJson?.error?.message || response.statusText || 'Unknown error';
+                    console.error("[Gemini] API Error Response:", errorMsg);
+                    throw new Error(`Gemini API ${response.status}: ${errorMsg}`);
                 }
 
                 const data = await response.json();
@@ -134,15 +140,27 @@ export const SpiritualIntelligenceService = {
 
                     return result;
                 } else {
-                    return "No response from Spirit Guide.";
+                    console.error("[Gemini] Unexpected data structure:", JSON.stringify(data));
+                    return "The sanctuary is currently in a state of deep reflection. Please try again in a moment.";
                 }
 
             } catch (error: unknown) {
                 const message = error instanceof Error ? error.message : String(error);
-                console.warn("Gemini Generation Error:", message);
+                console.error("[Gemini] Generation Caught Error:", message);
+                
                 if (message.includes('429')) {
-                    return "The sanctuary is currently experiencing a high volume of seekers. Please pause, breathe, and reflect on this moment. Your guide will be available shortly.";
+                    return "The sanctuary is receiving many seekers. Please pause for a moment and try again.";
                 }
+                
+                // For dev/test builds or major config issues, let the user know what's wrong precisely
+                if (message.includes('API key') || message.includes('API_KEY_INVALID') || message.includes('403')) {
+                    return `Guidance Interrupted: API Configuration Error. Please contact support.`;
+                }
+
+                if (message.includes('400') || message.includes('404')) {
+                    return `Guidance Interrupted: Service Endpoint Error.`;
+                }
+
                 return "I am currently taking a moment of silence. Please try again soon.";
             }
         }

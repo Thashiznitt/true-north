@@ -720,10 +720,10 @@ export const contentAgentService = {
     getDailyAdvice: async (username: string, belief: BeliefType, themes: string[], journalInput?: string): Promise<string> => {
         const theme = themes[0] || 'Wisdom';
         const provider = await SpiritualIntelligenceService.getProvider();
-        const { subscriptionTier: tier, dateOfBirth, astrologyEnabled } = useStore.getState();
+        const { subscriptionTier: tier, dateOfBirth, astrologyEnabled, journalEntries, userGoals } = useStore.getState();
 
         if (provider === 'LocalMock') {
-            const adviceTemplates: Record<BeliefType, string[]> = {
+            const adviceTemplates: Record<string, string[]> = {
                 Christian: [
                     "Dear {{name}}, based on your focus on {{theme}}, remember that your path is prepared. Lean into the stillness today.",
                     "{{name}}, I see you've been reflecting on {{theme}}. The word reminds us that grace is a marathon, not a sprint. Take a breath.",
@@ -753,36 +753,6 @@ export const contentAgentService = {
                     "{{name}}, your soul is seeking deeper alignment in {{theme}}. Trust the whispers of your intuition today.",
                     "The universe is supporting your growth in {{theme}}, {{name}}. Stay open to the flow of energy and light.",
                     "{{name}}, remember that your path in {{theme}} is a sacred dance between form and spirit. Honor both today."
-                ],
-                Catholic: [
-                    "{{name}}, may the grace of this day guide you in {{theme}}. Lean on the communion of saints.",
-                    "In your focus on {{theme}}, {{name}}, remember the sacraments are a source of constant renewal.",
-                    "{{name}}, let the peace of Christ rule in your heart as you navigate {{theme}} today."
-                ],
-                Protestant: [
-                    "{{name}}, stand firm in faith regarding {{theme}}. His word is a lamp to your feet.",
-                    "{{name}}, trusting that He who began a good work in you concerning {{theme}} will carry it to completion.",
-                    "Grace upon grace for you today, {{name}}, as you walk in {{theme}}."
-                ],
-                Sikh: [
-                    "{{name}}, as you focus on {{theme}}, remember that the True Name (Satnam) is your anchor. Stay grounded in Seva.",
-                    "Your path in {{theme}} is guided by the One, {{name}}. Let your actions reflect the wisdom of the Guru today.",
-                    "{{name}}, find strength in Chardi Kala today as you navigate {{theme}}. Your spirit is tireless."
-                ],
-                Hindu: [
-                    "{{name}}, reflecting on {{theme}}, remember your Dharma. Action without attachment is the highest path today.",
-                    "For your journey in {{theme}}, {{name}}, consider the divine light within you. May your karma be pure and your heart light.",
-                    "{{name}}, in the pursuit of {{theme}}, find balance in the rhythm of the universe. OM Shanti."
-                ],
-                Buddhist: [
-                    "{{name}}, as you cultivate {{theme}}, remember that mindfulness is the path to liberation. Breathe through this moment.",
-                    "Your growth in {{theme}}, {{name}}, is like the lotus—rising from the mud to find the light. Stay present.",
-                    "{{name}}, find peace in impermanence today regarding {{theme}}. Observe everything with compassion."
-                ],
-                Jewish: [
-                    "{{name}}, focusing on {{theme}}? Remember that every mitzvah is a step toward alignment. Your actions matter.",
-                    "Your path in {{theme}} is rich with tradition, {{name}}. Find wisdom in the questions and strength in the covenant.",
-                    "{{name}}, may your day be filled with Chesed as you pursue {{theme}}. Shalom is found in the doing."
                 ]
             };
 
@@ -791,21 +761,22 @@ export const contentAgentService = {
 
             let advice = template.replace('{{theme}}', theme.toLowerCase()).replace('{{name}}', username || 'friend');
 
-            if (journalInput && journalInput.length > 20) {
-                advice += "\n\nI also noticed your recent journal entries touched on something deeper. Trust that those feelings are pointing you toward your True North.";
+            if (journalEntries.length > 0) {
+                advice += `\n\nI see you've shared ${journalEntries.length} reflections in your sanctuary. Trust that this consistency is building a foundation for the clarity you seek.`;
             }
             return advice;
         } else {
             const todayStr = new Date().toISOString().split('T')[0];
             const cacheKey = `@TN:DailyAdvice:${todayStr}:${belief}:${username}`;
+            
             try {
                 const cached = await AsyncStorage.getItem(cacheKey);
                 if (cached) return cached;
             } catch (e) { /* ignore */ }
 
             try {
-                const userGoals = useStore.getState().userGoals;
-                const systemPrompt = await constructSystemPrompt(belief, `Provide personalized, compassionate advice for a seeker focusing on ${theme}.`, tier, username, userGoals, dateOfBirth, astrologyEnabled);
+                const entriesText = journalEntries.slice(0, 5).map(e => `[${e.date}] ${e.content}`).join('\n');
+                const systemPrompt = await constructSystemPrompt(belief, `Generate personalized, compassionate daily advice for a seeker focusing on ${theme}. They have recently reflected on: ${entriesText}`, tier, username, userGoals, dateOfBirth, astrologyEnabled, themes);
                 let userPrompt = `Seeker Name: ${username || 'Friend'}. Focus: ${theme}.`;
                 if (journalInput) {
                     userPrompt += ` Recent insights: "${journalInput}".`;
@@ -1064,7 +1035,9 @@ export const contentAgentService = {
             return { title, message, action };
         } else {
             try {
-                const recentJournal = journalEntries.slice(0, 3).map(e => `${e.title}: ${e.content}`).join(' | ');
+                const allEntries = [...journalEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                const recentJournal = allEntries.slice(0, 10).map(e => `${e.title}: ${e.content}`).join(' | ');
+                const historySummary = allEntries.slice(10, 30).map(e => e.title).join(', ');
                 
                 const instructions = `
 You are a profound Spiritual Counselor. 
@@ -1073,6 +1046,7 @@ TASK:
 2. Expound on the quote in the context of the user's current affirmation: "${content}".
 3. Deeply weave in their life themes (${selectedThemes?.join(', ') || 'personal growth'}) and align the advice with their goals (${JSON.stringify(userGoals)}).
 4. Mirror the emotional state found in their recent reflections (${recentJournal || 'no recent entries'}).
+5. RECALL: Reference their historical journey: "${historySummary || 'No older history recorded yet.'}".
 
 FORMAT: 
 Output strictly JSON with keys: 
@@ -1186,8 +1160,10 @@ Output strictly JSON with keys:
 
             try {
                 const { subscriptionTier: tier, dateOfBirth, astrologyEnabled, username, userGoals, journalEntries } = useStore.getState();
-                const recentJournal = journalEntries.slice(0, 3).map(e => `${e.title}: ${e.content}`).join(' | ');
-                const systemPrompt = await constructSystemPrompt(belief, `Generate a short, powerful, and poetic daily affirmation for a seeker. Ensure it is resonant with their path (${belief}) and profoundly targets their listed life goals. Focus: ${theme}. ${recentJournal ? `Consider their recent reflections: ${recentJournal}` : ''} Return JSON with "text" and "verse" (optional).`, tier, username, userGoals, dateOfBirth, astrologyEnabled, [theme]);
+                const allEntries = [...journalEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                const recentJournal = allEntries.slice(0, 5).map(e => `${e.title}: ${e.content}`).join(' | ');
+                const historySummary = allEntries.slice(5, 20).map(e => e.title).join(', ');
+                const systemPrompt = await constructSystemPrompt(belief, `Generate a short, powerful, and poetic daily affirmation for a seeker. Ensure it is resonant with their path (${belief}) and profoundly targets their listed life goals. Focus: ${theme}. ${recentJournal ? `Consider their recent reflections: ${recentJournal}.` : ''} ${historySummary ? `Recall their long-term focus: ${historySummary}.` : ''} Return JSON with "text" and "verse" (optional).`, tier, username, userGoals, dateOfBirth, astrologyEnabled, [theme]);
                 const userPrompt = `Generate a daily sanctuary affirmation for a ${belief} seeker focusing on ${theme}.`;
                 const jsonStr = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
                 try {

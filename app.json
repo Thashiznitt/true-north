@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "True North",
+    "name": "True North | Life Compass",
     "slug": "true-north",
     "version": "1.0.0",
     "scheme": "truenorth",
@@ -37,6 +37,7 @@
     },
     "android": {
       "package": "com.thashiznitt.truenorth",
+      "versionCode": 25,
       "adaptiveIcon": {
         "foregroundImage": "./assets/white-icon.png",
         "backgroundColor": "#C8A95A"
@@ -44,7 +45,14 @@
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
-        "FOREGROUND_SERVICE"
+        "FOREGROUND_SERVICE",
+        "com.android.vending.BILLING"
+      ],
+      "blockedPermissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
     "web": {
@@ -69,7 +77,17 @@
         }
       ],
       "expo-apple-authentication",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "35.0.0"
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {

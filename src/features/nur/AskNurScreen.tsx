@@ -17,18 +17,113 @@ export const AskNurScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
-    const { nurChats, addNurMessage, clearNurChat, username, subscriptionTier, createdCircles, beliefType, themes } = useStore();
+    const { nurChats, addNurMessage, clearNurChat, syncNurChats, username, subscriptionTier, createdCircles, beliefType, themes, userId, isLoggedIn } = useStore();
 
     const [inputText, setInputText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+    const [isNavigating, setIsNavigating] = useState(false);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const flatListRef = useRef<any>(null);
 
     // Paywall Check
-    const isSubscriber = subscriptionTier === 'true_north' || subscriptionTier === 'zenith';
+    const isSubscriber = subscriptionTier === 'true_north' || subscriptionTier === 'zenith' || subscriptionTier === 'compass';
+    const userMessageCount = nurChats.filter(m => m.role === 'user').length;
+    const isTrialExhausted = !isSubscriber && userMessageCount >= 7;
 
-    if (!isSubscriber) {
+    // Cloud Sync on Load
+    useEffect(() => {
+        if (isLoggedIn && userId) {
+            syncNurChats();
+        }
+    }, [isLoggedIn, userId, syncNurChats]);
+
+    // Daily Reset & Greeting Logic
+    useEffect(() => {
+        const checkDailyReset = async () => {
+            const today = new Date().toDateString();
+            const lastMsg = nurChats[nurChats.length - 1];
+
+            // Check if last message was from a previous day
+            const lastMsgDate = lastMsg ? new Date(lastMsg.timestamp).toDateString() : null;
+            const needsReset = lastMsgDate !== today;
+
+            if (needsReset) {
+                if (isSubscriber) {
+                    clearNurChat(); // Only clear history for subscribers
+                }
+
+                // Get Daily Wisdom for context
+                try {
+                    const dailyAffirmation = "Faith is taking the first step even when you don't see the whole staircase.";
+                    const greetingText = NurAIService.getDailyGreeting(username || '', beliefType, dailyAffirmation);
+
+                    const initialGreeting: ChatMessage = {
+                        id: 'init-' + Date.now(),
+                        role: 'assistant',
+                        content: greetingText,
+                        timestamp: Date.now(),
+                        mode: 'affirmation'
+                    };
+                    addNurMessage(initialGreeting);
+                } catch (e) {
+                    console.warn("Failed to generate daily greeting", e);
+                }
+            } else if (nurChats.length === 0) {
+                const greetingText = NurAIService.getDailyGreeting(username, beliefType, undefined);
+                const initialGreeting: ChatMessage = {
+                    id: 'init-' + Date.now(),
+                    role: 'assistant',
+                    content: greetingText,
+                    timestamp: Date.now(),
+                    mode: 'affirmation'
+                };
+                addNurMessage(initialGreeting);
+            }
+        };
+
+        checkDailyReset();
+    }, [isSubscriber, username, beliefType, nurChats.length, clearNurChat, addNurMessage]);
+
+    // Handle deep-linked events
+    useEffect(() => {
+        if (!isSubscriber || !route.params?.showEvents) return;
+
+        const relevantEvents: Array<{ event: CircleEvent, circleId: string, circleName: string }> = [];
+
+        createdCircles.forEach(circle => {
+            const alignsBelief = circle.belief === beliefType;
+            const alignsTheme = themes.some(t => circle.description?.includes(t) || circle.name.includes(t));
+
+            if (alignsBelief || alignsTheme) {
+                circle.events?.forEach(event => {
+                    relevantEvents.push({ event, circleId: circle.id, circleName: circle.name });
+                });
+            }
+        });
+
+        if (relevantEvents.length > 0) {
+            const eventMsg: ChatMessage = {
+                id: 'events-' + Date.now(),
+                role: 'assistant',
+                content: "I've found some gatherings that might resonate with your journey today. Would you like to explore them?",
+                timestamp: Date.now(),
+                mode: 'affirmation',
+                metadata: { events: relevantEvents }
+            };
+            addNurMessage(eventMsg);
+            navigation.setParams({ showEvents: undefined });
+        }
+    }, [isSubscriber, route.params?.showEvents, beliefType, themes, createdCircles, addNurMessage, navigation]);
+
+    // Auto-scroll
+    useEffect(() => {
+        if (nurChats.length > 0) {
+            setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+        }
+    }, [nurChats.length]);
+
+    if (isTrialExhausted) {
         return (
             <View style={styles.container}>
                 <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
@@ -52,9 +147,9 @@ export const AskNurScreen = () => {
                         </View>
                     </MotiView>
 
-                    <Text style={styles.lockedTitle}>Premium Access Required</Text>
+                    <Text style={styles.lockedTitle}>Path Reached</Text>
                     <Text style={styles.lockedSubtitle}>
-                        Ask Nur is a sacred spiritual companion reserved for our True North and Zenith travelers.
+                        You have used your 7 trial messages with Nur. To continue this journey and unlock deeper spiritual guidance, please choose a plan.
                     </Text>
 
                     <View style={styles.lockedBenefits}>
@@ -73,11 +168,24 @@ export const AskNurScreen = () => {
                     </View>
 
                     <TouchableOpacity
-                        style={styles.unlockButton}
-                        onPress={() => navigation.navigate('Subscription')}
+                        style={[styles.unlockButton, isNavigating && { opacity: 0.7 }]}
+                        onPress={() => {
+                            setIsNavigating(true);
+                            setTimeout(() => {
+                                navigation.navigate('Subscription');
+                                setTimeout(() => setIsNavigating(false), 1000);
+                            }, 500);
+                        }}
+                        disabled={isNavigating}
                     >
-                        <Text style={styles.unlockButtonText}>Join the Journey</Text>
-                        <ArrowRight size={20} color={palette.charcoal} />
+                        {isNavigating ? (
+                            <ActivityIndicator color={palette.charcoal} />
+                        ) : (
+                            <>
+                                <Text style={styles.unlockButtonText}>Join the Journey</Text>
+                                <ArrowRight size={20} color={palette.charcoal} />
+                            </>
+                        )}
                     </TouchableOpacity>
 
                     <Text style={styles.lockedFooter}>Unlock your full spiritual potential today.</Text>
@@ -85,99 +193,6 @@ export const AskNurScreen = () => {
             </View>
         );
     }
-
-    // Daily Reset & Greeting Logic
-    useEffect(() => {
-        if (!isSubscriber) return;
-
-        const checkDailyReset = async () => {
-            const today = new Date().toDateString();
-            const lastMsg = nurChats[nurChats.length - 1];
-
-            // Check if last message was from a previous day
-            const lastMsgDate = lastMsg ? new Date(lastMsg.timestamp).toDateString() : null;
-            const needsReset = lastMsgDate !== today;
-
-            if (needsReset) {
-                clearNurChat(); // Clear previous history
-
-                // Get Daily Wisdom for context
-                try {
-                    // Ideally fetch from store or service. For now mock or try to grab recently stored.
-                    // We'll simulate fetching the daily affirmation shown to the user.
-                    // In a real scenario, DailyRitualService.getDailyAffirmation() would return the *current* one.
-                    const dailyAffirmation = "Faith is taking the first step even when you don't see the whole staircase.";
-
-                    const greetingText = NurAIService.getDailyGreeting(username, beliefType, dailyAffirmation);
-
-                    const initialGreeting: ChatMessage = {
-                        id: 'init-' + Date.now(),
-                        role: 'assistant',
-                        content: greetingText,
-                        timestamp: Date.now(),
-                        mode: 'affirmation'
-                    };
-                    addNurMessage(initialGreeting);
-                } catch (e) {
-                    console.warn("Failed to generate daily greeting", e);
-                }
-            } else if (nurChats.length === 0) {
-                // Fallback if empty but same day (unlikely unless manually cleared)
-                const greetingText = NurAIService.getDailyGreeting(username, beliefType, undefined);
-                const initialGreeting: ChatMessage = {
-                    id: 'init-' + Date.now(),
-                    role: 'assistant',
-                    content: greetingText,
-                    timestamp: Date.now(),
-                    mode: 'affirmation'
-                };
-                addNurMessage(initialGreeting);
-            }
-        };
-
-        checkDailyReset();
-    }, [isSubscriber]); // Run on mount or sub change
-
-    // Handle deep-linked events
-    useEffect(() => {
-        if (route.params?.showEvents) {
-            // Find relevant events
-            const relevantEvents: Array<{ event: CircleEvent, circleId: string, circleName: string }> = [];
-
-            createdCircles.forEach(circle => {
-                // If it aligns with belief OR themes
-                const alignsBelief = circle.belief === beliefType;
-                const alignsTheme = themes.some(t => circle.description?.includes(t) || circle.name.includes(t));
-
-                if (alignsBelief || alignsTheme) {
-                    circle.events?.forEach(event => {
-                        relevantEvents.push({ event, circleId: circle.id, circleName: circle.name });
-                    });
-                }
-            });
-
-            if (relevantEvents.length > 0) {
-                const eventMsg: ChatMessage = {
-                    id: 'events-' + Date.now(),
-                    role: 'assistant',
-                    content: "I've found some gatherings that might resonate with your journey today. Would you like to explore them?",
-                    timestamp: Date.now(),
-                    mode: 'affirmation',
-                    metadata: { events: relevantEvents }
-                };
-                addNurMessage(eventMsg);
-                // Clear params so it doesn't re-trigger
-                navigation.setParams({ showEvents: undefined });
-            }
-        }
-    }, [route.params?.showEvents, beliefType, themes, createdCircles]);
-
-    // Auto-scroll
-    useEffect(() => {
-        if (nurChats.length > 0) {
-            setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
-        }
-    }, [nurChats.length]);
 
     const handleSuggestion = (text: string) => {
         setInputText(text);
@@ -197,6 +212,12 @@ export const AskNurScreen = () => {
         addNurMessage(userMsg);
         setInputText('');
         setIsTyping(true);
+
+        // Limit Check for Free Users (redundant but safe)
+        if (isTrialExhausted) {
+            setIsTyping(false);
+            return;
+        }
 
         try {
             const response = await NurAIService.generateResponse(userMsg.content);

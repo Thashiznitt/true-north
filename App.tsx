@@ -18,6 +18,7 @@ const queryClient = new QueryClient();
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
+  console.log("[App] Component mounting...");
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -37,7 +38,7 @@ export default function App() {
     if (__DEV__) {
       // Allow overriding with PROD key even in dev for simulator testing
       iosApiKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY_PROD || process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE';
-      androidApiKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE';
+      androidApiKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY_PROD || process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || 'test_wBhjehklKDMwfUnPjCTIklJxHwE';
     } else {
       // Production / TestFlight / Release
       // Strictly use PROD key, no fallback to test keys to avoid RevenueCat security block
@@ -47,6 +48,10 @@ export default function App() {
       if (!iosApiKey && Platform.OS === 'ios') {
         // Last resort safety: if env var missing in build, use the validated production key
         iosApiKey = 'appl_XkmqCwmuRnOaxhvHAtIczSdJbsd';
+      }
+      if (!androidApiKey && Platform.OS === 'android') {
+        // Last resort safety for Android production
+        androidApiKey = 'goog_CkXHjYDdxoHaGbVfnWaqLpEcqAo';
       }
     }
 
@@ -62,10 +67,35 @@ export default function App() {
   }, []);
 
   const onLayoutRootView = React.useCallback(async () => {
+    // onLayout is often unreliable for hiding the splash screen if the initial render is null
+    // We already handle this in useEffect now as a primary mechanism
     if (fontsLoaded) {
-      await SplashScreen.hideAsync();
+      console.log("[App] onLayout triggered - and fonts are loaded");
+      await SplashScreen.hideAsync().catch(() => {});
     }
   }, [fontsLoaded]);
+
+  React.useEffect(() => {
+    console.log("[App] fontsLoaded status:", fontsLoaded);
+    if (fontsLoaded) {
+      const hideSplash = async () => {
+        console.log("[App] Hiding splash screen via useEffect...");
+        await SplashScreen.hideAsync().catch(err => {
+          console.warn("[App] Error hiding splash screen:", err);
+        });
+      };
+      hideSplash();
+    }
+  }, [fontsLoaded]);
+
+  // Emergency safety: hide splash screen after 8 seconds no matter what
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      console.log("[App] Emergency splash screen hide triggered");
+      SplashScreen.hideAsync().catch(() => {});
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (!fontsLoaded) {
     return null;

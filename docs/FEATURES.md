@@ -19,6 +19,7 @@ Daily inspiration based on the user's selected belief system and current theme.
 ## 4. Faith-Friendly Ads
 For non-subscribers, the app serves contextual, faith-friendly ads.
 - **Upsell**: Each ad includes a "Remove Ads" option that leads to the subscription page.
+- **Compass Tier**: A dedicated annual subscription for users who prefer longer-term alignment at a lower monthly equivalent.
 
 ## 5. Security & Fraud Protection
 The app uses automated Spiritual Intelligence checks to prevent sharing of sensitive information (like phone numbers or payment requests) in public circles, protecting the community from fraud.

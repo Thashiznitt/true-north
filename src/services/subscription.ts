@@ -16,11 +16,22 @@ export const subscriptionService = {
         try {
             const customerInfo = await Purchases.restorePurchases();
             const setSubscriptionTier = useStore.getState().setSubscriptionTier;
+            // Broad search for ANY active entitlement to ensure features unlock
+            const activeEntitlements = Object.keys(customerInfo.entitlements.active);
+            console.log("[Subscription] Active entitlements discovery:", activeEntitlements);
+            
+            const isPremium = activeEntitlements.length > 0;
+            let newTier: 'free' | 'compass' | 'true_north' | 'zenith' = 'free';
 
-            // Check for 'premium' entitlement
-            const isPremium = customerInfo.entitlements.active['premium'] !== undefined;
-            const newTier = isPremium ? 'true_north' : 'free';
+            if (isPremium) {
+                // Try to find the specific tier from entitlement IDs
+                if (activeEntitlements.some(e => e.includes('zenith'))) newTier = 'zenith';
+                else if (activeEntitlements.some(e => e.includes('true_north') || e.includes('truenorth') || e.includes('premium') || e.includes('pro'))) newTier = 'true_north';
+                else if (activeEntitlements.some(e => e.includes('compass'))) newTier = 'compass';
+                else newTier = 'true_north'; // Default to true_north if entitlement exists but name is generic
+            }
 
+            console.log(`[Subscription] Restore result - isPremium: ${isPremium}, mappedTier: ${newTier}`);
             await setSubscriptionTier(newTier);
             await subscriptionService.syncSubscriptionToDb(newTier);
             return true;
@@ -108,8 +119,11 @@ export const subscriptionService = {
             console.log("[Subscription] Attempting purchase for package:", pkg.identifier);
             const { customerInfo } = await Purchases.purchasePackage(pkg);
 
-            // Check for 'premium' entitlement which covers all paid tiers
-            const isPremium = customerInfo.entitlements.active['premium'] !== undefined;
+            // Broad search for ANY active entitlement
+            const activeEntitlements = Object.keys(customerInfo.entitlements.active);
+            console.log("[Subscription] Purchase success. Active entitlements:", activeEntitlements);
+            
+            const isPremium = activeEntitlements.length > 0;
             console.log("[Subscription] Purchase result - isPremium:", isPremium);
 
             if (isPremium) {
@@ -164,15 +178,21 @@ export const subscriptionService = {
 
         try {
             const customerInfo = await Purchases.getCustomerInfo();
-            // Check for 'premium' entitlement
-            const isPremium = customerInfo.entitlements.active['premium'] !== undefined;
+            // Broad search for ANY active entitlement
+            const activeEntitlements = Object.keys(customerInfo.entitlements.active);
+            const isPremium = activeEntitlements.length > 0;
             const setSubscriptionTier = useStore.getState().setSubscriptionTier;
 
-            // Default to 'free' if not premium. 
-            // In a more complex setup, we'd check which specific product gives which tier.
-            // But for now, any active premium entitlement maps to their last known tier or true_north.
             const currentTier = useStore.getState().subscriptionTier;
-            const newTier = isPremium ? (currentTier === 'free' ? 'true_north' : currentTier) : 'free';
+            let newTier: 'free' | 'compass' | 'true_north' | 'zenith' = 'free';
+
+            if (isPremium) {
+                // Try to map active entitlement to tier
+                if (activeEntitlements.some(e => e.includes('zenith'))) newTier = 'zenith';
+                else if (activeEntitlements.some(e => e.includes('true_north') || e.includes('truenorth') || e.includes('premium') || e.includes('pro'))) newTier = 'true_north';
+                else if (activeEntitlements.some(e => e.includes('compass'))) newTier = 'compass';
+                else newTier = currentTier === 'free' ? 'true_north' : currentTier;
+            }
 
             if (currentTier !== newTier) {
                 await setSubscriptionTier(newTier);
