@@ -13,6 +13,13 @@
 2. Run `npm install --legacy-peer-deps`.
 3. Align dependencies if necessary using `npx expo-doctor`.
 
+## 3. API Health Check
+Before building or committing, ensure your environment is correctly configured:
+```bash
+npm run api-check
+```
+This script validates your **Gemini API Key**, model availability, and **Supabase** connectivity. It is also run automatically as a Husky pre-commit hook.
+
 ## Running the App
 
 ### iOS

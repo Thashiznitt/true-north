@@ -45,7 +45,7 @@ RevenueCat needs a **Service Account** to communicate with Google Play:
 2. Create a new entitlement with the ID: `premium`.
 
 > [!NOTE]
-> **Entitlement Discovery (v24+)**: While `premium` is the primary ID, the app now uses "Discovery Mode." It will check for ANY active entitlement (e.g., `pro`, `compass`, `zenith`) and map them to the correct internal tier. This ensures users never lose access due to a naming mismatch in the dashboard.
+> **Entitlement Discovery (v29+)**: While `premium` is the primary ID, the app uses "Discovery Mode." It will check for ANY active entitlement (e.g., `pro`, `plus`, `standard`, `basic`, `compass`, `zenith`) and map them to the correct internal tier. This ensures re-registered users regain access instantly via the **Restore Purchases** or **Auto-Sync** logic.
 
 ### Create Offerings
 1. Navigate to **Offerings**.

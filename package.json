@@ -9,6 +9,7 @@
     "ios:16e": "expo run:ios --device \"iPhone 16e\"",
     "web": "expo start --web",
     "lint": "eslint .",
+    "api-check": "./scripts/check-api-health.sh",
     "prebuild": "./scripts/check-api-health.sh",
     "prepare": "husky install",
     "check-versions": "node -v && npm -v && npx react-native --version"

@@ -27,9 +27,12 @@ export const subscriptionService = {
             if (isPremium) {
                 // Try to find the specific tier from entitlement IDs
                 if (activeEntitlements.some(e => e.includes('zenith'))) newTier = 'zenith';
-                else if (activeEntitlements.some(e => e.includes('true_north') || e.includes('truenorth') || e.includes('premium') || e.includes('pro'))) newTier = 'true_north';
-                else if (activeEntitlements.some(e => e.includes('compass'))) newTier = 'compass';
-                else newTier = 'true_north'; // Default to true_north if entitlement exists but name is generic
+                else if (activeEntitlements.some(e => e.includes('true_north') || e.includes('truenorth') || e.includes('premium') || e.includes('pro') || e.includes('plus') || e.includes('standard'))) newTier = 'true_north';
+                else if (activeEntitlements.some(e => e.includes('compass') || e.includes('basic') || e.includes('starter'))) newTier = 'compass';
+                else {
+                    console.log("[Subscription] Found active entitlement but no specific tier match, defaulting to true_north");
+                    newTier = 'true_north'; // Default to true_north if entitlement exists but name is generic
+                }
             }
 
             console.log(`[Subscription] Restore result - isPremium: ${isPremium}, mappedTier: ${newTier}`);
@@ -200,8 +203,8 @@ export const subscriptionService = {
             if (isPremium) {
                 // Try to map active entitlement to tier
                 if (activeEntitlements.some(e => e.includes('zenith'))) newTier = 'zenith';
-                else if (activeEntitlements.some(e => e.includes('true_north') || e.includes('truenorth') || e.includes('premium') || e.includes('pro'))) newTier = 'true_north';
-                else if (activeEntitlements.some(e => e.includes('compass'))) newTier = 'compass';
+                else if (activeEntitlements.some(e => e.includes('true_north') || e.includes('truenorth') || e.includes('premium') || e.includes('pro') || e.includes('plus') || e.includes('standard'))) newTier = 'true_north';
+                else if (activeEntitlements.some(e => e.includes('compass') || e.includes('basic') || e.includes('starter'))) newTier = 'compass';
                 else newTier = currentTier === 'free' ? 'true_north' : currentTier;
             }
 

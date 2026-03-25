@@ -71,7 +71,10 @@ export const PrivacySettingsScreen = () => {
                 Alert.alert("Not Available", "Biometrics are not set up on this device.");
                 return;
             }
-            const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'Enable App Lock' });
+            const result = await LocalAuthentication.authenticateAsync({ 
+                promptMessage: 'Enable App Lock',
+                requireConfirmation: false,
+            });
             if (result.success) setBiometricsEnabled(true);
         } else {
             setBiometricsEnabled(false);

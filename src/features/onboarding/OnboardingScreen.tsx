@@ -66,10 +66,19 @@ const BELIEF_META: Record<string, { icon: React.FC<any>, desc: string }> = { // 
 
 
 const TIER_BENEFITS: Record<string, string[]> = {
-    free: ["1 Personal Daily Affirmation", "View Community Reflections", "Join up to 3 Local Circles"],
-    compass: ["Unlimited Private Reflections", "Join up to 5 Circles", "Standard Daily Guidance"],
-    true_north: ["Unlimited Community Reflections", "Personalized Spiritual Guidance", "Join Unlimited Circles"],
-    zenith: ["Elite Spiritual Mentoring", "Deep Community Analysis", "Unlimited Circle Creation"],
+    free: ["1 Personal Daily Affirmation", "View Community Reflections", "Join up to 3 Local Circles", "Ad-supported experience"],
+    compass: ["Unlimited Private Reflections (Journal)", "Ask Nur Companion", "Join up to 5 Circles", "Standard Daily Guidance"],
+    true_north: ["Unlimited Community Reflections", "Ask Nur Companion", "Personalized Spiritual Guidance", "Join Unlimited Circles", "Create up to 2 Circles"],
+    zenith: ["Elite Spiritual Mentoring", "Ask Nur Companion", "Deep Community Analysis", "Unlimited Circle Creation", "Location Intelligence"],
+};
+
+const cleanTitle = (title: string) => {
+    if (!title) return '';
+    return title.split('(')[0].trim()
+        .replace(' Monthly', '')
+        .replace(' Annual', '')
+        .replace(' Yearly', '')
+        .replace(' Subscription', '');
 };
 
 const INTRO_BG = require('../../../assets/onboarding_intro_bg.jpg'); // eslint-disable-line
@@ -130,6 +139,8 @@ export const OnboardingScreen = () => {
     const [offering, setOffering] = useState<PurchasesOffering | null>(null);
     const [offeringLoading, setOfferingLoading] = useState(!env.useMockServices);
     const [isPurchasing, setIsPurchasing] = useState(false);
+    const [isRestoring, setIsRestoring] = useState(false);
+    const [subscriptionDetected, setSubscriptionDetected] = useState(false);
 
     // Username State
     const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
@@ -238,6 +249,18 @@ export const OnboardingScreen = () => {
 
     React.useEffect(() => {
         setOnboardingStep(step);
+    }, [step]);
+
+    React.useEffect(() => {
+        if (step === 11 && !env.useMockServices) {
+            // Check if user is already subscribed (auto-restore detection)
+            subscriptionService.checkSubscriptionStatus().then((newTier) => {
+                if (newTier !== 'free') {
+                    console.log("[Onboarding] Active subscription detected on paywall mount:", newTier);
+                    setSubscriptionDetected(true);
+                }
+            }).catch(e => console.error("[Onboarding] Auto-check subscription failed:", e));
+        }
     }, [step]);
 
 
@@ -577,6 +600,36 @@ export const OnboardingScreen = () => {
             console.error("[Onboarding] handleSubscribe unexpected error:", error);
             setIsPurchasing(false);
             Alert.alert("Error", "An unexpected error occurred during the subscription process.");
+        }
+    };
+
+    const handleRestore = async () => {
+        setIsRestoring(true);
+        try {
+            const success = await subscriptionService.restorePurchases();
+            if (success) {
+                const currentTier = useStore.getState().subscriptionTier;
+                if (currentTier !== 'free') {
+                    setSubscriptionDetected(true);
+                    Alert.alert(
+                        "Subscription Restored", 
+                        `Welcome back, Seeker! Your ${currentTier.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} subscription has been restored.`,
+                        [{ text: "Continue", onPress: () => {
+                            setLoggedIn(true);
+                            setOnboarded(true);
+                        }}]
+                    );
+                } else {
+                    Alert.alert("No Subscription Found", "We couldn't find an active subscription associated with your store account.");
+                }
+            } else {
+                Alert.alert("Restore Failed", "We encountered an issue restoring your purchases. Please try again later.");
+            }
+        } catch (error) {
+            console.error("[Onboarding] handleRestore error:", error);
+            Alert.alert("Error", "An unexpected error occurred during restore.");
+        } finally {
+            setIsRestoring(false);
         }
     };
 
@@ -1134,9 +1187,12 @@ export const OnboardingScreen = () => {
                                 }
 
                                 try {
+                                    // Optimization for Android native BiometricPrompt
                                     const result = await LocalAuthentication.authenticateAsync({
                                         promptMessage: 'Enable Biometrics for True North',
-                                        fallbackLabel: 'Use Passcode',
+                                        cancelLabel: 'Cancel',
+                                        disableDeviceFallback: false,
+                                        requireConfirmation: false, // Standard Android behavior for faster unlock
                                     });
                                     if (result.success) {
                                         setSetupBiometrics(true);
@@ -1292,21 +1348,21 @@ export const OnboardingScreen = () => {
                                                 }}>
                                                     {active && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: palette.softGold }} />}
                                                 </View>
-                                                <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 20, color: active ? theme.colors.text : palette.ivory }}>{product.title}</Text>
+                                                <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 18, color: active ? palette.charcoal : palette.ivory }}>{cleanTitle(product.title)}</Text>
                                             </View>
                                             <View style={{ alignItems: 'flex-end' }}>
-                                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 22, color: active ? theme.colors.text : palette.ivory }}>{product.priceString}</Text>
-                                                <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: active ? theme.colors.secondaryText : palette.softGold, opacity: 0.8 }}>
+                                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 20, color: active ? palette.charcoal : palette.ivory }}>{product.priceString}</Text>
+                                                <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: active ? 'rgba(0,0,0,0.6)' : palette.softGold, opacity: 0.8 }}>
                                                     {pkg.packageType.toLowerCase().includes('annual') ? '/ year' : '/ month'}
                                                 </Text>
                                             </View>
                                         </View>
 
                                         <View style={{ gap: 8, marginTop: 8 }}>
-                                            {benefits.slice(0, 3).map((b, i) => (
+                                            {benefits.map((b, i) => (
                                                 <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                                    <Check size={14} color={active ? palette.softGold : 'rgba(255,255,255,0.6)'} />
-                                                    <Text style={{ fontFamily: theme.typography.sans, fontSize: 13, color: active ? theme.colors.secondaryText : palette.ivory, opacity: 0.9 }}>{b}</Text>
+                                                    <Check size={14} color={active ? palette.charcoal : 'rgba(255,255,255,0.6)'} />
+                                                    <Text style={{ fontFamily: theme.typography.sans, fontSize: 13, color: active ? 'rgba(0,0,0,0.7)' : palette.ivory, opacity: 0.9 }}>{b}</Text>
                                                 </View>
                                             ))}
                                         </View>
@@ -1337,18 +1393,18 @@ export const OnboardingScreen = () => {
                                                 }}>
                                                     {active && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: palette.softGold }} />}
                                                 </View>
-                                                <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 20, color: active ? theme.colors.text : palette.ivory }}>{t.label}</Text>
+                                                <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 18, color: active ? palette.charcoal : palette.ivory }}>{t.label}</Text>
                                             </View>
                                             <View style={{ alignItems: 'flex-end' }}>
-                                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 22, color: active ? theme.colors.text : palette.ivory }}>{t.price}</Text>
-                                                <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: active ? theme.colors.secondaryText : palette.softGold, opacity: 0.8 }}>{t.sub}</Text>
+                                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 20, color: active ? palette.charcoal : palette.ivory }}>{t.price}</Text>
+                                                <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: active ? 'rgba(0,0,0,0.6)' : palette.softGold, opacity: 0.8 }}>{t.sub}</Text>
                                             </View>
                                         </View>
                                         <View style={{ gap: 8, marginTop: 8 }}>
-                                            {benefits.slice(0, 3).map((b, i) => (
+                                            {benefits.map((b, i) => (
                                                 <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                                    <Check size={14} color={active ? palette.softGold : 'rgba(255,255,255,0.6)'} />
-                                                    <Text style={{ fontFamily: theme.typography.sans, fontSize: 13, color: active ? theme.colors.secondaryText : palette.ivory, opacity: 0.9 }}>{b}</Text>
+                                                    <Check size={14} color={active ? palette.charcoal : 'rgba(255,255,255,0.6)'} />
+                                                    <Text style={{ fontFamily: theme.typography.sans, fontSize: 13, color: active ? 'rgba(0,0,0,0.7)' : palette.ivory, opacity: 0.9 }}>{b}</Text>
                                                 </View>
                                             ))}
                                         </View>
@@ -1378,11 +1434,11 @@ export const OnboardingScreen = () => {
                                         {tier === 'free' && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: palette.softGold }} />}
                                     </View>
                                     <View>
-                                        <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 20, color: tier === 'free' ? theme.colors.text : palette.ivory }}>Free Plan</Text>
-                                        <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: tier === 'free' ? theme.colors.secondaryText : palette.softGold, opacity: 0.8 }}>Basic Experience</Text>
+                                        <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 18, color: tier === 'free' ? palette.charcoal : palette.ivory }}>Free Plan</Text>
+                                        <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: tier === 'free' ? 'rgba(0,0,0,0.6)' : palette.softGold, opacity: 0.8 }}>Basic Experience</Text>
                                     </View>
                                 </View>
-                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 22, color: tier === 'free' ? theme.colors.text : palette.ivory }}>Free</Text>
+                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 20, color: tier === 'free' ? palette.charcoal : palette.ivory }}>Free</Text>
                             </View>
                         </TouchableOpacity>
                     </View>
@@ -1391,39 +1447,55 @@ export const OnboardingScreen = () => {
                         No commitment. Cancel anytime in settings.
                     </Text>
 
-                    <View style={{ paddingHorizontal: 20, paddingBottom: 40 }}>
-                        <SubscriptionLegal light />
-                    </View>
-                </ScrollView>
-
-                {/* ALWAYS FLOATING BUTTON */}
-                <View style={{
-                    position: 'absolute', bottom: 30, left: 0, right: 0,
-                    paddingHorizontal: 20,
-                }}>
-                    <TouchableOpacity
-                        style={[
-                            styles.subscribeButton,
-                            { backgroundColor: palette.softGold, height: 64, borderRadius: 32 },
-                            (offeringLoading || isPurchasing) && { opacity: 0.7 }
-                        ]}
-                        onPress={handleSubscribe}
-                        disabled={offeringLoading || isPurchasing}
-                    >
-                        {isPurchasing ? (
-                            <ActivityIndicator color={palette.ivory} />
-                        ) : (
-                            <Text style={[styles.subscribeButtonText, { fontSize: 18, fontFamily: theme.typography.sansBold }]}>
-                                {tier === 'free'
-                                    ? "Continue to App"
-                                    : offering
-                                        ? "Subscribe Now"
-                                        : `Subscribe ${DEFAULT_TIERS.find(t => t.id === tier)?.price}`
-                                }
+                        <TouchableOpacity 
+                            onPress={handleRestore}
+                            disabled={isRestoring}
+                            style={{ marginVertical: 12, alignItems: 'center' }}
+                        >
+                            <Text style={{ 
+                                fontFamily: theme.typography.sansBold, 
+                                fontSize: 14, 
+                                color: palette.softGold,
+                                textDecorationLine: 'underline'
+                            }}>
+                                {isRestoring ? "Checking Store Account..." : "Restore Purchases"}
                             </Text>
-                        )}
-                    </TouchableOpacity>
-                </View>
+                        </TouchableOpacity>
+
+                        <View style={{ paddingHorizontal: 20, paddingBottom: 60 }}>
+                            <SubscriptionLegal light />
+                        </View>
+                    </ScrollView>
+
+                    {/* ALWAYS FLOATING BUTTON */}
+                    <View style={{
+                        position: 'absolute', bottom: 30, left: 0, right: 0,
+                        paddingHorizontal: 20,
+                    }}>
+                        <TouchableOpacity
+                            style={[
+                                styles.subscribeButton,
+                                { backgroundColor: palette.softGold, height: 64, borderRadius: 32 },
+                                (offeringLoading || isPurchasing) && { opacity: 0.7 }
+                            ]}
+                            onPress={subscriptionDetected ? () => { setLoggedIn(true); setOnboarded(true); } : handleSubscribe}
+                            disabled={offeringLoading || isPurchasing}
+                        >
+                            {isPurchasing ? (
+                                <ActivityIndicator color={palette.ivory} />
+                            ) : (
+                                <Text style={[styles.subscribeButtonText, { fontSize: 18, fontFamily: theme.typography.sansBold }]}>
+                                    {subscriptionDetected ? "Continue to App" : (
+                                        tier === 'free'
+                                            ? "Continue to App"
+                                            : offering
+                                                ? "Subscribe Now"
+                                                : `Subscribe ${DEFAULT_TIERS.find(t => t.id === tier)?.price}`
+                                    )}
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
             </View>
         );
     };

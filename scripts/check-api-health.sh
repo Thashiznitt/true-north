@@ -26,11 +26,11 @@ else
 fi
 
 # Add Supabase health check using ANON key
-if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
+if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_KEY" ]; then
   echo "⚠️  Supabase environment variables not fully set. Skipping."
 else
   echo "Checking Supabase API reachability..."
-  SB_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "apikey: ${EXPO_PUBLIC_SUPABASE_ANON_KEY}" "${EXPO_PUBLIC_SUPABASE_URL}/rest/v1/")
+  SB_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "apikey: ${EXPO_PUBLIC_SUPABASE_KEY}" "${EXPO_PUBLIC_SUPABASE_URL}/rest/v1/")
   
   if [ "$SB_RESPONSE" -eq 200 ] || [ "$SB_RESPONSE" -eq 400 ]; then
     echo "✅ Supabase API is accessible."

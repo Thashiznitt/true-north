@@ -115,6 +115,7 @@ export const JournalDetailScreen = () => {
                 error={bioError}
                 promptPinMode={promptPinMode}
                 securityPin={securityPin}
+                biometricsEnabled={biometricsEnabled}
                 onPinSuccess={() => {
                     setSessionUnlocked(true);
                     setBioError(false);

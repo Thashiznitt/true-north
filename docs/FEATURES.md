@@ -20,9 +20,14 @@ Daily inspiration based on the user's selected belief system and current theme.
 For non-subscribers, the app serves contextual, faith-friendly ads.
 - **Upsell**: Each ad includes a "Remove Ads" option that leads to the subscription page.
 - **Compass Tier**: A dedicated annual subscription for users who prefer longer-term alignment at a lower monthly equivalent.
+- **Restore Purchases**: Returning or re-registered users can instantly recover their existing store entitlements from the onboarding paywall.
+- **Auto-Sync**: The app automatically detects active store subscriptions on launch and when entering the paywall to ensure seamless access.
 
-## 5. Security & Fraud Protection
-The app uses automated Spiritual Intelligence checks to prevent sharing of sensitive information (like phone numbers or payment requests) in public circles, protecting the community from fraud.
+## 5. Security & App Lock
+The app provides robust protection for your personal and communal "Sanctuaries."
+- **Dual Unlocking (v29)**: Users can choose between Biometrics (Face ID/Fingerprint) and a manual 4-digit PIN when unlocking Journals or Circles. 
+- **Intelligent Fallback**: If biometrics are unavailable or fail, the app automatically offers the PIN entry mode.
+- **Fraud Protection**: Automated Spiritual Intelligence checks prevent sharing of sensitive information (like phone numbers or payment requests) in public circles.
 
 ## 6. Event Management
 Community leaders can create events (online or in-person).

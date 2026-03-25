@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import { theme, palette } from '../theme';
 import { Fingerprint } from 'lucide-react-native';
 
@@ -12,6 +12,10 @@ interface SanctuaryLockProps {
     buttonText?: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     icon?: any;
+    biometricsEnabled?: boolean;
+    securityPin?: string | null;
+    onPinSuccess?: () => void;
+    promptPinMode?: boolean;
 }
 
 export const SanctuaryLock = ({
@@ -25,8 +29,9 @@ export const SanctuaryLock = ({
     icon: Icon = Fingerprint,
     securityPin,
     onPinSuccess,
-    promptPinMode = false
-}: SanctuaryLockProps & { loading?: boolean, securityPin?: string | null, onPinSuccess?: () => void, promptPinMode?: boolean }) => {
+    promptPinMode = false,
+    biometricsEnabled = false
+}: SanctuaryLockProps & { loading?: boolean }) => {
     
     const [pinInput, setPinInput] = useState('');
     const [pinError, setPinError] = useState('');
@@ -88,17 +93,23 @@ export const SanctuaryLock = ({
                     )}
                 </TouchableOpacity>
 
-                {isPinMode && !promptPinMode && (
-                    <TouchableOpacity style={styles.backButton} onPress={() => setIsPinMode(false)}>
-                        <Text style={styles.backButtonText}>Use Biometrics</Text>
-                    </TouchableOpacity>
+                {isPinMode ? (
+                    biometricsEnabled && (
+                        <TouchableOpacity style={styles.backButton} onPress={() => setIsPinMode(false)}>
+                            <Text style={styles.backButtonText}>Use Biometrics</Text>
+                        </TouchableOpacity>
+                    )
+                ) : (
+                    securityPin && (
+                        <TouchableOpacity style={styles.backButton} onPress={() => setIsPinMode(true)}>
+                            <Text style={styles.backButtonText}>Use PIN</Text>
+                        </TouchableOpacity>
+                    )
                 )}
 
-                {(!isPinMode || promptPinMode) && (
-                    <TouchableOpacity style={styles.backButton} onPress={onBack} disabled={loading}>
-                        <Text style={styles.backButtonText}>Go Back</Text>
-                    </TouchableOpacity>
-                )}
+                <TouchableOpacity style={styles.backButton} onPress={onBack} disabled={loading}>
+                    <Text style={styles.backButtonText}>Go Back</Text>
+                </TouchableOpacity>
             </View>
         </View>
     );
