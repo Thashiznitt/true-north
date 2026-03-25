@@ -4,6 +4,7 @@ import { notificationService } from './notifications';
 import { supabase } from './supabase';
 import Purchases, { PurchasesPackage, PurchasesOffering } from 'react-native-purchases';
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
+import * as Notifications from 'expo-notifications';
 
 // This handles both Mock (Local) and Real (RevenueCat) logic based on environment
 export const subscriptionService = {
@@ -151,6 +152,16 @@ export const subscriptionService = {
                     // @ts-expect-error: categoryIdentifier requirement for secondary reminders
                     await notificationService.scheduleDailyAffirmation(newTier, { categoryIdentifier: 'gratitude-reminders-secondary' });
                     await notificationService.scheduleDailyJournaling(newTier);
+                    
+                    // Immediate success notification
+                    await Notifications.scheduleNotificationAsync({
+                        content: {
+                            title: 'Vision Aligned ✨',
+                            body: `Your journey continues. Welcome to the ${newTier.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} path.`,
+                            sound: true,
+                        },
+                        trigger: null, // trigger immediately
+                    });
                 } catch (notiError) {
                     console.error("[Subscription] Notification scheduling failed after purchase:", notiError);
                 }

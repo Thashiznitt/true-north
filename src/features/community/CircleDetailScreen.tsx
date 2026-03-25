@@ -145,7 +145,7 @@ export const CircleDetailScreen = () => {
         const paymentKeywords = [/\$/g, /Ksh/gi, /payment/gi, /send money/gi, /donate/gi, /M-Pesa/gi];
 
         const subscriptionTier = useStore.getState().subscriptionTier;
-        const canPostInCircles = subscriptionTier === 'true_north' || subscriptionTier === 'zenith';
+        const canPostInCircles = subscriptionTier === 'compass' || subscriptionTier === 'true_north' || subscriptionTier === 'zenith';
         const isOrganizer = isAdmin || isModerator;
         const isCircleMember = isMember || isOrganizer;
 

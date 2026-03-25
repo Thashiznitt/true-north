@@ -6,13 +6,22 @@ import { ChevronLeft, Shield, Eye, Lock, UserX, Trash2, LucideIcon } from 'lucid
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../../store';
 import { FadeIn } from '../../components/FadeIn';
+import { BottomSheet } from '../../components/BottomSheet';
 import { supabase } from '../../services/supabase';
 import { authService } from '../../services/auth';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 export const PrivacySettingsScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const logout = useStore(state => state.logout);
+    const biometricsEnabled = useStore(state => state.biometricsEnabled);
+    const setBiometricsEnabled = useStore(state => state.setBiometricsEnabled);
+    const securityPin = useStore(state => state.securityPin);
+    const setSecurityPin = useStore(state => state.setSecurityPin);
+
+    const [isPinModalVisible, setPinModalVisible] = useState(false);
+    const [pinInput, setPinInput] = useState('');
 
     const [privacy, setPrivacy] = useState({
         privateProfile: false,
@@ -52,6 +61,34 @@ export const PrivacySettingsScreen = () => {
                 }
             ]
         );
+    };
+
+    const handleBiometricsToggle = async () => {
+        if (!biometricsEnabled) {
+            const hasHardware = await LocalAuthentication.hasHardwareAsync();
+            const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+            if (!hasHardware || !isEnrolled) {
+                Alert.alert("Not Available", "Biometrics are not set up on this device.");
+                return;
+            }
+            const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'Enable App Lock' });
+            if (result.success) setBiometricsEnabled(true);
+        } else {
+            setBiometricsEnabled(false);
+        }
+    };
+
+    const handlePinSave = () => {
+        if (pinInput.length === 4) {
+            setSecurityPin(pinInput);
+            setPinModalVisible(false);
+            setPinInput('');
+        } else if (pinInput.length === 0) {
+            setSecurityPin(null);
+            setPinModalVisible(false);
+        } else {
+            Alert.alert("Invalid PIN", "PIN must be exactly 4 digits, or leave empty to remove it.");
+        }
     };
 
 
@@ -97,6 +134,35 @@ export const PrivacySettingsScreen = () => {
             <View style={styles.content}>
                 <View style={styles.section}>
                     <FadeIn delay={100} from="bottom">
+                        <Text style={styles.sectionTitle}>App Lock</Text>
+                    </FadeIn>
+                    <FadeIn delay={150} from="bottom">
+                        <SettingRow
+                            icon={Lock}
+                            label="Require Biometrics"
+                            description="Lock your journal and circles with Face ID / Fingerprint."
+                            value={biometricsEnabled}
+                            onToggle={handleBiometricsToggle}
+                        />
+                    </FadeIn>
+                    <FadeIn delay={170} from="bottom">
+                        <TouchableOpacity style={[styles.actionRow, { borderBottomWidth: 0 }]} onPress={() => setPinModalVisible(true)}>
+                            <View style={styles.rowLeft}>
+                                <View style={[styles.iconContainer, { backgroundColor: palette.softGold + '10' }]}>
+                                    <Lock size={20} color={palette.softGold} />
+                                </View>
+                                <View style={styles.textContainer}>
+                                    <Text style={styles.label}>{securityPin ? "Change Security PIN" : "Set Security PIN"}</Text>
+                                    <Text style={styles.description}>Fallback access when biometrics fail.</Text>
+                                </View>
+                            </View>
+                            <ChevronLeft size={20} color={theme.colors.border} style={{ transform: [{ rotate: '180deg' }] }} />
+                        </TouchableOpacity>
+                    </FadeIn>
+                </View>
+
+                <View style={styles.section}>
+                    <FadeIn delay={200} from="bottom">
                         <Text style={styles.sectionTitle}>Visibility</Text>
                     </FadeIn>
                     <FadeIn delay={200} from="bottom">
@@ -145,6 +211,27 @@ export const PrivacySettingsScreen = () => {
                     </FadeIn>
                 </View>
             </View>
+            <BottomSheet
+                visible={isPinModalVisible}
+                onClose={() => setPinModalVisible(false)}
+                title={securityPin ? "Change PIN" : "Set PIN"}
+                actionLabel="Save"
+                onAction={handlePinSave}
+            >
+                <Text style={{ fontFamily: theme.typography.sansMedium, color: theme.colors.text, marginBottom: 16 }}>
+                    Enter a 4-digit PIN. Leave empty to remove it.
+                </Text>
+                <BottomSheet.TextInput
+                    placeholder="****"
+                    secureTextEntry
+                    keyboardType="number-pad"
+                    maxLength={4}
+                    value={pinInput}
+                    onChangeText={setPinInput}
+                    autoFocus
+                    style={{ letterSpacing: 8, fontSize: 24, textAlign: 'center' }}
+                />
+            </BottomSheet>
         </View>
     );
 };

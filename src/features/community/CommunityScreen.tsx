@@ -44,6 +44,7 @@ export const CommunityScreen = () => {
     const [isNavigating, setIsNavigating] = useState(false);
 
     const [bioError, setBioError] = useState(false);
+    const [promptPinMode, setPromptPinMode] = useState(false);
 
     useEffect(() => {
         if (isFocused && (biometricsEnabled || securityPin) && !isSessionUnlocked) {
@@ -74,40 +75,19 @@ export const CommunityScreen = () => {
                     setBioError(false);
                 } else {
                     setBioError(true);
+                    if (securityPin) setPromptPinMode(true);
                 }
             } catch (error) {
                 console.error("[Biometrics] Auth error:", error);
                 setBioError(true);
-                if (securityPin) promptPin();
+                if (securityPin) setPromptPinMode(true);
             }
         } else if (securityPin) {
-            promptPin();
+            setPromptPinMode(true);
         } else {
             // Fallback for devices without biometrics if enabled in store but not on device
             setSessionUnlocked(true);
         }
-    };
-
-    const promptPin = () => {
-        Alert.prompt(
-            "Enter PIN",
-            "Your communal sanctuaries are protected. Enter your 4-digit PIN to continue.",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Unlock",
-                    onPress: (enteredPin?: string) => {
-                        if (enteredPin === securityPin) {
-                            setSessionUnlocked(true);
-                            setBioError(false);
-                        } else {
-                            Alert.alert("Incorrect PIN", "Please try again.");
-                        }
-                    }
-                }
-            ],
-            "secure-text"
-        );
     };
 
     useEffect(() => {
@@ -239,6 +219,7 @@ export const CommunityScreen = () => {
 
     // Paywall gating for the whole screen if not subscribed
     // This matches the user's request to see subscription tiers when clicking "Unlock"
+    console.log('[CommunityScreen] subscriptionTier:', subscriptionTier, '| isSubscribed:', isSubscribed);
     if (!isSubscribed) {
         return (
             <SanctuaryLock

@@ -49,6 +49,7 @@ export const JournalDetailScreen = () => {
     const setSessionUnlocked = useStore((state) => state.setSessionUnlocked);
 
     const [bioError, setBioError] = useState(false);
+    const [promptPinMode, setPromptPinMode] = useState(false);
 
     React.useEffect(() => {
         if (isSubscribed && (biometricsEnabled || securityPin) && !isSessionUnlocked) {
@@ -59,7 +60,7 @@ export const JournalDetailScreen = () => {
     const authenticate = async () => {
         if (!biometricsEnabled) {
             if (securityPin) {
-                promptPin();
+                setPromptPinMode(true);
             } else {
                 setSessionUnlocked(true);
             }
@@ -80,35 +81,13 @@ export const JournalDetailScreen = () => {
                 setBioError(false);
             } else {
                 setBioError(true);
-                if (securityPin) promptPin();
+                if (securityPin) setPromptPinMode(true);
             }
         } else if (securityPin) {
-            promptPin();
+            setPromptPinMode(true);
         } else {
             setSessionUnlocked(true);
         }
-    };
-
-    const promptPin = () => {
-        Alert.prompt(
-            "Enter PIN",
-            "This reflection is protected by your sanctuary security settings.",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Unlock",
-                    onPress: (enteredPin: string | undefined) => {
-                        if (enteredPin === securityPin) {
-                            setSessionUnlocked(true);
-                            setBioError(false);
-                        } else {
-                            Alert.alert("Incorrect PIN", "The PIN you entered is incorrect. Please try again.");
-                        }
-                    }
-                }
-            ],
-            "secure-text"
-        );
     };
 
     const addTag = () => {
@@ -134,6 +113,13 @@ export const JournalDetailScreen = () => {
                 onUnlock={authenticate}
                 onBack={() => navigation.goBack()}
                 error={bioError}
+                promptPinMode={promptPinMode}
+                securityPin={securityPin}
+                onPinSuccess={() => {
+                    setSessionUnlocked(true);
+                    setBioError(false);
+                    setPromptPinMode(false);
+                }}
             />
         );
     }
@@ -200,7 +186,7 @@ export const JournalDetailScreen = () => {
                     <TouchableOpacity style={styles.actionButton} onPress={handleSave}>
                         <Check size={24} color={palette.success} />
                     </TouchableOpacity>
-                    {(subscriptionTier === 'true_north' || subscriptionTier === 'zenith') && (
+                    {(subscriptionTier === 'compass' || subscriptionTier === 'true_north' || subscriptionTier === 'zenith') && (
                         <TouchableOpacity style={styles.actionButton} onPress={handleAIAssist}>
                             <Sparkles size={22} color={palette.softGold} />
                         </TouchableOpacity>

@@ -47,6 +47,7 @@ export const JournalScreen = () => {
     const [isSearching, setIsSearching] = useState(false);
     const [isNavigating, setIsNavigating] = useState(false);
     const [bioError, setBioError] = useState(false);
+    const [promptPinMode, setPromptPinMode] = useState(false);
 
     const navigation = useNavigation<any>(); // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -79,40 +80,19 @@ export const JournalScreen = () => {
                     setBioError(false);
                 } else {
                     setBioError(true);
+                    if (securityPin) setPromptPinMode(true);
                 }
             } catch (error) {
                 console.error("[Biometrics] Journal Auth error:", error);
                 setBioError(true);
-                if (securityPin) promptPin();
+                if (securityPin) setPromptPinMode(true);
             }
         } else if (securityPin) {
-            promptPin();
+            setPromptPinMode(true);
         } else {
             // Fallback for devices without biometrics if enabled in store but not on device
             setSessionUnlocked(true);
         }
-    };
-
-    const promptPin = () => {
-        Alert.prompt(
-            "Enter PIN",
-            "Your sanctuary is protected. Enter your 4-digit PIN to continue.",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Unlock",
-                    onPress: (enteredPin?: string) => {
-                        if (enteredPin === securityPin) {
-                            setSessionUnlocked(true);
-                            setBioError(false);
-                        } else {
-                            Alert.alert("Incorrect PIN", "Please try again.");
-                        }
-                    }
-                }
-            ],
-            "secure-text"
-        );
     };
 
     const filteredEntries = journalEntries.filter(entry =>
@@ -194,6 +174,7 @@ export const JournalScreen = () => {
 
     // Paywall gating for the whole screen if not subscribed
     // This matches the user's request to see subscription tiers when clicking "Unlock"
+    console.log('[JournalScreen] subscriptionTier:', subscriptionTier, '| isSubscribed:', isSubscribed);
     if (!isSubscribed) {
         return (
             <SanctuaryLock
@@ -217,6 +198,13 @@ export const JournalScreen = () => {
                 onBack={() => navigation.navigate('Affirmation')}
                 error={bioError}
                 buttonText="Unlock Journal"
+                promptPinMode={promptPinMode}
+                securityPin={securityPin}
+                onPinSuccess={() => {
+                    setSessionUnlocked(true);
+                    setBioError(false);
+                    setPromptPinMode(false);
+                }}
             />
         );
     }

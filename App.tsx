@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootNavigator, navigationRef } from './src/navigation/root';
 import { Platform } from 'react-native';
 import Purchases, { LOG_LEVEL } from 'react-native-purchases';
+import { subscriptionService } from './src/services/subscription';
 
 
 const queryClient = new QueryClient();
@@ -58,9 +59,17 @@ export default function App() {
     if (Platform.OS === 'ios' && iosApiKey) {
       console.log("[RevenueCat] Configuring for iOS with key:", iosApiKey.substring(0, 8) + '...');
       Purchases.configure({ apiKey: iosApiKey });
+      // Sync real subscription state with RevenueCat to clear any stale persisted tier
+      subscriptionService.checkSubscriptionStatus().catch(e =>
+        console.warn('[RevenueCat] Initial status check failed:', e)
+      );
     } else if (Platform.OS === 'android' && androidApiKey) {
       console.log("[RevenueCat] Configuring for Android with key:", androidApiKey.substring(0, 8) + '...');
       Purchases.configure({ apiKey: androidApiKey });
+      // Sync real subscription state with RevenueCat to clear any stale persisted tier
+      subscriptionService.checkSubscriptionStatus().catch(e =>
+        console.warn('[RevenueCat] Initial status check failed:', e)
+      );
     } else {
       console.warn("[RevenueCat] No API key found for platform:", Platform.OS);
     }

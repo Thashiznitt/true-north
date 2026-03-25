@@ -102,9 +102,9 @@ export const SpiritualIntelligenceService = {
                 throw new Error("Missing Gemini API Key. Please check your configuration.");
             }
 
-            // Use Google Generative AI REST API (v1 for stability)
-            const geminiModel = 'gemini-1.5-flash-latest';
-            endpoint = `https://generativelanguage.googleapis.com/v1/models/${geminiModel}:generateContent?key=${apiKey}`;
+            // Use Google Generative AI REST API (v1beta for 2.5-flash support)
+            const geminiModel = 'gemini-2.5-flash';
+            endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`;
 
             try {
                 const response = await fetch(endpoint, {
