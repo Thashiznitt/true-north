@@ -10,6 +10,8 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import * as Crypto from 'expo-crypto';
 
 export type AuthProvider = 'Apple' | 'Google' | 'Email';
+export type AuthResult = { success: boolean; isExistingUser?: boolean; error?: string };
+
 
 class AuthService {
     constructor() {
@@ -24,20 +26,23 @@ class AuthService {
     /**
      * Attempts to log the user in via the specified provider.
      */
-    async login(provider: AuthProvider, email?: string, password?: string): Promise<boolean> {
+    async login(provider: AuthProvider, goals?: any, email?: string, password?: string): Promise<AuthResult> {
         if (env.useMockServices) {
             return this.mockLogin(provider);
         }
 
         try {
-            if (provider === 'Apple') return await this.signInWithApple();
-            if (provider === 'Google') return await this.signInWithGoogle();
-            if (provider === 'Email') return await this.signInWithEmail(email, password);
+            if (provider === 'Apple') return await this.signInWithApple(goals);
+            if (provider === 'Google') return await this.signInWithGoogle(goals);
+            if (provider === 'Email') {
+                const success = await this.signInWithEmail(email, password);
+                return { success };
+            }
 
             throw new Error(`Auth provider ${provider} not supported`);
         } catch (error) {
             console.error(`${provider} login error:`, error);
-            return false;
+            return { success: false, error: error instanceof Error ? error.message : String(error) };
         }
     }
 
@@ -58,7 +63,7 @@ class AuthService {
         return true;
     }
 
-    private async signInWithApple(): Promise<boolean> {
+    private async signInWithApple(goals?: any): Promise<AuthResult> {
         try {
             const credential = await AppleAuthentication.signInAsync({
                 requestedScopes: [
@@ -85,22 +90,22 @@ class AuthService {
                     }
 
                     // Ensure DB profile exists
-                    await this.ensureUserProfile(data.user.id, data.user.email, credential.fullName?.givenName || undefined);
+                    const isExistingUser = await this.ensureUserProfile(data.user.id, data.user.email, credential.fullName?.givenName || undefined, goals);
 
                     // Sync with RevenueCat
                     await subscriptionService.logIn(data.user.id);
 
-                    return true;
+                    return { success: true, isExistingUser };
                 }
             }
-            return false;
+            return { success: false };
         } catch (e: unknown) {
-            if (e && typeof e === 'object' && 'code' in e && e.code === 'ERR_CANCELED') return false;
+            if (e && typeof e === 'object' && 'code' in e && e.code === 'ERR_CANCELED') return { success: false };
             throw e;
         }
     }
 
-    private async signInWithGoogle(): Promise<boolean> {
+    private async signInWithGoogle(goals?: any): Promise<AuthResult> {
         try {
             if (Platform.OS === 'android') {
                 await GoogleSignin.hasPlayServices();
@@ -136,18 +141,18 @@ class AuthService {
                     if (userInfo.data.user.name) setUsername(userInfo.data.user.name);
 
                     // Ensure DB profile exists
-                    await this.ensureUserProfile(data.user.id, data.user.email, userInfo.data.user.name || undefined);
+                    const isExistingUser = await this.ensureUserProfile(data.user.id, data.user.email, userInfo.data.user.name || undefined, goals);
 
                     // Sync with RevenueCat
                     await subscriptionService.logIn(data.user.id);
 
-                    return true;
+                    return { success: true, isExistingUser };
                 }
             }
-            return false;
+            return { success: false };
         } catch (error: unknown) {
             const err = error as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-            if (err.code === 'SIGN_IN_CANCELLED') return false;
+            if (err.code === 'SIGN_IN_CANCELLED') return { success: false };
 
             console.error('[Google Sign-In Error]', {
                 code: err.code,
@@ -173,7 +178,7 @@ class AuthService {
                 "Sign In Error",
                 `${userFriendlyMsg}\n\nPlease ensure your configuration is correct.`
             );
-            return false;
+            return { success: false, error: errorMsg };
         }
 
     }
@@ -217,7 +222,7 @@ class AuthService {
     /**
      * Simulated login for Development/Local environment
      */
-    private async mockLogin(provider: AuthProvider): Promise<boolean> {
+    private async mockLogin(provider: AuthProvider): Promise<AuthResult> {
         console.log(`[MockAuth] Logging in with ${provider}...`);
 
         return new Promise((resolve) => {
@@ -232,12 +237,12 @@ class AuthService {
                 }
 
                 console.log(`[MockAuth] Login successful.`);
-                resolve(true);
+                resolve({ success: true, isExistingUser: false });
             }, 1500);
         });
     }
 
-    private async ensureUserProfile(userId: string, email?: string, username?: string): Promise<void> {
+    private async ensureUserProfile(userId: string, email?: string, username?: string, goals?: any): Promise<boolean> {
         try {
             // Check if user already exists in the 'users' table
             const { data: existingUser } = await supabase
@@ -246,75 +251,101 @@ class AuthService {
                 .eq('id', userId)
                 .single();
 
-            if (!existingUser) {
-                console.log(`[Auth] Creating new profile for user ${userId}...`);
+            if (existingUser) {
+                console.log(`[Auth] User ${userId} already exists. Updating goals if provided...`);
+                if (goals) {
+                    const { error: goalsError } = await supabase
+                        .from('user_goals')
+                        .upsert({
+                            user_id: userId,
+                            spirituality: goals.spirituality,
+                            spouse: goals.spouse,
+                            career: goals.career,
+                            business: goals.business,
+                            health: goals.health,
+                            family: goals.family,
+                            children: goals.children,
+                            friends: goals.friends,
+                            finances: goals.finances,
+                            updated_at: new Date().toISOString()
+                        });
+                    if (goalsError) console.error("[Auth] Error updating goals:", goalsError);
+                }
+                return true;
+            }
 
-                // 1. Create User Record
-                let { error: userError } = await supabase
+            console.log(`[Auth] Creating new profile for user ${userId}...`);
+
+            // 1. Create User Record
+            let { error: userError } = await supabase
+                .from('users')
+                .insert({
+                    id: userId,
+                    email: email,
+                    username: username || 'Sacred Voyager',
+                    role: 'member',
+                    subscription_tier: 'free',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                });
+
+            // Fallback for residual 'users' rows that weren't cascadingly deleted, causing a unique email constraint error
+            if (userError && userError.code === '23505' && userError.message?.includes('users_email_key')) {
+                console.warn(`[Auth] Duplicate email constraint hit for ${email}. Using fallback to ensure profile creation.`);
+                const fallbackResult = await supabase
                     .from('users')
                     .insert({
                         id: userId,
-                        email: email,
+                        email: `${userId}@rescued-profile.local`,
                         username: username || 'Sacred Voyager',
                         role: 'member',
                         subscription_tier: 'free',
                         created_at: new Date().toISOString(),
                         updated_at: new Date().toISOString(),
                     });
-
-                // Fallback for residual 'users' rows that weren't cascadingly deleted, causing a unique email constraint error
-                if (userError && userError.code === '23505' && userError.message?.includes('users_email_key')) {
-                    console.warn(`[Auth] Duplicate email constraint hit for ${email}. Using fallback to ensure profile creation.`);
-                    const fallbackResult = await supabase
-                        .from('users')
-                        .insert({
-                            id: userId,
-                            email: `${userId}@rescued-profile.local`,
-                            username: username || 'Sacred Voyager',
-                            role: 'member',
-                            subscription_tier: 'free',
-                            created_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString(),
-                        });
-                    userError = fallbackResult.error;
-                }
-
-                if (userError) throw userError;
-
-                // 2. Create Default Goals
-                const { error: goalsError } = await supabase
-                    .from('user_goals')
-                    .insert({
-                        user_id: userId,
-                        spirituality: '',
-                        spouse: '',
-                        career: '',
-                        business: '',
-                        health: '',
-                        family: '',
-                        children: '',
-                        friends: '',
-                        finances: '',
-                    });
-
-                if (goalsError) throw goalsError;
-
-                // 3. Create Default Preferences
-                const { error: prefError } = await supabase
-                    .from('user_preferences')
-                    .insert({
-                        user_id: userId,
-                        belief_type: 'Exploring',
-                        themes: [],
-                        is_onboarded: true, // Social users are considered onboarded at this point or directed to onboarding
-                        biometrics_enabled: false,
-                        notifications_enabled: true
-                    });
-
-                if (prefError) throw prefError;
+                userError = fallbackResult.error;
             }
+
+            if (userError) throw userError;
+
+            // 2. Create Default Goals
+            const { error: goalsError } = await supabase
+                .from('user_goals')
+                .insert({
+                    user_id: userId,
+                    spirituality: goals?.spirituality || '',
+                    spouse: goals?.spouse || '',
+                    career: goals?.career || '',
+                    business: goals?.business || '',
+                    health: goals?.health || '',
+                    family: goals?.family || '',
+                    children: goals?.children || '',
+                    friends: goals?.friends || '',
+                    finances: goals?.finances || '',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                });
+
+            if (goalsError) throw goalsError;
+
+            // 3. Create Default Preferences
+            const { error: prefError } = await supabase
+                .from('user_preferences')
+                .insert({
+                    user_id: userId,
+                    belief_type: 'Exploring',
+                    themes: [],
+                    is_onboarded: true, // Social users are considered onboarded at this point or directed to onboarding
+                    biometrics_enabled: false,
+                    notifications_enabled: true
+                });
+
+            if (prefError) throw prefError;
+
+            return false;
         } catch (error) {
             console.error('[Auth] Error ensuring user profile:', error);
+            return false;
         }
     }
 

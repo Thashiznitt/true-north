@@ -23,7 +23,7 @@ True North is a React Native application built with the Expo SDK 52.
 - `src/store/`: Zustand store for global application state.
 - `src/services/`: Business logic and external service integrations (Content Agent, API).
 - `src/theme/`: Centralized theme tokens and color palette.
-- `src/components/`: Shared reusable components (e.g., FaithAd).
+- `src/components/`: Shared reusable components (e.g., FaithAd, PinGate).
 
 ## Key Patterns
 
@@ -35,7 +35,7 @@ The app uses a `navigationRef` in `src/navigation/root.tsx` to enable navigation
 - **Vertical Rhythm**: standardized 32px spacing established across all core sanctuary screens (Affirmation, Community, Detail).
 
 ### Ghost Communities & Content Agent
-The `ContentAgentService` simulates active communities and reflections for a "lived-in" feel, while allowing users to create their own real communities. It also handles the "Spiritual Analysis" logic for journal feedback, now hyper-personalized by integrating the user's belief system, selected life themes, and recent journal history into a unified SI context.
+The `ContentAgentService` simulates active communities and reflections for a "lived-in" feel, while allowing users to create their own real communities. It also handles the "Spiritual Analysis" logic for journal feedback, now hyper-personalized by integrating the user's belief system, selected life themes, and recent journal history into a unified SI context. The system also supports debounced auto-save to ensure data persistence during the creative process.
 
 ### Persistence & Backend
 - **State**: Persisted using Zustand's `persist` middleware with `@react-native-async-storage/async-storage`.
@@ -50,4 +50,4 @@ A dedicated `src/features/admin` module encapsulates the Superadmin logic, ensur
 ### Security Architecture
 - **Supabase RLS**: Granular Row Level Security policies are used to enforce access control based on user roles (Admin, Moderator, Validator).
 - **Fraud Prevention**: Content Agent service performs real-time analysis to block sensitive data sharing in public spaces.
-- **Biometric Security**: Optional device-level security for sensitive journal entries.
+- **PIN-Only Security**: For simplified and reliable access, the app utilizes a unified 4-digit PIN system to secure sensitive journal entries and community interactions.

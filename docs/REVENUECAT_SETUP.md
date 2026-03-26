@@ -8,7 +8,7 @@ Create three **Auto-Renewable Subscriptions** in App Store Connect with the foll
 
 | Tier | Product ID | Recommended Price |
 |------|------------|-------------------|
-| **Compass** | `tn_annual_compass_7188` | $69.99 (Annual) |
+| **Compass** | `tn_annual_compass_7188` | Ksh. 10,800.00 (Annual - 900/mo) |
 | **True North** | `tn_monthly_alignment_1299` | $12.99 (Monthly) |
 | **Zenith** | `tn_monthly_zenith_1999` | $19.99 (Monthly) |
 
@@ -27,7 +27,7 @@ Create three **Subscriptions** in Google Play Console with the following Product
 
 | Tier | Product ID | Recommended Price |
 |------|------------|-------------------|
-| **Compass** | `tn_annual_compass_7188` | $69.99 (Annual) |
+| **Compass** | `tn_annual_compass_7188` | Ksh. 10,800.00 (Annual - 900/mo) |
 | **True North** | `tn_monthly_alignment_1299` | $12.99 (Monthly) |
 | **Zenith** | `tn_monthly_zenith_1999` | $19.99 (Monthly) |
 

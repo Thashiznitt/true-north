@@ -46,3 +46,6 @@ subscription_final.png
 /android
 
 /src/generated/prisma
+
+# Build Artifacts
+*.aab

@@ -897,7 +897,16 @@ export const contentAgentService = {
         }
     },
 
-    getSpiritualAnalysis: async (content: string, belief: BeliefType, selectedThemes?: string[]): Promise<{ title: string, message: string, action: string }> => {
+    getSpiritualAnalysis: async (content: string, belief: BeliefType, selectedThemes?: string[]): Promise<{ 
+        title: string, 
+        greeting: string,
+        analysis: string,
+        quote: string,
+        location: string,
+        advice: string,
+        action: string,
+        message?: string // Keep for legacy if needed, but we'll use structured fields
+    }> => {
         const provider = await SpiritualIntelligenceService.getProvider();
         const { subscriptionTier: tier, dateOfBirth, astrologyEnabled, username, userGoals, journalEntries } = useStore.getState();
 
@@ -911,168 +920,394 @@ export const contentAgentService = {
             const isWork = text.includes('work') || text.includes('job') || text.includes('career') || text.includes('boss') || text.includes('interview');
 
             const title = "Spiritual Insight";
-            let message = "";
-            let action = "Reflect on this";
+            const greeting = `Hello, ${username || 'Seeker'}.`;
+            let analysis = "I've been reflecting on your recent journey and themes.";
+            let quote = "Be still, and know that I am God.";
+            let location = "Psalm 46:10";
+            let advice = "Take a moment today to find stillness in your sanctuary.";
+            let action = "Find Quiet";
 
             if (belief === 'Christian') {
                 if (isAnxious) {
+                    analysis = "I sense some anxiety about your path. Remember that your value is not in the outcome, but in your faithfulness.";
                     if (isWork) {
-                        message = "I sense some anxiety about your work. Remember Colossians 3:23: 'Whatever you do, work at it with all your heart, as working for the Lord.' Your value is not in the outcome, but in your faithfulness. Trust Him with the results.";
+                        quote = "Whatever you do, work at it with all your heart, as working for the Lord.";
+                        location = "Colossians 3:23";
+                        advice = "Trust Him with your results today; you are enough.";
                     } else {
-                        message = "In moments of anxiety, recall Philippians 4:6-7. 'Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God.' Breathe in His peace right now.";
+                        quote = "Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God.";
+                        location = "Philippians 4:6-7";
+                        advice = "Breathe in His peace right now and let go of the weight.";
                     }
                     action = "Pray for Peace";
                 } else if (isSad) {
-                    message = "The Lord is close to the brokenhearted (Psalm 34:18). It's okay to not be okay. Bring your authentic sorrow to Him; He is big enough to hold it.";
+                    analysis = "It's okay to not be okay. Bring your authentic sorrow to the sanctuary.";
+                    quote = "The Lord is close to the brokenhearted.";
+                    location = "Psalm 34:18";
+                    advice = "Bring your authentic sorrow to Him; He is big enough to hold it.";
                     action = "Receive Comfort";
                 } else if (isHappy) {
-                    message = "This joy is a gift! 'Every good and perfect gift is from above' (James 1:17). Take a moment to simply say 'Thank You' for this season of blessing.";
+                    analysis = "This joy is a beautiful gift in your season of growth.";
+                    quote = "Every good and perfect gift is from above.";
+                    location = "James 1:17";
+                    advice = "Take a moment to simply say 'Thank You' for this season of blessing.";
                     action = "Offer Praise";
                 } else {
-                    message = "As you reflect today, ask yourself: Where did I see God's hand moving in the small details? He is present in the stillness.";
+                    analysis = "As you reflect today, notice the small details where grace appears.";
+                    quote = "He has made everything beautiful in its time.";
+                    location = "Ecclesiastes 3:11";
+                    advice = "Look for God's hand moving in the quiet moments today.";
                     action = "Seek Him";
                 }
             }
             else if (belief === 'Muslim') {
                 if (isAnxious) {
+                    analysis = "I sense the weight you are carrying. Remember that results belong to Allah alone.";
                     if (isWork) {
-                        message = "Work is a form of worship (Ibadah), but results are from Allah. 'Tie your camel and trust in Allah.' Do your best, and leave the outcome to Al-Wakil (The Trustee).";
+                        quote = "Tie your camel and trust in Allah.";
+                        location = "Hadith (At-Tirmidhi)";
+                        advice = "Do your best, and leave the outcome to Al-Wakil (The Trustee).";
                     } else {
-                        message = "When worry takes over, remember: 'Verily, in the remembrance of Allah do hearts find rest' (Quran 13:28). Recite 'HasbunAllahu wa ni'mal wakil' (Allah is sufficient for us).";
+                        quote = "Verily, in the remembrance of Allah do hearts find rest.";
+                        location = "Quran 13:28";
+                        advice = "Recite 'HasbunAllahu wa ni'mal wakil' (Allah is sufficient for us).";
                     }
                     action = "Make Dua";
                 } else if (isSad) {
-                    message = "Allah does not burden a soul beyond that it can bear. Your pain is seen by Him. Turned to Him in simple, honest dua. He is Al-Sami (The All-Hearing).";
+                    analysis = "Your pain is seen by Al-Sami. He does not burden a soul beyond its capacity.";
+                    quote = "Allah does not burden a soul beyond that it can bear.";
+                    location = "Quran 2:286";
+                    advice = "Turn to Him in simple, honest dua. He is always listening.";
                     action = "Seek Patience";
                 } else if (isHappy) {
-                    message = "Alhamdulillah for this happiness. 'If you are grateful, I will surely increase you' (Quran 14:7). Let your joy turn into gratitude and charity (Sadaqah).";
+                    analysis = "Alhamdulillah for this happiness. Let it increase your devotion.";
+                    quote = "If you are grateful, I will surely increase you.";
+                    location = "Quran 14:7";
+                    advice = "Let your joy turn into gratitude and a small act of charity today.";
                     action = "Say Alhamdulillah";
                 } else {
-                    message = "Reflect on your intention (Niyyah) today. Simply purifying your intention turns ordinary actions into rewards. What is your heart's direction?";
+                    analysis = "Reflect on your intention (Niyyah) today. It is the heart of every action.";
+                    quote = "Actions are according to intentions.";
+                    location = "Hadith (Bukhari)";
+                    advice = "Simply purifying your intention turns ordinary actions into rewards.";
                     action = "Renew Intention";
                 }
             }
             else if (belief === 'Jewish') {
                 if (isAnxious) {
-                    message = "In moments of worry, remember: 'The heart of man plans his way, but the Lord establishes his steps' (Proverbs 16:9). Trust in the covenant and find peace in doing one small mitzvah right now.";
+                    analysis = "In moments of worry, remember that your steps are established.";
+                    quote = "The heart of man plans his way, but the Lord establishes his steps.";
+                    location = "Proverbs 16:9";
+                    advice = "Trust in the covenant and find peace in doing one small mitzvah right now.";
                     action = "Do a Mitzvah";
                 } else if (isSad) {
-                    message = "Even in the narrowest place (Mitzrayim), there is a path to liberation. Your sorrow is acknowledged. Let the light of the tradition steady your soul.";
+                    analysis = "Even in the narrowest place, there is a path to liberation.";
+                    quote = "From the depths I called to You, O Lord.";
+                    location = "Psalm 130:1";
+                    advice = "Your sorrow is acknowledged. Let the light of the tradition steady your soul.";
                     action = "Find Light";
                 } else if (isHappy) {
-                    message = "Mazel Tov! This joy is a blessing to be shared. 'Serve the Lord with gladness.' Let your heart sing today.";
+                    analysis = "Mazel Tov! This joy is a blessing to be shared with your circle.";
+                    quote = "Serve the Lord with gladness.";
+                    location = "Psalm 100:2";
+                    advice = "Let your heart sing today and share this light with others.";
                     action = "Share Joy";
                 } else {
-                    message = "Reflect on how your actions today can bring more holiness into the world. Every moment is an opportunity for connection.";
+                    analysis = "Every moment is an opportunity for connection and holiness.";
+                    quote = "Be holy, for I am holy.";
+                    location = "Leviticus 19:2";
+                    advice = "Reflect on how your actions today can bring more holiness into the world.";
                     action = "Seek Holiness";
                 }
             }
             else if (belief === 'Sikh') {
                 if (isAnxious) {
-                    message = "Waheguru is the Protector of all. 'Why do you worry, O mind? The Lord Himself provides.' Ground yourself in Nam Simran and let go of the ego's fear.";
+                    analysis = "Waheguru is the Protector of all. Let go of the ego's fear.";
+                    quote = "Why do you worry, O mind? The Lord Himself provides.";
+                    location = "Guru Granth Sahib";
+                    advice = "Ground yourself in Nam Simran and trust in the Divine Provider.";
                     action = "Meditate (Simran)";
                 } else if (isSad) {
-                    message = "In times of pain, remember the spirit of Chardi Kala. 'Nanak Naam Chardi Kala, Tere Bhane Sarbat Da Bhala.' May your spirit remain high as you seek the well-being of all.";
+                    analysis = "In times of pain, seek the spirit of Chardi Kala.";
+                    quote = "Nanak Naam Chardi Kala, Tere Bhane Sarbat Da Bhala.";
+                    location = "Ardas";
+                    advice = "May your spirit remain high as you seek the well-being of all.";
                     action = "Rise in Spirit";
                 } else if (isHappy) {
-                    message = "Lakh Lakh Vadhaiya! This happiness is a gift from the True Guru. Express your gratitude through Seva (selfless service) to those around you.";
+                    analysis = "Lakh Lakh Vadhaiya! This happiness is a gift from the True Guru.";
+                    quote = "The Guru has blessed me with the treasure of the Lord’s Name.";
+                    location = "Guru Granth Sahib";
+                    advice = "Express your gratitude through Seva (selfless service) today.";
                     action = "Do Seva";
                 } else {
-                    message = "Is your mind in alignment with the Truth (Sat)? Reflect on whether your actions today are honest and selfless.";
+                    analysis = "Reflect on whether your actions today are honest and selfless.";
+                    quote = "Truth is the highest virtue, but higher still is truthful living.";
+                    location = "Guru Nanak Dev Ji";
+                    advice = "Focus on bringing your mind into alignment with the Truth (Sat).";
                     action = "Verify Truth";
                 }
             }
             else if (belief === 'Hindu') {
                 if (isAnxious) {
-                    message = "Anxiety arises from attachment to the fruits of action. 'You have a right to perform your prescribed duty, but you are not entitled to the fruits of action.' Re-center in your Dharma.";
+                    analysis = "Anxiety arises from attachment to the fruits of action. Return to your Dharma.";
+                    quote = "You have a right to perform your prescribed duty, but you are not entitled to the fruits of action.";
+                    location = "Bhagavad Gita 2.47";
+                    advice = "Perform your work as an offering, without worrying about the results.";
                     action = "Focus on Dharma";
                 } else if (isSad) {
-                    message = "Life is a flow of dualities—pleasure and pain, heat and cold. This too shall pass. Find the steady witness (Atman) within that remains untouched by the waves of emotion.";
+                    analysis = "Life is a flow of dualities. Find the steady witness within.";
+                    quote = "The soul is neither born, nor does it ever die.";
+                    location = "Bhagavad Gita 2.20";
+                    advice = "Find the steady witness (Atman) that remains untouched by emotional waves.";
                     action = "Seek the Witness";
                 } else if (isHappy) {
-                    message = "Enjoy this state of Sattva (purity and joy). Let it fuel your devotion (Bhakti). 'Whatever you do... do that as an offering to Me.'";
+                    analysis = "Enjoy this state of Sattva. Let it fuel your devotion.";
+                    quote = "Whatever you do... do that as an offering to Me.";
+                    location = "Bhagavad Gita 9.27";
+                    advice = "Let your happiness turn into Bhakti (devotion) and gratitude.";
                     action = "Offer Gratitude";
                 } else {
-                    message = "What is the quality of your mind right now? Seek to move from Rajas (restlessness) or Tamas (lethargy) toward Sattva (clarity).";
+                    analysis = "Seek to move toward Sattva (clarity) in your thoughts.";
+                    quote = "From the unreal lead me to the real.";
+                    location = "Brhadaranyaka Upanishad";
+                    advice = "Notice the quality of your mind and seek balance in all things.";
                     action = "Seek Balance";
                 }
             }
             else if (belief === 'Buddhist') {
                 if (isAnxious) {
-                    message = "Anxiety is a story the mind tells about a future that doesn't exist. Return to the breath. 'Do not dwell in the past, do not dream of the future, concentrate the mind on the present moment.'";
+                    analysis = "Anxiety is a story about a future that doesn't exist. Return to the breath.";
+                    quote = "Do not dwell in the past, do not dream of the future, concentrate the mind on the present moment.";
+                    location = "The Buddha";
+                    advice = "Return to the present moment; it is the only place where life exists.";
                     action = "Return to Breath";
                 } else if (isSad) {
-                    message = "Compassion includes yourself. Observe this sadness without judgment, like rain falling on a garden. It is a part of the human experience, not the whole of you.";
+                    analysis = "Compassion includes yourself. Observe this sadness without judgment.";
+                    quote = "Pain is inevitable, suffering is optional.";
+                    location = "Buddhist Wisdom";
+                    advice = "Observe your feelings like rain falling on a garden—with compassion.";
                     action = "Practice Metta";
                 } else if (isHappy) {
-                    message = "Savor this joy, but notice its nature—fluid and changing. Enjoy it fully without clinging, like a beautiful sunset. This is the path of equanimity.";
+                    analysis = "Savor this joy, but notice its nature—fluid and changing.";
+                    quote = "Happiness is not having a lot. Happiness is giving a lot.";
+                    location = "The Buddha";
+                    advice = "Enjoy this moment fully without clinging; this is the path of equanimity.";
                     action = "Savor Equanimity";
                 } else {
-                    message = "Are you acting with Right Intention today? Check if your thoughts are rooted in non-attachment and compasssion.";
+                    analysis = "Check if your thoughts are rooted in non-attachment and compassion.";
+                    quote = "Three things cannot be long hidden: the sun, the moon, and the truth.";
+                    location = "The Buddha";
+                    advice = "Act with Right Intention today, seeking the middle way in all things.";
                     action = "Check Intention";
                 }
             }
             else { // Secular / Open / Exploring / Spiritual / General Path
                 if (isAnxious) {
+                    analysis = "Anxiety is often excitement without the breath. You have handled everything up to this point.";
                     if (isWork) {
-                        message = "Work anxiety often comes from attaching our worth to our output. Remember: You are not your job. Your value is intrinsic. Focus on what is within your control, and release the rest.";
+                        quote = "You are not your job. Your value is intrinsic.";
+                        location = "Modern Wisdom";
+                        advice = "Focus on what is within your control, and release the rest today.";
                     } else {
-                        message = "Anxiety is often excitement without the breath. Take three deep, slow breaths. Ground yourself in this present moment. You have handled everything up to this point, and you can handle this too.";
+                        quote = "Do not dwell in the past, do not dream of the future, concentrate the mind on the present moment.";
+                        location = "Ancient Mindfulness";
+                        advice = "Take three deep, slow breaths. Ground yourself in this present moment.";
                     }
                     action = "Breathe Deeply";
                 } else if (isSad) {
-                    message = "Honor this feeling. Sadness is often love with nowhere to go, or a sign that something mattered. Don't rush to 'fix' it. Just witness it with compassion.";
+                    analysis = "Honor this feeling. Sadness is often love with nowhere to go.";
+                    quote = "The wound is the place where the Light enters you.";
+                    location = "Rumi";
+                    advice = "Don't rush to 'fix' it. Just witness it with compassion today.";
                     action = "Be Kind to Self";
                 } else if (isHappy) {
-                    message = "Savor this feeling. Our brains are wired to overlook the good. Take 10 seconds to really feel this joy in your body. This stores it as resilience for later.";
+                    analysis = "Savor this feeling. Our brains are wired to overlook the good.";
+                    quote = "Joy is a net of love by which you can catch souls.";
+                    location = "Mother Teresa";
+                    advice = "Take 10 seconds to really feel this joy in your body. Store it for later.";
                     action = "Savor the Moment";
                 } else {
-                    message = "As you write, try to connect with your 'Why'. What values are guiding your actions today? Clarity often comes when we pause to listen to our own inner wisdom.";
+                    analysis = "Clarity often comes when we pause to listen to our own inner wisdom.";
+                    quote = "Knowing yourself is the beginning of all wisdom.";
+                    location = "Aristotle";
+                    advice = "As you write, try to connect with your 'Why' and the values guiding you.";
                     action = "Find Clarity";
                 }
             }
 
-            return { title, message, action };
+            return { title, greeting, analysis, quote, location, advice, action };
         } else {
             try {
                 const allEntries = [...journalEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                const recentJournal = allEntries.slice(0, 10).map(e => `${e.title}: ${e.content}`).join(' | ');
+                const recentJournal = allEntries.slice(0, 10).map(e => `[${e.date}] ${e.title}: ${e.content}`).join(' | ');
                 const historySummary = allEntries.slice(10, 30).map(e => e.title).join(', ');
                 
                 const instructions = `
-You are a profound Spiritual Counselor. 
+You are a profound Spiritual Counselor in the True North Sanctuary. 
+
 TASK:
-1. Provide a sacred text quote (e.g., from the Bible, Quran, Gita, Torah, etc.) strictly aligned with the user's belief system (${belief}).
-2. Expound on the quote in the context of the user's current affirmation: "${content}".
-3. Deeply weave in their life themes (${selectedThemes?.join(', ') || 'personal growth'}) and align the advice with their goals (${JSON.stringify(userGoals)}).
-4. Mirror the emotional state found in their recent reflections (${recentJournal || 'no recent entries'}).
-5. RECALL: Reference their historical journey: "${historySummary || 'No older history recorded yet.'}".
+1. Identify a sacred text quote (e.g., from the Bible, Quran, Gita, Torah, Guru Granth Sahib, etc.) that is strictly aligned with the user's belief system (${belief}) and resonates with their current focus.
+2. Provide the specific location/source of the quote correctly (e.g., "John 14:27", "Surah Al-Baqarah 2:153", etc.).
+3. Expound deeply on this wisdom in the context of the user's current affirmation: "${content}".
+4. Deeply weave in their primary life themes (${selectedThemes?.join(', ') || 'personal growth'}) and align the advice with their specific goals: ${JSON.stringify(userGoals)}.
+5. Mirror the emotional state found in their recent reflections: "${recentJournal || 'no recent entries'}".
+6. Reference their historical journey: "${historySummary || 'No older history recorded yet.'}".
+
+GUIDELINES:
+- Use a tone that is compassionate, vulnerable, and authoritative.
+- Ensure the quote is accurate and the location is provided.
+- Avoid generic advice; make it feel like you are speaking directly to their current soul-state.
 
 FORMAT: 
-Output strictly JSON with keys: 
-- title: A sacred, comforting title.
-- message: The religious quote followed by your deep exposition.
-- action: A single, practical, small soul-step to take today.
+Output strictly JSON only. No markdown formatting around the JSON.
+Keys: 
+- title: A sacred, comforting title for this guidance.
+- greeting: A warm, personalized greeting to the seeker (e.g., "Hello [Name],").
+- analysis: A deep, reflective analysis based on their recent sanctuary reflections, themes, and goals.
+- quote: The exact words of the pertinent sacred text.
+- location: The specific source/location of the quote (e.g., "Psalm 23:1").
+- advice: Practical, actionable advice on how to navigate the day effectively, drawing upon their context and the sacred text.
+- action: A single, practical, small soul-step to take today (short label, e.g., "Breathe", "Pray", "Serve").
 `.trim();
 
                 const systemPrompt = await constructSystemPrompt(belief, instructions, tier, username, userGoals, dateOfBirth, astrologyEnabled, selectedThemes);
                 const userPrompt = `Guide me based on my current path and recent sanctuary reflections.`;
                 const jsonStr = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
 
-                // Try to parse JSON, if fails, fallback
+                // Clean JSON string of potential markdown backticks
+                let cleanedJson = jsonStr.trim();
+                if (cleanedJson.startsWith('```json')) cleanedJson = cleanedJson.replace(/^```json/, '');
+                if (cleanedJson.startsWith('```')) cleanedJson = cleanedJson.replace(/^```/, '');
+                if (cleanedJson.endsWith('```')) cleanedJson = cleanedJson.replace(/```$/, '');
+                cleanedJson = cleanedJson.trim();
+
+                // Try to parse JSON
                 try {
-                    const parsed = JSON.parse(jsonStr);
+                    const parsed = JSON.parse(cleanedJson);
                     return {
                         title: parsed.title || "Spiritual Insight",
-                        message: parsed.message || "Keep reflecting.",
+                        greeting: parsed.greeting || `Hello, ${username || 'Seeker'}.`,
+                        analysis: parsed.analysis || parsed.message || "I am reflecting on your path.",
+                        quote: parsed.quote || "",
+                        location: parsed.location || "",
+                        advice: parsed.advice || "Keep your heart open to the light today.",
                         action: parsed.action || "Reflect"
                     };
-                } catch {
-                    return { title: "Insight", message: jsonStr, action: "Reflect" };
+                } catch (parseError) {
+                    console.error("[ContentAgent] JSON Parse Error:", parseError, "Raw content:", jsonStr);
+                    // Fallback to unstructured parsing if possible, or just the message
+                    return { 
+                        title: "Spiritual Insight", 
+                        greeting: `Hello, ${username || 'Seeker'}.`,
+                        analysis: "I am reflecting on your path.",
+                        quote: "",
+                        location: "",
+                        advice: jsonStr, 
+                        action: "Reflect" 
+                    };
                 }
 
-            } catch {
-                return { title: "Insight", message: "Your thoughts are heard.", action: "Breathe" };
+            } catch (err) {
+                console.error("[ContentAgent] Error in getSpiritualAnalysis:", err);
+                return { 
+                    title: "Insight", 
+                    greeting: `Hello, ${username || 'Seeker'}.`,
+                    analysis: "I am reflecting on your path.",
+                    quote: "The Lord is my shepherd; I shall not want.",
+                    location: "Psalm 23:1",
+                    advice: "Your thoughts are heard. Breathe and find peace in this moment.", 
+                    action: "Breathe" 
+                };
+            }
+        }
+    },
+
+    getJournalReflection: async (content: string, belief: BeliefType): Promise<{ 
+        title: string, 
+        greeting: string,
+        analysis: string, 
+        quote: string, 
+        location: string, 
+        advice: string, 
+        action: string 
+    }> => {
+        const provider = await SpiritualIntelligenceService.getProvider();
+        const { subscriptionTier: tier, dateOfBirth, astrologyEnabled, username, userGoals } = useStore.getState();
+
+        if (provider === 'LocalMock') {
+            return {
+                title: "Sacred Reflection",
+                greeting: `Peace be with you, ${username || 'Seeker'}.`,
+                analysis: "I've carefully considered what you've shared in your sanctuary. Your words reveal a heart seeking alignment and truth.",
+                quote: belief === 'Muslim' ? "Verily, in the remembrance of Allah do hearts find rest." : "Be still, and know that I am God.",
+                location: belief === 'Muslim' ? "Quran 13:28" : "Psalm 46:10",
+                advice: "Carry this stillness with you throughout the day. Let your actions flow from this center of peace.",
+                action: belief === 'Muslim' ? "Ameen" : "Amen"
+            };
+        } else {
+            try {
+                const instructions = `
+You are an enlightened Spiritual Guide in the True North Sanctuary. 
+
+USER INPUT: "${content}"
+BELIEF SYSTEM: ${belief}
+USER GOALS: ${JSON.stringify(userGoals)}
+
+TASK: Provide a 4-part spiritual reflection based strictly on the user's input, their path, and their goals.
+
+COMPONENTS:
+1. A warm, welcoming greeting to the user.
+2. A reflective analysis based on the user's themes, goals, and this specific journal entry.
+3. A pertinent quote from the corresponding sacred text (${belief}).
+4. Practical advice on how to navigate the day effectively, drawing upon everything mentioned above.
+
+GUIDELINES:
+- Tone: Compassionate, wise, and deeply personal.
+- NO labels like "Greeting:", "Analysis:", "Quote:", or "Advice:" in the final text.
+- The final result must be a beautiful, continuous flow of wisdom.
+- Return ONLY a JSON object with the keys below.
+
+JSON KEYS:
+- title: A short, poetic title (e.g., "Dawn of Clarity").
+- greeting: The personal greeting.
+- analysis: The reflective analysis.
+- quote: The exact words of the sacred text.
+- location: The specific source (e.g., "John 14:27").
+- advice: The practical daily advice.
+- action: A single word for the button (e.g., "Reflect", "Amen", "Ameen").
+`.trim();
+
+                const systemPrompt = await constructSystemPrompt(belief, instructions, tier, username, userGoals, dateOfBirth, astrologyEnabled);
+                const userPrompt = `Reflect on my word: "${content}"`;
+                const jsonStr = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
+
+                let cleanedJson = jsonStr.trim();
+                if (cleanedJson.startsWith('```json')) cleanedJson = cleanedJson.replace(/^```json/, '');
+                if (cleanedJson.startsWith('```')) cleanedJson = cleanedJson.replace(/^```/, '');
+                if (cleanedJson.endsWith('```')) cleanedJson = cleanedJson.replace(/```$/, '');
+                cleanedJson = cleanedJson.trim();
+
+                const parsed = JSON.parse(cleanedJson);
+                return {
+                    title: parsed.title || "Sacred Insight",
+                    greeting: parsed.greeting || `Hello, ${username || 'Seeker'}.`,
+                    analysis: parsed.analysis || "I am reflecting on your path.",
+                    quote: parsed.quote || "",
+                    location: parsed.location || "",
+                    advice: parsed.advice || "Walk in grace today.",
+                    action: parsed.action || "Amen"
+                };
+            } catch (err) {
+                console.error("[ContentAgent] Error in getJournalReflection:", err);
+                return { 
+                    title: "Sacred Insight", 
+                    greeting: `Hello, ${username || 'Seeker'}.`,
+                    analysis: "Your reflection is a beautiful step on your journey.",
+                    quote: "The Lord is my shepherd; I shall not want.",
+                    location: "Psalm 23:1",
+                    advice: "Peace be with you this day.", 
+                    action: "Amen" 
+                };
             }
         }
     },
@@ -1159,7 +1394,7 @@ Output strictly JSON with keys:
             } catch (e) { /* ignore */ }
 
             try {
-                const { subscriptionTier: tier, dateOfBirth, astrologyEnabled, username, userGoals, journalEntries } = useStore.getState();
+                const { subscriptionTier: _tier, dateOfBirth: _dateOfBirth, astrologyEnabled: _astrologyEnabled, username, userGoals, journalEntries } = useStore.getState();
                 const allEntries = [...journalEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                 const recentJournal = allEntries.slice(0, 5).map(e => `${e.title}: ${e.content}`).join(' | ');
                 const historySummary = allEntries.slice(5, 20).map(e => e.title).join(', ');
@@ -1169,11 +1404,11 @@ Output strictly JSON with keys:
                 try {
                     const parsed = JSON.parse(jsonStr);
                     const result = { text: parsed.text, verse: parsed.verse };
-                    try { await AsyncStorage.setItem(cacheKey, JSON.stringify(result)); } catch (e) { /* ignore */ }
+                    try { await AsyncStorage.setItem(cacheKey, JSON.stringify(result)); } catch (_e) { /* ignore */ }
                     return result;
                 } catch {
                     const result = { text: jsonStr };
-                    try { await AsyncStorage.setItem(cacheKey, JSON.stringify(result)); } catch (e) { /* ignore */ }
+                    try { await AsyncStorage.setItem(cacheKey, JSON.stringify(result)); } catch (_e) { /* ignore */ }
                     return result;
                 }
             } catch {

@@ -71,7 +71,7 @@ export const AffirmationScreen = () => {
     const [bgIdx, setBgIdx] = useState(0);
     const [isFavorite, setIsFavorite] = useState(false);
     const [showAdvice, setShowAdvice] = useState(false);
-    const [adviceContent, setAdviceContent] = useState('');
+    const [adviceContent, setAdviceContent] = useState<any>(null);
     const [loadingAdvice, setLoadingAdvice] = useState(false);
     const [isWallpaperMode, setIsWallpaperMode] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -93,6 +93,20 @@ export const AffirmationScreen = () => {
 
         setCurrentIdx(dayOfYear % AFFIRMATIONS.length);
         setBgIdx(dayOfYear % BACKGROUNDS.length);
+
+        // Auto-display guidance if past 10:00 AM and not seen today
+        const checkAutoAdvice = async () => {
+            const hour = now.getHours();
+            if (hour >= 10) {
+                const { DailyRitualService } = require('../../services/DailyRitualService');
+                const lastSeen = await DailyRitualService.shouldShowAdvice();
+                if (lastSeen) {
+                    handleGetAdvice();
+                    await DailyRitualService.markAdviceShown();
+                }
+            }
+        };
+        checkAutoAdvice();
     }, []);
 
     const current = AFFIRMATIONS[currentIdx];
@@ -142,7 +156,7 @@ export const AffirmationScreen = () => {
     const handleGetAdvice = async () => {
         setLoadingAdvice(true);
         setShowAdvice(true);
-        setAdviceContent('Receiving spiritual guidance...');
+        setAdviceContent({ greeting: 'Reflecting...', analysis: 'Preparing your spiritual guidance...' });
 
         try {
             const advice = await contentAgentService.getSpiritualAnalysis(
@@ -150,11 +164,30 @@ export const AffirmationScreen = () => {
                 beliefType || 'Spiritual',
                 themes
             );
-            setAdviceContent(advice.message);
+            setAdviceContent(advice);
         } catch (error) {
-            setAdviceContent("Rest in the silence. The guidance will come clear soon.");
+            setAdviceContent({ analysis: "Rest in the silence. The guidance will come clear soon." });
         } finally {
             setLoadingAdvice(false);
+        }
+    };
+
+    const copyAdvice = async () => {
+        if (!adviceContent) return;
+
+        const textToCopy = [
+            adviceContent.greeting,
+            adviceContent.analysis,
+            adviceContent.quote ? `"${adviceContent.quote}" — ${adviceContent.location}` : '',
+            adviceContent.advice
+        ].filter(Boolean).join('\n\n');
+
+        try {
+            await Share.share({
+                message: `${textToCopy}\n\n— Sent from True North Sanctuary`,
+            });
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -234,22 +267,37 @@ export const AffirmationScreen = () => {
                                     {!isWallpaperMode && (
                                         <FadeIn delay={600} from="bottom">
                                             <View style={styles.actions}>
-                                                <TouchableOpacity style={styles.actionButton} onPress={copyToClipboard}>
-                                                    <CopyIcon color={palette.softGold} size={24} />
-                                                </TouchableOpacity>
-                                                <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
-                                                    <ShareIcon color={palette.softGold} size={24} />
-                                                </TouchableOpacity>
-                                                <TouchableOpacity style={styles.actionButton} onPress={toggleFavorite}>
-                                                    <HeartIcon
-                                                        color={isFavorite ? palette.softGold : palette.ivory + '80'}
-                                                        fill={isFavorite ? palette.softGold : 'transparent'}
-                                                        size={24}
-                                                    />
-                                                </TouchableOpacity>
-                                                <TouchableOpacity style={styles.actionButton} onPress={handleGetAdvice}>
-                                                    <AdviceIcon color={palette.softGold} size={24} />
-                                                </TouchableOpacity>
+                                                <View style={styles.actionItem}>
+                                                    <TouchableOpacity style={styles.actionButton} onPress={copyToClipboard}>
+                                                        <CopyIcon color={palette.softGold} size={24} />
+                                                    </TouchableOpacity>
+                                                    <Text style={styles.actionItemLabel}>Copy</Text>
+                                                </View>
+
+                                                <View style={styles.actionItem}>
+                                                    <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+                                                        <ShareIcon color={palette.softGold} size={24} />
+                                                    </TouchableOpacity>
+                                                    <Text style={styles.actionItemLabel}>Share</Text>
+                                                </View>
+
+                                                <View style={styles.actionItem}>
+                                                    <TouchableOpacity style={styles.actionButton} onPress={toggleFavorite}>
+                                                        <HeartIcon
+                                                            color={isFavorite ? palette.softGold : palette.ivory + '80'}
+                                                            fill={isFavorite ? palette.softGold : 'transparent'}
+                                                            size={24}
+                                                        />
+                                                    </TouchableOpacity>
+                                                    <Text style={styles.actionItemLabel}>Bless</Text>
+                                                </View>
+
+                                                <View style={styles.actionItem}>
+                                                    <TouchableOpacity style={styles.actionButton} onPress={handleGetAdvice}>
+                                                        <AdviceIcon color={palette.softGold} size={24} />
+                                                    </TouchableOpacity>
+                                                    <Text style={styles.actionItemLabel}>Advice</Text>
+                                                </View>
                                             </View>
                                         </FadeIn>
                                     )}
@@ -330,27 +378,78 @@ export const AffirmationScreen = () => {
             <BottomSheet
                 visible={showAdvice}
                 onClose={() => setShowAdvice(false)}
-                title="Spiritual Advice"
-                height="60%"
+                title="Spiritual Guidance"
+                height="70%"
             >
                 <TrueNorthFlashList
                     data={[]}
                     renderItem={renderItem}
                     keyExtractor={() => 'advice'}
-                    estimatedItemSize={400}
+                    estimatedItemSize={600}
                     contentContainerStyle={styles.adviceScroll}
                     ListHeaderComponent={
-                        <View style={{ alignItems: 'center', paddingVertical: 10 }}>
-                            <Sparkles color={palette.softGold} size={32} style={{ marginBottom: 16 }} />
-                            <Text style={styles.adviceText}>
-                                {adviceContent}
-                            </Text>
+                        <View style={{ paddingHorizontal: 4 }}>
+                            <View style={{ alignItems: 'center', marginBottom: 24 }}>
+                                <Sparkles color={palette.softGold} size={32} />
+                                <Text style={[styles.modalTitle, { marginTop: 12, textAlign: 'center' }]}>
+                                    {adviceContent?.title || "Spiritual Insight"}
+                                </Text>
+                            </View>
+
+                            {adviceContent?.greeting && (
+                                <Text style={styles.greetingText}>
+                                    {adviceContent.greeting}
+                                </Text>
+                            )}
+
+                            {adviceContent?.analysis && (
+                                <Text style={styles.analysisText}>
+                                    {adviceContent.analysis}
+                                </Text>
+                            )}
+
+                            {adviceContent?.quote && (
+                                <View style={styles.quoteBlock}>
+                                    <Text style={styles.quoteTextSmall}>
+                                        &quot;{adviceContent.quote}&quot;
+                                    </Text>
+                                    {adviceContent?.location && (
+                                        <Text style={styles.quoteLocation}>
+                                            — {adviceContent.location}
+                                        </Text>
+                                    )}
+                                </View>
+                            )}
+
+                            {adviceContent?.advice && (
+                                <View style={styles.adviceBlock}>
+                                    <View style={styles.adviceHeader}>
+                                        <AdviceIcon color={palette.softGold} size={20} />
+                                        <Text style={styles.adviceLabel}>DAILY ADVICE</Text>
+                                    </View>
+                                    <Text style={styles.adviceText}>
+                                        {adviceContent.advice}
+                                    </Text>
+                                    
+                                    <TouchableOpacity style={styles.copyAdviceBtn} onPress={copyAdvice}>
+                                        <CopyIcon color={palette.softGold} size={16} />
+                                        <Text style={styles.copyAdviceBtnText}>Copy Advice</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+
+                            {adviceContent?.action && (
+                                <View style={styles.actionBlock}>
+                                    <Text style={styles.actionLabel}>SOUL STEP</Text>
+                                    <Text style={styles.actionText}>{adviceContent.action}</Text>
+                                </View>
+                            )}
                         </View>
                     }
                 />
 
                 <TouchableOpacity
-                    style={[styles.closeBtn, { marginTop: 16 }]}
+                    style={[styles.closeBtn, { marginTop: 24 }]}
                     onPress={() => setShowAdvice(false)}
                 >
                     <Text style={styles.closeBtnText}>Return to Presence</Text>
@@ -384,8 +483,10 @@ const styles = StyleSheet.create({
         fontFamily: theme.typography.sansBold, fontSize: 13, color: palette.softGold,
         textTransform: 'uppercase', letterSpacing: 2, marginTop: theme.spacing.lg
     },
-    actions: { flexDirection: 'row', marginTop: theme.spacing.xl, gap: theme.spacing.xl },
-    actionButton: { width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },
+    actions: { flexDirection: 'row', marginTop: theme.spacing.xl, gap: theme.spacing.xl, alignItems: 'center' },
+    actionItem: { alignItems: 'center', gap: 8 },
+    actionButton: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' },
+    actionItemLabel: { fontFamily: theme.typography.sansBold, fontSize: 10, color: palette.softGold, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.8 },
     bottomActions: { marginTop: theme.spacing.xl, gap: theme.spacing.xl },
     wallpaperButton: {
         paddingVertical: 14, paddingHorizontal: 24, borderRadius: 30,
@@ -406,9 +507,114 @@ const styles = StyleSheet.create({
     modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.xl },
     modalHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
     modalTitle: { fontFamily: theme.typography.serifBold, fontSize: 20, color: theme.colors.text },
-    adviceScroll: { paddingBottom: theme.spacing.xl },
-    adviceText: { fontFamily: theme.typography.serif, fontSize: 18, color: theme.colors.text, lineHeight: 28, textAlign: 'center' },
-    closeBtn: { paddingVertical: 14, borderRadius: 12, backgroundColor: theme.colors.text, alignItems: 'center' },
+    adviceScroll: { paddingBottom: 40, paddingHorizontal: 8 },
+    greetingText: {
+        fontFamily: theme.typography.serifBold,
+        fontSize: 22,
+        color: palette.softGold,
+        marginBottom: 12,
+        textAlign: 'left'
+    },
+    analysisText: {
+        fontFamily: theme.typography.serif,
+        fontSize: 17,
+        color: theme.colors.text,
+        lineHeight: 28,
+        textAlign: 'left',
+        opacity: 0.9,
+        marginBottom: 24
+    },
+    adviceBlock: {
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)'
+    },
+    adviceHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 12
+    },
+    adviceLabel: {
+        fontFamily: theme.typography.sansBold,
+        fontSize: 12,
+        color: palette.softGold,
+        letterSpacing: 1,
+    },
+    adviceText: { 
+        fontFamily: theme.typography.serif, 
+        fontSize: 17, 
+        color: theme.colors.text, 
+        lineHeight: 28, 
+        textAlign: 'left',
+        opacity: 0.9
+    },
+    copyAdviceBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 16,
+        alignSelf: 'flex-start',
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        backgroundColor: 'rgba(200, 169, 90, 0.1)',
+        borderRadius: 8
+    },
+    copyAdviceBtnText: {
+        fontFamily: theme.typography.sansBold,
+        fontSize: 12,
+        color: palette.softGold,
+        textTransform: 'uppercase'
+    },
+    quoteBlock: {
+        backgroundColor: 'rgba(200, 169, 90, 0.08)',
+        borderLeftWidth: 3,
+        borderLeftColor: palette.softGold,
+        padding: 20,
+        marginBottom: 24,
+        borderRadius: 8,
+    },
+    quoteTextSmall: {
+        fontFamily: theme.typography.serifBold,
+        fontSize: 19,
+        color: palette.softGold,
+        lineHeight: 28,
+        fontStyle: 'italic',
+    },
+    quoteLocation: {
+        fontFamily: theme.typography.sansMedium,
+        fontSize: 13,
+        color: theme.colors.secondaryText,
+        marginTop: 12,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
+    actionBlock: {
+        marginTop: 32,
+        padding: 20,
+        backgroundColor: theme.colors.surface,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: palette.softGold + '30',
+        alignItems: 'center',
+    },
+    actionLabel: {
+        fontFamily: theme.typography.sansBold,
+        fontSize: 12,
+        color: palette.softGold,
+        letterSpacing: 2,
+        marginBottom: 8,
+    },
+    actionText: {
+        fontFamily: theme.typography.sansMedium,
+        fontSize: 16,
+        color: theme.colors.text,
+        textAlign: 'center',
+    },
+    closeBtn: { paddingVertical: 16, borderRadius: 12, backgroundColor: theme.colors.text, alignItems: 'center' },
     closeBtnText: { fontFamily: theme.typography.sansBold, fontSize: 14, color: theme.colors.background, textTransform: 'uppercase', letterSpacing: 1 },
     wallpaperOverlay: {
         position: 'absolute', bottom: 50, left: 0, right: 0, alignItems: 'center', zIndex: 100

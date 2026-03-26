@@ -96,9 +96,8 @@ export const notificationService = {
                 title: "Evening Reflection",
                 body: "Your sanctuary awaits. What brought you peace today?",
                 data: { screen: 'Journal' },
-                // @ts-expect-error: categoryIdentifier is not in the base content type
                 categoryIdentifier: 'gratitude-reminders-secondary',
-            },
+            } as Notifications.NotificationContentInput,
             trigger: {
                 hour: 21,
                 minute: 0,
@@ -110,6 +109,7 @@ export const notificationService = {
     cancelSecondaryGratitudeReminder: async () => {
         const scheduled = await Notifications.getAllScheduledNotificationsAsync();
         for (const notif of scheduled) {
+            // @ts-ignore
             if (notif.content.categoryIdentifier === 'gratitude-reminders-secondary') {
                 await Notifications.cancelScheduledNotificationAsync(notif.identifier);
             }
@@ -197,5 +197,28 @@ export const notificationService = {
         // For local simplicity, we'll assume scheduling implies intent to notify.
     },
 
+    scheduleDailySpiritualGuidance: async () => {
+        const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+        for (const notif of scheduled) {
+            if (notif.content.title === "Spiritual Guidance") {
+                await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+            }
+        }
 
+        const hour = 10;
+        const minute = 0;
+
+        await Notifications.scheduleNotificationAsync({
+            content: {
+                title: "Spiritual Guidance",
+                body: "Open your sanctuary for today's sacred wisdom.",
+                data: { screen: 'Affirmation' },
+            },
+            trigger: {
+                hour,
+                minute,
+                repeats: true,
+            } as Notifications.NotificationTriggerInput,
+        });
+    },
 };

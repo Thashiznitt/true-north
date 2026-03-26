@@ -50,6 +50,8 @@ export const FadeIn = ({
 
     return (
         <Animated.View
+            pointerEvents={pointerEvents}
+            collapsable={false}
             style={[
                 style,
                 {

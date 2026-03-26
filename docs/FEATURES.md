@@ -8,10 +8,10 @@ Users can join existing "Ghost Circles" or create their own.
 
 ## 2. Journaling
 A sacred space for users to record their daily reflections.
-- **Premium Feature**: Journaling requires a subscription.
-- **Search**: Users can search through their past entries.
-- **Spiritual Advice (Free)**: Accessible on the Affirmation screen, offering personalized spiritual guidance, sacred text quotes (Bible, Quran, etc.), and action steps based on your current state, themes, goals, and journal entries.
-- **SI Analysis (Premium)**: Advanced journaling analysis and the "Ask Nur" AI companion require a subscription.
+- **Auto-Save**: Reflections are automatically persisted every 2 seconds and upon exiting the screen to ensure no thoughts are lost.
+- **Search**: Advanced filtering through past entries by title, content, and #tags.
+- **Reflection Star (AI Assessment)**: A dedicated "Sparkle" action that provides an on-demand spiritual evaluation of your current journal entry.
+- **SI Analysis (Premium)**: Deep, cross-referenced "Spiritual Intelligence" that understands your themes, goals, and history.
 
 ## 3. Affirmations
 Daily inspiration based on the user's selected belief system and current theme.
@@ -19,14 +19,16 @@ Daily inspiration based on the user's selected belief system and current theme.
 ## 4. Faith-Friendly Ads
 For non-subscribers, the app serves contextual, faith-friendly ads.
 - **Upsell**: Each ad includes a "Remove Ads" option that leads to the subscription page.
-- **Compass Tier**: A dedicated annual subscription for users who prefer longer-term alignment at a lower monthly equivalent.
-- **Restore Purchases**: Returning or re-registered users can instantly recover their existing store entitlements from the onboarding paywall.
+- **Compass Tier**: A dedicated annual subscription (Ksh. 900.00/month equivalent) for users who prefer longer-term alignment with a significant discount (55% or more).
+- **Restore Purchases**: Returning users can instantly recover their existing store entitlements from the onboarding paywall.
 - **Auto-Sync**: The app automatically detects active store subscriptions on launch and when entering the paywall to ensure seamless access.
+- **Return-to-Feature**: Upon successful subscription, users are automatically redirected back to the feature they were attempting to access (Journal, Ask Nur, etc.).
 
 ## 5. Security & App Lock
 The app provides robust protection for your personal and communal "Sanctuaries."
-- **Dual Unlocking (v29)**: Users can choose between Biometrics (Face ID/Fingerprint) and a manual 4-digit PIN when unlocking Journals or Circles. 
-- **Intelligent Fallback**: If biometrics are unavailable or fail, the app automatically offers the PIN entry mode.
+- **PIN-Only Access**: For simplicity and reliability, the app utilizes a unified 4-digit PIN system to secure Journals and Circles.
+- **PinGate Component**: A specialized lock screen that intercepts access to secure features until the correct PIN is provided.
+- **Auto-Lock (Session Privacy)**: The "Sanctuary" automatically re-locks whenever you navigate away from a secure area, protecting your private reflections.
 - **Fraud Protection**: Automated Spiritual Intelligence checks prevent sharing of sensitive information (like phone numbers or payment requests) in public circles.
 
 ## 6. Event Management

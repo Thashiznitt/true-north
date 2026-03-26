@@ -29,7 +29,7 @@ export const AskNurScreen = () => {
     // Paywall Check
     const isSubscriber = subscriptionTier === 'true_north' || subscriptionTier === 'zenith' || subscriptionTier === 'compass';
     const userMessageCount = nurChats.filter(m => m.role === 'user').length;
-    const isTrialExhausted = !isSubscriber && userMessageCount >= 7;
+    const isTrialExhausted = !isSubscriber && userMessageCount >= 10;
 
     // Cloud Sync on Load
     useEffect(() => {
@@ -149,7 +149,7 @@ export const AskNurScreen = () => {
 
                     <Text style={styles.lockedTitle}>Path Reached</Text>
                     <Text style={styles.lockedSubtitle}>
-                        You have used your 7 trial messages with Nur. To continue this journey and unlock deeper spiritual guidance, please choose a plan.
+                        You have used your 10 trial messages with Nur. To continue this journey and unlock deeper spiritual guidance, please choose a plan.
                     </Text>
 
                     <View style={styles.lockedBenefits}>
@@ -172,7 +172,7 @@ export const AskNurScreen = () => {
                         onPress={() => {
                             setIsNavigating(true);
                             setTimeout(() => {
-                                navigation.navigate('Subscription');
+                                navigation.navigate('Subscription', { returnTo: 'AskNur' });
                                 setTimeout(() => setIsNavigating(false), 1000);
                             }, 500);
                         }}
@@ -353,66 +353,67 @@ export const AskNurScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            {/* Chat Area or Intro */}
-            {nurChats.length === 0 ? (
-                <View style={styles.introContainer}>
-                    <View style={styles.introIcon}>
-                        <Sparkles size={40} color={palette.ivory} />
-                    </View>
-                    <Text style={styles.introTitle}>Salam, {username || 'Traveler'}</Text>
-                    <Text style={styles.introSubtitle}>
-                        I am Nur, your spiritual companion.{"\n"}
-                        I&apos;m here to listen, reflect, and help you align with your True North.
-                    </Text>
-
-                    <View style={styles.suggestionContainer}>
-                        <TouchableOpacity style={styles.suggestionButton} onPress={() => handleSuggestion("I feel overwhelmed today.")}>
-                            <Text style={styles.suggestionText}>&quot;I feel overwhelmed today.&quot;</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.suggestionButton} onPress={() => handleSuggestion("Help me plan my spiritual goals.")}>
-                            <Text style={styles.suggestionText}>&quot;Help me plan my spiritual goals.&quot;</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.suggestionButton} onPress={() => handleSuggestion("Give me a reality check on my habits.")}>
-                            <Text style={styles.suggestionText}>&quot;Give me a reality check.&quot;</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            ) : (
-                <TrueNorthFlashList
-                    ref={flatListRef}
-                    data={nurChats}
-                    renderItem={renderMessage}
-                    keyExtractor={(item: any) => item.id}
-                    estimatedItemSize={100}
-                    contentContainerStyle={styles.chatContent}
-                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-                    onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
-                />
-            )}
-
-            {/* Typing Indicator */}
-            {isTyping && (
-                <View style={styles.typingContainer}>
-                    <ActivityIndicator size="small" color={palette.softGold} />
-                    <Text style={styles.typingText}>Nur is reflecting...</Text>
-                </View>
-            )}
-
-            {/* Action Bar (Reality Check) */}
-            {!isTyping && nurChats.length > 0 && (
-                <View style={styles.actionBar}>
-                    <TouchableOpacity style={styles.quickAction} onPress={handleRealityCheck}>
-                        <ShieldCheck size={14} color={palette.ivory} />
-                        <Text style={styles.quickActionText}>Reality Check</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
-
-            {/* Input Area */}
             <KeyboardAvoidingView
+                style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
+                {/* Chat Area or Intro */}
+                {nurChats.length === 0 ? (
+                    <View style={styles.introContainer}>
+                        <View style={styles.introIcon}>
+                            <Sparkles size={40} color={palette.ivory} />
+                        </View>
+                        <Text style={styles.introTitle}>Salam, {username || 'Traveler'}</Text>
+                        <Text style={styles.introSubtitle}>
+                            I am Nur, your spiritual companion.{"\n"}
+                            I&apos;m here to listen, reflect, and help you align with your True North.
+                        </Text>
+
+                        <View style={styles.suggestionContainer}>
+                            <TouchableOpacity style={styles.suggestionButton} onPress={() => handleSuggestion("I feel overwhelmed today.")}>
+                                <Text style={styles.suggestionText}>&quot;I feel overwhelmed today.&quot;</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.suggestionButton} onPress={() => handleSuggestion("Help me plan my spiritual goals.")}>
+                                <Text style={styles.suggestionText}>&quot;Help me plan my spiritual goals.&quot;</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.suggestionButton} onPress={() => handleSuggestion("Give me a reality check on my habits.")}>
+                                <Text style={styles.suggestionText}>&quot;Give me a reality check.&quot;</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                ) : (
+                    <TrueNorthFlashList
+                        ref={flatListRef}
+                        data={nurChats}
+                        renderItem={renderMessage}
+                        keyExtractor={(item: any) => item.id}
+                        estimatedItemSize={100}
+                        contentContainerStyle={styles.chatContent}
+                        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                        onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                    />
+                )}
+
+                {/* Typing Indicator */}
+                {isTyping && (
+                    <View style={styles.typingContainer}>
+                        <ActivityIndicator size="small" color={palette.softGold} />
+                        <Text style={styles.typingText}>Nur is reflecting...</Text>
+                    </View>
+                )}
+
+                {/* Action Bar (Reality Check) */}
+                {!isTyping && nurChats.length > 0 && (
+                    <View style={styles.actionBar}>
+                        <TouchableOpacity style={styles.quickAction} onPress={handleRealityCheck}>
+                            <ShieldCheck size={14} color={palette.ivory} />
+                            <Text style={styles.quickActionText}>Reality Check</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+
+                {/* Input Area */}
                 <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 10 }]}>
                     <TextInput
                         style={styles.input}

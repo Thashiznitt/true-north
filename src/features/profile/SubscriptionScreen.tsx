@@ -4,10 +4,11 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { ChevronLeft, Check, Compass as CompassIcon, Star, Zap, Heart, Sparkles } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { subscriptionService } from '../../services/subscription';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { PurchasesOffering } from 'react-native-purchases';
+import { useStore } from '../../store';
 import { env } from '../../services/env';
 import { FadeIn } from '../../components/FadeIn';
 import { Popup } from '../../components/Popup';
@@ -29,10 +30,12 @@ const TIER_METADATA: Record<string, any> = {
     },
     compass: {
         benefits: ["Unlimited Private Reflections (Journal)", "Ask Nur Companion", "Join up to 5 Circles", "Standard Daily Guidance"],
+        badgeText: "SAVE 55%"
     },
     true_north: {
         benefits: ["Unlimited Community Reflections", "Ask Nur Companion", "Personalized Spiritual Guidance", "Join Unlimited Circles", "Create up to 2 Circles"],
-        isPopular: true
+        isPopular: true,
+        badgeText: "MOST ALIGNED"
     },
     zenith: {
         benefits: ["Elite Spiritual Mentoring", "Ask Nur Companion", "Deep Community Analysis", "Unlimited Circle Creation", "Location Intelligence"],
@@ -46,6 +49,8 @@ export const SubscriptionScreen = () => {
     const keyExtractor = React.useCallback(() => 'dummy', []);
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<any>();
+    const route = useRoute<any>();
+    const returnTo = route.params?.returnTo;
     const [selectedTier, setSelectedTier] = useState<Tier>('true_north');
     // For real RC packages, we track the package identifier directly to avoid
     // mis-mapping when multiple packages share a similar packageType string.
@@ -54,6 +59,7 @@ export const SubscriptionScreen = () => {
     const [loading, setLoading] = useState(!env.useMockServices);
     const [purchasing, setPurchasing] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const currentTier = useStore(state => state.subscriptionTier);
 
     React.useEffect(() => {
         if (!env.useMockServices) {
@@ -72,7 +78,11 @@ export const SubscriptionScreen = () => {
         setPurchasing(true);
         try {
             if (selectedTier === 'free') {
-                navigation.goBack();
+                if (returnTo) {
+                    navigation.navigate(returnTo);
+                } else {
+                    navigation.goBack();
+                }
                 return;
             }
 
@@ -159,8 +169,12 @@ export const SubscriptionScreen = () => {
                         <FadeIn key={pkg.identifier} delay={200 + index * 100} from="bottom">
                             <TierCard
                                 name={cleanTitle(product.title)}
-                                price={product.priceString}
-                                period={isAnnual ? '/ year' : '/ month'}
+                                price={
+                                    (displayTier === 'compass' && isAnnual)
+                                        ? "Ksh. 900.00"
+                                        : product.priceString
+                                }
+                                period="/ month"
                                 subtext={isAnnual || displayTier === 'compass' ? 'Paid Annually' : (displayTier === 'zenith' ? 'Elite Experience' : 'Monthly Alignment')}
                                 benefits={meta.benefits}
                                 icon={TIER_ICONS[displayTier] || Star}
@@ -170,6 +184,8 @@ export const SubscriptionScreen = () => {
                                     setSelectedTier(displayTier);
                                 }}
                                 isPopular={meta.isPopular}
+                                badgeText={meta.badgeText}
+                                isCurrent={currentTier === displayTier}
                             />
                         </FadeIn>
                     );
@@ -187,19 +203,22 @@ export const SubscriptionScreen = () => {
                             icon={TIER_ICONS.free}
                             isSelected={selectedTier === 'free'}
                             onSelect={() => setSelectedTier('free')}
+                            isCurrent={currentTier === 'free'}
                         />
                     </FadeIn>
 
                     <FadeIn delay={200} from="bottom">
                         <TierCard
                             name="Compass"
-                            price="$5.99"
+                            price="Ksh. 900.00"
                             period="/ month"
                             subtext="Paid Annually"
                             benefits={TIER_METADATA.compass.benefits}
                             icon={CompassIcon}
                             isSelected={selectedTier === 'compass'}
                             onSelect={() => setSelectedTier('compass')}
+                            badgeText="SAVE 55%"
+                            isCurrent={currentTier === 'compass'}
                         />
                     </FadeIn>
 
@@ -214,6 +233,7 @@ export const SubscriptionScreen = () => {
                             isSelected={selectedTier === 'true_north'}
                             onSelect={() => setSelectedTier('true_north')}
                             isPopular
+                            isCurrent={currentTier === 'true_north'}
                         />
                     </FadeIn>
 
@@ -227,6 +247,7 @@ export const SubscriptionScreen = () => {
                             icon={Zap}
                             isSelected={selectedTier === 'zenith'}
                             onSelect={() => setSelectedTier('zenith')}
+                            isCurrent={currentTier === 'zenith'}
                         />
                     </FadeIn>
                 </>
@@ -274,7 +295,7 @@ export const SubscriptionScreen = () => {
                                 </Text>
                                 {!offering && selectedTier !== 'free' && (
                                     <Text style={styles.ctaButtonSub}>
-                                        {selectedTier === 'compass' ? '$69.99 / year' : `${selectedTier === 'true_north' ? '$12.99' : '$19.99'} / month`}
+                                        {selectedTier === 'compass' ? 'Ksh. 10,800.00 / year' : `${selectedTier === 'true_north' ? '$12.99' : '$19.99'} / month`}
                                     </Text>
                                 )}
                             </>
@@ -287,7 +308,11 @@ export const SubscriptionScreen = () => {
                 visible={showSuccessModal}
                 onClose={() => {
                     setShowSuccessModal(false);
-                    navigation.goBack();
+                    if (returnTo) {
+                        navigation.navigate(returnTo);
+                    } else {
+                        navigation.goBack();
+                    }
                 }}
             >
                 <View style={{ alignItems: 'center' }}>
@@ -297,14 +322,27 @@ export const SubscriptionScreen = () => {
                     <Text style={styles.successTitle}>Vision Aligned</Text>
                     <Text style={styles.successDesc}>
                         Your path is now set to <Text style={{ fontFamily: theme.typography.sansBold, color: palette.softGold }}>{selectedTier.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</Text>.{'\n'}
-                        May your journey be filled with divine light and clarity.{'\n\n'}
-                        <Text style={{ fontFamily: theme.typography.sansMedium, color: palette.softGold }}>✨ You can now select multiple Daily Reflection themes!</Text>
+                        May your journey be filled with divine light and clarity.
                     </Text>
+
+                    <View style={styles.successBenefitBox}>
+                        <Text style={styles.benefitBoxTitle}>Your New Access Level:</Text>
+                        {(TIER_METADATA[selectedTier as keyof typeof TIER_METADATA]?.benefits || []).map((benefit: string, i: number) => (
+                            <View key={i} style={styles.successBenefitRow}>
+                                <Check size={16} color={palette.softGold} />
+                                <Text style={styles.successBenefitText}>{benefit}</Text>
+                            </View>
+                        ))}
+                    </View>
                     <TouchableOpacity
                         style={styles.praiseButton}
                         onPress={() => {
                             setShowSuccessModal(false);
-                            navigation.goBack();
+                            if (returnTo) {
+                                navigation.navigate(returnTo);
+                            } else {
+                                navigation.goBack();
+                            }
                         }}
                     >
                         <Text style={styles.praiseButtonText}>Praise</Text>
@@ -315,7 +353,7 @@ export const SubscriptionScreen = () => {
     );
 };
 
-const TierCard = ({ name, price, period, subtext, benefits, icon: Icon, isSelected, onSelect, isPopular }: any) => (
+const TierCard = ({ name, price, period, subtext, benefits, icon: Icon, isSelected, onSelect, isPopular, badgeText, isCurrent }: any) => (
     <TouchableOpacity
         activeOpacity={0.9}
         onPress={onSelect}
@@ -324,9 +362,9 @@ const TierCard = ({ name, price, period, subtext, benefits, icon: Icon, isSelect
             isSelected && styles.tierCardSelected,
         ]}
     >
-        {isPopular && (
-            <View style={styles.popularBadge}>
-                <Text style={styles.popularText}>MOST ALIGNED</Text>
+        {(isPopular || badgeText || isCurrent) && (
+            <View style={[styles.popularBadge, isCurrent && styles.currentPlanBadge]}>
+                <Text style={styles.popularText}>{isCurrent ? 'CURRENT PLAN' : (badgeText || 'MOST ALIGNED')}</Text>
             </View>
         )}
         <View style={styles.tierHeader}>
@@ -429,5 +467,15 @@ const styles = StyleSheet.create({
         borderRadius: 28, alignItems: 'center', justifyContent: 'center',
         shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8
     },
-    praiseButtonText: { fontFamily: theme.typography.sansBold, fontSize: 16, color: palette.ivory }
+    praiseButtonText: { fontFamily: theme.typography.sansBold, fontSize: 16, color: palette.ivory },
+    successBenefitBox: {
+        width: '100%', backgroundColor: 'rgba(212, 175, 55, 0.05)', borderRadius: 16, padding: 20, marginBottom: 32,
+        borderWidth: 1, borderColor: palette.softGold + '20'
+    },
+    benefitBoxTitle: { fontFamily: theme.typography.sansBold, fontSize: 12, color: palette.softGold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 },
+    successBenefitRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+    successBenefitText: { fontFamily: theme.typography.sans, fontSize: 14, color: theme.colors.text, opacity: 0.9, flex: 1 },
+    currentPlanBadge: {
+        backgroundColor: theme.colors.text,
+    },
 });

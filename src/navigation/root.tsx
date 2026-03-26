@@ -186,6 +186,7 @@ export const RootNavigator = () => {
         if (isOnboarded) {
             notificationService.scheduleEveningGratitude();
             notificationService.scheduleNurEventReminder();
+            notificationService.scheduleDailySpiritualGuidance();
 
             // Check if they need to see the walkthrough
             const store = useStore.getState();

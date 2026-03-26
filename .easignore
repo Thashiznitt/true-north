@@ -1,0 +1,14 @@
+node_modules/
+.git/
+android/
+ios/
+.expo/
+dist/
+build/
+*.jks
+*.keystore
+*.aab
+*.apk
+scripts/
+tests/
+assets/originals/

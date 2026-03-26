@@ -26,6 +26,7 @@ import { COUNTRIES, COUNTRIES_DATA } from '../../data/locations';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { Search, MapPin, X, Globe } from 'lucide-react-native';
 import { BottomSheet } from '../../components/BottomSheet';
+import { Popup } from '../../components/Popup';
 import { SubscriptionLegal } from '../../components/SubscriptionLegal';
 import { APP_THEMES, THEME_ICONS_MAP, AppTheme } from '../../types/themes';
 
@@ -106,6 +107,7 @@ export const OnboardingScreen = () => {
     const setSubscriptionTier = useStore(state => state.setSubscriptionTier);
     const setDateOfBirthStore = useStore(state => state.setDateOfBirth);
     const setUserGoals = useStore(state => state.setUserGoals);
+    const currentStoreTier = useStore(state => state.subscriptionTier);
 
     const navigation = useNavigation<any>(); // eslint-disable-line
     const storeStep = useStore(state => state.onboardingStep);
@@ -141,6 +143,7 @@ export const OnboardingScreen = () => {
     const [isPurchasing, setIsPurchasing] = useState(false);
     const [isRestoring, setIsRestoring] = useState(false);
     const [subscriptionDetected, setSubscriptionDetected] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     // Username State
     const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
@@ -445,7 +448,7 @@ export const OnboardingScreen = () => {
                 eveningGratitude: true,
                 weeklyCommunity: true
             });
-            setBiometricsEnabled(setupBiometrics);
+            setBiometricsEnabled(false);
             setSecurityPin(pin || null);
             setSubscriptionTier('free'); // Default to free initially
 
@@ -580,16 +583,10 @@ export const OnboardingScreen = () => {
 
                 const success = await subscriptionService.purchasePackage(pkg);
                 if (success) {
-                    console.log("[Onboarding] Purchase successful, setting onboarded state...");
-                    // Note: subscriptionService.purchasePackage already handles DB sync and notification scheduling
-                    setLoggedIn(true);
-                    setOnboarded(true);
+                    console.log("[Onboarding] Purchase successful, showing success modal...");
+                    setShowSuccessModal(true);
                 } else {
                     console.log("[Onboarding] Purchase was not successful or was cancelled.");
-                }
-
-                // Only set state if we hasn't been redirected (onboarded)
-                if (!useStore.getState().isOnboarded) {
                     setIsPurchasing(false);
                 }
             } else {
@@ -636,10 +633,25 @@ export const OnboardingScreen = () => {
     const handleSocialLogin = async (provider: 'Apple' | 'Google') => {
         setLoading(true);
         try {
-            const success = await authService.login(provider);
-            if (success) {
+            const result = await authService.login(provider, goals);
+            if (result.success) {
                 setAuthMode('social');
-                // User is logged in, proceed to username or next appropriate step
+                
+                // If existing user, redirect immediately
+                if (result.isExistingUser) {
+                    console.log(`[Onboarding] Existing ${provider} user detected. Redirecting to Affirmation.`);
+                    setLoggedIn(true);
+                    setOnboarded(true);
+                    // Navigation will be handled by RootNavigator reacting to isOnboarded
+                    // but we can also trigger it manually for immediate effect
+                    navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Main', params: { screen: 'Affirmation' } }],
+                    });
+                    return;
+                }
+
+                // New user - User is logged in, proceed to username or next appropriate step
                 // Check if username is set, if so validation might pass to skip step 7
                 const currentUsername = useStore.getState().username;
                 if (currentUsername && currentUsername.trim().length > 0) {
@@ -734,6 +746,13 @@ export const OnboardingScreen = () => {
                 <TouchableOpacity style={styles.introButton} onPress={nextStep}>
                     <Text style={styles.introButtonText}>Begin</Text>
                 </TouchableOpacity>
+
+                <TouchableOpacity 
+                    style={[styles.introButton, { backgroundColor: 'transparent', borderWidth: 1, borderColor: palette.softGold, marginTop: 16 }]} 
+                    onPress={() => setStep(4)}
+                >
+                    <Text style={[styles.introButtonText, { color: palette.softGold }]}>Log In</Text>
+                </TouchableOpacity>
             </View>
         </View>
     );
@@ -790,7 +809,7 @@ export const OnboardingScreen = () => {
     const renderStep2 = () => (
         <>
             {/* eslint-disable-next-line truenorth-performance/no-scrollview */}
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
                 <StepContainer>
                     <FadeIn delay={100} from="bottom">
                         {renderHeader("Daily Goals", "Tell us about your current priorities (max 10 words)")}
@@ -1152,78 +1171,12 @@ export const OnboardingScreen = () => {
         >
             <StepContainer>
                 <FadeIn delay={100} from="bottom">
-                    {renderHeader("Privacy & Security", "Protect your private reflections with biometrics or a PIN.")}
+                    {renderHeader("Privacy & Security", "Protect your private reflections with a 4-digit PIN.")}
                 </FadeIn>
 
-                <FadeIn delay={300} from="bottom">
-                    <TouchableOpacity
-                        style={[styles.securityCard, setupBiometrics && styles.securityCardActive]}
-                        onPress={async () => {
-                            if (!setupBiometrics) {
-                                // Mock activation on simulator ONLY if mock services are enabled
-                                if (env.useMockServices && !Constants.isDevice) {
-                                    setLoading(true);
-                                    setTimeout(() => {
-                                        setLoading(false);
-                                        setSetupBiometrics(true);
-                                        Alert.alert("Success", "Mock Biometrics enabled for Simulator.");
-                                    }, 1000);
-                                    return;
-                                }
-
-                                const hasHardware = await LocalAuthentication.hasHardwareAsync();
-                                if (!hasHardware) {
-                                    Alert.alert("Unavailable", "Biometric hardware not found on this device.");
-                                    return;
-                                }
-
-                                const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-                                if (!isEnrolled) {
-                                    Alert.alert(
-                                        "Not Enrolled", 
-                                        "No biometrics (Fingerprint/Face) are enrolled on this device. Please set them up in your phone settings first."
-                                    );
-                                    return;
-                                }
-
-                                try {
-                                    // Optimization for Android native BiometricPrompt
-                                    const result = await LocalAuthentication.authenticateAsync({
-                                        promptMessage: 'Enable Biometrics for True North',
-                                        cancelLabel: 'Cancel',
-                                        disableDeviceFallback: false,
-                                        requireConfirmation: false, // Standard Android behavior for faster unlock
-                                    });
-                                    if (result.success) {
-                                        setSetupBiometrics(true);
-                                    }
-                                } catch (error) {
-                                    console.error("[Biometrics] Auth error:", error);
-                                    Alert.alert("Error", "Could not initialize biometric prompt.");
-                                }
-                            } else {
-                                setSetupBiometrics(false);
-                            }
-                        }}
-                    >
-                        <View style={styles.securityIconContainer}>
-                            {loading && !setupBiometrics ? (
-                                <ActivityIndicator color={palette.softGold} />
-                            ) : (
-                                <Fingerprint size={28} color={setupBiometrics ? palette.ivory : theme.colors.text} />
-                            )}
-                        </View>
-                        <View style={styles.securityTextContainer}>
-                            <Text style={[styles.securityTitle, setupBiometrics && styles.securityTextActive]}>Enable Biometrics</Text>
-                            <Text style={[styles.securityDesc, setupBiometrics && styles.securityTextActive]}>Use FaceID or TouchID to unlock your journal.</Text>
-                        </View>
-                        {setupBiometrics && <Check size={20} color={palette.ivory} />}
-                    </TouchableOpacity>
-                </FadeIn>
-
-                <FadeIn delay={500} from="bottom">
-                    <View style={[styles.pinSection, { marginBottom: 60 }]}>
-                        <Text style={styles.label}>Or set a 4-digit PIN</Text>
+                <FadeIn delay={300} from="bottom" pointerEvents="box-none">
+                    <View style={[styles.pinSection, { marginBottom: 60, marginTop: 40 }]}>
+                        <Text style={styles.label}>Set a security PIN</Text>
                         <TextInput
                             style={styles.pinInput}
                             placeholder="••••"
@@ -1233,8 +1186,9 @@ export const OnboardingScreen = () => {
                             value={pin}
                             onChangeText={setPin}
                             secureTextEntry
+                            autoFocus={true}
                         />
-                        <Text style={styles.pinHint}>Recommended if biometrics are unavailable.</Text>
+                        <Text style={styles.pinHint}>This PIN will be required to unlock your Journal and Circles.</Text>
                     </View>
                 </FadeIn>
             </StepContainer>
@@ -1298,9 +1252,9 @@ export const OnboardingScreen = () => {
 
     const renderStep10 = () => {
         const DEFAULT_TIERS = [
-            { id: 'compass', label: 'Compass', price: '$5.99', sub: '/ mo', save: 'Paid Yearly ($69.99/yr)' },
-            { id: 'true_north', label: 'True North', price: '$12.99', sub: '/ mo', save: 'Most Popular' },
-            { id: 'zenith', label: 'Zenith', price: '$19.99', sub: '/ mo', save: 'Best Value' },
+            { id: 'compass', label: 'Compass', price: 'Ksh. 900.00', sub: '/ mo', save: 'Paid Annually (Save 55%)' },
+            { id: 'true_north', label: 'True North', price: 'Ksh. 2,000.00', sub: '/ mo', save: 'Most Aligned' },
+            { id: 'zenith', label: 'Zenith', price: 'Ksh. 4,500.00', sub: '/ mo', save: 'Elite Experience' },
         ];
 
         return (
@@ -1325,6 +1279,7 @@ export const OnboardingScreen = () => {
                                 const tierId = pkg.packageType.toLowerCase().includes('annual') ? 'compass' :
                                     pkg.packageType.toLowerCase().includes('monthly') ? 'true_north' : 'zenith';
                                 const active = tier === tierId;
+                                const isCurrent = currentStoreTier === tierId;
                                 const product = pkg.product || pkg.storeProduct;
                                 const benefits = TIER_BENEFITS[tierId as keyof typeof TIER_BENEFITS] || [];
 
@@ -1339,6 +1294,11 @@ export const OnboardingScreen = () => {
                                         }}
                                         onPress={() => setTier(tierId)}
                                     >
+                                        {isCurrent && (
+                                            <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: palette.softGold, paddingHorizontal: 10, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10 }}>
+                                                <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 10, color: palette.white }}>CURRENT PLAN</Text>
+                                            </View>
+                                        )}
                                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                                                 <View style={{
@@ -1351,9 +1311,11 @@ export const OnboardingScreen = () => {
                                                 <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 18, color: active ? palette.charcoal : palette.ivory }}>{cleanTitle(product.title)}</Text>
                                             </View>
                                             <View style={{ alignItems: 'flex-end' }}>
-                                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 20, color: active ? palette.charcoal : palette.ivory }}>{product.priceString}</Text>
+                                                <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 20, color: active ? palette.charcoal : palette.ivory }}>
+                                                    {tierId === 'compass' ? "Ksh. 900.00" : product.priceString}
+                                                </Text>
                                                 <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: active ? 'rgba(0,0,0,0.6)' : palette.softGold, opacity: 0.8 }}>
-                                                    {pkg.packageType.toLowerCase().includes('annual') ? '/ year' : '/ month'}
+                                                    {tierId === 'compass' ? '/ mo' : (pkg.packageType.toLowerCase().includes('annual') ? '/ year' : '/ month')}
                                                 </Text>
                                             </View>
                                         </View>
@@ -1384,6 +1346,11 @@ export const OnboardingScreen = () => {
                                         }}
                                         onPress={() => setTier(t.id as any)}
                                     >
+                                        {currentStoreTier === t.id && (
+                                            <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: palette.softGold, paddingHorizontal: 10, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10 }}>
+                                                <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 10, color: palette.white }}>CURRENT PLAN</Text>
+                                            </View>
+                                        )}
                                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                                                 <View style={{
@@ -1506,6 +1473,7 @@ export const OnboardingScreen = () => {
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={[styles.container, step !== 0 && step !== 4 && step !== 11 && { paddingTop: insets.top + 20, paddingBottom: insets.bottom }, { backgroundColor: 'transparent' }]}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
             >
             {step !== 0 && step !== 4 && step !== 11 && (
                 <View style={styles.nav}>
@@ -1518,7 +1486,7 @@ export const OnboardingScreen = () => {
             )}
 
             <View style={styles.content}>
-                <FadeIn key={step} style={{ flex: 1 }} delay={100}>
+                <FadeIn key={step} style={{ flex: 1 }} delay={100} pointerEvents="box-none">
                     {step === 0 && renderIntroStep()}
                     {step === 1 && renderStep1()}
                     {step === 2 && renderStep2()}
@@ -1528,9 +1496,14 @@ export const OnboardingScreen = () => {
                     {step === 6 && renderStepPassword()}
                     {step === 7 && renderStep6()}
                     {step === 8 && renderStep7()}
-                    {step === 9 && renderStep8()}
-                    {step === 10 && renderStep9()}
-                    {step === 11 && renderStep10()}
+                    {step === 9 ? (
+                        <View style={{ flex: 1 }}>{renderStep8()}</View>
+                    ) : (
+                        <>
+                            {step === 10 && renderStep9()}
+                            {step === 11 && renderStep10()}
+                        </>
+                    )}
                 </FadeIn>
             </View>
 
@@ -1563,6 +1536,45 @@ export const OnboardingScreen = () => {
                 setShowCountryPicker(false);
                 setShowCityPicker(false);
             }, showCountryPicker ? 'country' : 'city')}
+
+            <Popup
+                visible={showSuccessModal}
+                onClose={() => {
+                    setShowSuccessModal(false);
+                    finishOnboarding();
+                }}
+            >
+                <View style={{ alignItems: 'center' }}>
+                    <View style={styles.successIconContainer}>
+                        <Sparkles size={48} color={palette.softGold} />
+                    </View>
+                    <Text style={styles.successTitle}>Vision Aligned</Text>
+                    <Text style={styles.successDesc}>
+                        Your path is now set to <Text style={{ fontFamily: theme.typography.sansBold, color: palette.softGold }}>{tier.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</Text>.{'\n'}
+                        May your journey be filled with divine light and clarity.
+                    </Text>
+
+                    <View style={styles.successBenefitBox}>
+                        <Text style={styles.benefitBoxTitle}>Your New Access Level:</Text>
+                        {(TIER_BENEFITS[tier] || []).map((benefit: string, i: number) => (
+                            <View key={i} style={styles.successBenefitRow}>
+                                <Check size={16} color={palette.softGold} />
+                                <Text style={styles.successBenefitText}>{benefit}</Text>
+                            </View>
+                        ))}
+                    </View>
+
+                    <TouchableOpacity
+                        style={styles.praiseButton}
+                        onPress={() => {
+                            setShowSuccessModal(false);
+                            finishOnboarding();
+                        }}
+                    >
+                        <Text style={styles.praiseButtonText}>Praise</Text>
+                    </TouchableOpacity>
+                </View>
+            </Popup>
         </View>
     );
 };
@@ -1748,4 +1760,26 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1, borderBottomColor: theme.colors.border
     },
     pickerItemText: { fontFamily: theme.typography.sansMedium, fontSize: 16, color: theme.colors.text, flex: 1 },
+    successIconContainer: {
+        width: 100, height: 100, borderRadius: 50, backgroundColor: palette.softGold + '15',
+        alignItems: 'center', justifyContent: 'center', marginBottom: 24
+    },
+    successTitle: { fontFamily: theme.typography.serifBold, fontSize: 28, color: theme.colors.text, marginBottom: 16 },
+    successDesc: {
+        fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.secondaryText,
+        textAlign: 'center', lineHeight: 24, marginBottom: 24
+    },
+    successBenefitBox: {
+        width: '100%', backgroundColor: 'rgba(212, 175, 55, 0.05)', borderRadius: 16, padding: 20, marginBottom: 32,
+        borderWidth: 1, borderColor: palette.softGold + '20'
+    },
+    benefitBoxTitle: { fontFamily: theme.typography.sansBold, fontSize: 12, color: palette.softGold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 },
+    successBenefitRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+    successBenefitText: { fontFamily: theme.typography.sans, fontSize: 14, color: theme.colors.text, opacity: 0.9, flex: 1 },
+    praiseButton: {
+        backgroundColor: theme.colors.text, paddingHorizontal: 48, height: 56,
+        borderRadius: 28, alignItems: 'center', justifyContent: 'center',
+        shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8
+    },
+    praiseButtonText: { fontFamily: theme.typography.sansBold, fontSize: 16, color: palette.ivory },
 });

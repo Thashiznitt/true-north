@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEY_LAST_SEEN_WISDOM = 'last_seen_wisdom_date';
+const STORAGE_KEY_LAST_SEEN_ADVICE = 'last_seen_advice_date';
 
 import { contentAgentService } from './ContentAgentService';
 import { useStore } from '../store';
@@ -44,6 +45,26 @@ export const DailyRitualService = {
             await AsyncStorage.setItem(STORAGE_KEY_LAST_SEEN_WISDOM, today);
         } catch (error) {
             console.error('Error marking daily wisdom shown:', error);
+        }
+    },
+
+    shouldShowAdvice: async () => {
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const lastSeen = await AsyncStorage.getItem(STORAGE_KEY_LAST_SEEN_ADVICE);
+            return lastSeen !== today;
+        } catch (error) {
+            console.error('Error checking daily advice status:', error);
+            return false;
+        }
+    },
+
+    markAdviceShown: async () => {
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            await AsyncStorage.setItem(STORAGE_KEY_LAST_SEEN_ADVICE, today);
+        } catch (error) {
+            console.error('Error marking daily advice shown:', error);
         }
     },
 };

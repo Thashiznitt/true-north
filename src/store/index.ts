@@ -226,7 +226,7 @@ interface UserState {
     deleteNotification: (id: string) => void;
     cleanupOldNotifications: () => void;
     toggleDailyGoal: (key: keyof DailyGoals) => void;
-    addJournalEntry: (entry: Omit<JournalEntry, 'id'>) => void;
+    addJournalEntry: (entry: Omit<JournalEntry, 'id'> & { id?: string }) => void;
     updateJournalEntry: (id: string, entry: Partial<JournalEntry>) => void;
     deleteJournalEntry: (id: string) => void;
     blockUser: (userId: string) => void;
@@ -452,7 +452,7 @@ export const useStore = create<UserState>()(
                 }
             })),
             addJournalEntry: (entry) => set((state) => ({
-                journalEntries: [{ ...entry, id: Math.random().toString(36).substr(2, 9) }, ...state.journalEntries]
+                journalEntries: [{ ...entry, id: entry.id || Math.random().toString(36).substr(2, 9) }, ...state.journalEntries]
             })),
             updateJournalEntry: (id, entry) => set((state) => ({
                 journalEntries: state.journalEntries.map(e => e.id === id ? { ...e, ...entry } : e)
@@ -595,7 +595,7 @@ export const useStore = create<UserState>()(
                 if (!circle || !event) return state;
 
                 const tier = tierId ? event.tiers?.find(t => t.id === tierId) : null;
-                const price = tier ? tier.price : event.price;
+                const _price = tier ? tier.price : event.price;
                 const tierName = tier ? tier.name : undefined;
 
                 const newTickets: UserTicket[] = [];
@@ -653,7 +653,7 @@ export const useStore = create<UserState>()(
                 });
                 return result;
             },
-            findUserByUsername: (username: string) => {
+            findUserByUsername: (_username: string) => {
                 // Return null by default, or implement dynamic search if needed
                 return null;
             },
@@ -724,7 +724,7 @@ export const useStore = create<UserState>()(
             name: 'true-north-storage',
             storage: createJSONStorage(() => AsyncStorage),
             partialize: (state) => {
-                const { isSessionUnlocked, ...rest } = state;
+                const { isSessionUnlocked: _, ...rest } = state;
                 return rest;
             },
             onRehydrateStorage: () => (state) => {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ImageBackground, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation, useIsFocused } from '@react-navigation/native';
+import { useNavigation, useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
 import { Users, Lock, Heart, Search, Plus, Bell, BookOpen, Moon, Leaf, Sun, Compass, HelpCircle as Cross } from 'lucide-react-native';
@@ -17,6 +17,7 @@ import { FadeIn } from '../../components/FadeIn';
 import { CircleCard } from '../../components/CircleCard';
 import { EmptyState } from '../../components/EmptyState';
 import { Users2 } from 'lucide-react-native';
+import { PinGate } from '../../components/PinGate';
 
 const getBeliefIcon = (belief: string) => {
     switch (belief) {
@@ -44,49 +45,18 @@ export const CommunityScreen = () => {
     const [bioError, setBioError] = useState(false);
     const [promptPinMode, setPromptPinMode] = useState(false);
 
-    useEffect(() => {
-        if (isFocused && (biometricsEnabled || securityPin) && !isSessionUnlocked) {
-            authenticate();
-        }
-    }, [isFocused, isSessionUnlocked]);
-
-    const authenticate = async () => {
-        if (!biometricsEnabled) {
-            if (!securityPin) {
-                setSessionUnlocked(true);
-            }
-            return;
-        }
-
-        const hasHardware = await LocalAuthentication.hasHardwareAsync();
-        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-
-        if (hasHardware && isEnrolled) {
-            try {
-                const result = await LocalAuthentication.authenticateAsync({
-                    promptMessage: 'Unlock your sanctuaries',
-                    fallbackLabel: 'Use PIN',
-                });
-
-                if (result.success) {
-                    setSessionUnlocked(true);
-                    setBioError(false);
-                } else {
-                    setBioError(true);
-                    if (securityPin) setPromptPinMode(true);
+    useFocusEffect(
+        React.useCallback(() => {
+            return () => {
+                // Lock session when leaving the screen
+                if (securityPin) {
+                    setSessionUnlocked(false);
                 }
-            } catch (error) {
-                console.error("[Biometrics] Auth error:", error);
-                setBioError(true);
-                if (securityPin) setPromptPinMode(true);
-            }
-        } else if (securityPin) {
-            setPromptPinMode(true);
-        } else {
-            // Fallback for devices without biometrics if enabled in store but not on device
-            setSessionUnlocked(true);
-        }
-    };
+            };
+        }, [securityPin])
+    );
+
+
 
     useEffect(() => {
         const getLocation = async () => {
@@ -182,7 +152,7 @@ export const CommunityScreen = () => {
                 <TouchableOpacity
                     style={styles.paywallCard}
                     onPress={() => {
-                        navigation.navigate('Subscription');
+                        navigation.navigate('Subscription', { returnTo: 'Circles' });
                     }}
                 >
                     <ImageBackground
@@ -222,7 +192,7 @@ export const CommunityScreen = () => {
         return (
             <SanctuaryLock
                 onUnlock={() => {
-                    navigation.navigate('Subscription');
+                    navigation.navigate('Subscription', { returnTo: 'Circles' });
                 }}
                 loading={false}
                 onBack={() => navigation.navigate('Affirmation')}
@@ -234,29 +204,9 @@ export const CommunityScreen = () => {
         );
     }
 
-    if (!isSessionUnlocked && (biometricsEnabled || securityPin)) {
-        return (
-            <SanctuaryLock
-                onUnlock={authenticate}
-                onBack={() => navigation.navigate('Affirmation')}
-                error={bioError}
-                title="Sacred Circles"
-                subtitle="Your communal sanctuaries are protected by biometric security."
-                buttonText="Unlock Circles"
-                securityPin={securityPin}
-                biometricsEnabled={biometricsEnabled}
-                promptPinMode={promptPinMode}
-                onPinSuccess={() => {
-                    setSessionUnlocked(true);
-                    setBioError(false);
-                    setPromptPinMode(false);
-                }}
-            />
-        );
-    }
-
     return (
-        <View style={styles.container}>
+        <PinGate>
+            <View style={styles.container}>
             <TrueNorthFlashList
                 data={dataWithNews}
                 renderItem={renderCircle}
@@ -339,6 +289,7 @@ export const CommunityScreen = () => {
                 <Plus size={32} color={palette.ivory} />
             </TouchableOpacity>
         </View>
+    </PinGate>
     );
 };
 

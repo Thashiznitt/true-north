@@ -12,6 +12,8 @@ import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashL
 import { FadeIn } from '../../components/FadeIn';
 import { EmptyState } from '../../components/EmptyState';
 import { Book } from 'lucide-react-native';
+import { PinGate } from '../../components/PinGate';
+import { useFocusEffect } from '@react-navigation/native';
 
 
 interface JournalEntry {
@@ -51,49 +53,18 @@ export const JournalScreen = () => {
 
     const navigation = useNavigation<any>(); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    React.useEffect(() => {
-        if (isSubscribed && (biometricsEnabled || securityPin) && !isSessionUnlocked) {
-            authenticate();
-        }
-    }, [isSessionUnlocked]);
-
-    const authenticate = async () => {
-        if (!biometricsEnabled) {
-            if (!securityPin) {
-                setSessionUnlocked(true);
-            }
-            return;
-        }
-
-        const hasHardware = await LocalAuthentication.hasHardwareAsync();
-        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-
-        if (hasHardware && isEnrolled) {
-            try {
-                const result = await LocalAuthentication.authenticateAsync({
-                    promptMessage: 'Unlock your private journal',
-                    fallbackLabel: 'Use PIN',
-                });
-
-                if (result.success) {
-                    setSessionUnlocked(true);
-                    setBioError(false);
-                } else {
-                    setBioError(true);
-                    if (securityPin) setPromptPinMode(true);
+    useFocusEffect(
+        React.useCallback(() => {
+            return () => {
+                // Lock session when leaving the screen
+                if (securityPin) {
+                    setSessionUnlocked(false);
                 }
-            } catch (error) {
-                console.error("[Biometrics] Journal Auth error:", error);
-                setBioError(true);
-                if (securityPin) setPromptPinMode(true);
-            }
-        } else if (securityPin) {
-            setPromptPinMode(true);
-        } else {
-            // Fallback for devices without biometrics if enabled in store but not on device
-            setSessionUnlocked(true);
-        }
-    };
+            };
+        }, [securityPin])
+    );
+
+
 
     const filteredEntries = journalEntries.filter(entry =>
         entry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -179,7 +150,7 @@ export const JournalScreen = () => {
         return (
             <SanctuaryLock
                 onUnlock={() => {
-                    navigation.navigate('Subscription');
+                    navigation.navigate('Subscription', { returnTo: 'Journal' });
                 }}
                 loading={false}
                 onBack={() => navigation.navigate('Affirmation')}
@@ -191,27 +162,10 @@ export const JournalScreen = () => {
         );
     }
 
-    if (!isSessionUnlocked && (biometricsEnabled || securityPin)) {
-        return (
-            <SanctuaryLock
-                onUnlock={authenticate}
-                onBack={() => navigation.navigate('Affirmation')}
-                error={bioError}
-                buttonText="Unlock Journal"
-                promptPinMode={promptPinMode}
-                securityPin={securityPin}
-                onPinSuccess={() => {
-                    setSessionUnlocked(true);
-                    setBioError(false);
-                    setPromptPinMode(false);
-                }}
-            />
-        );
-    }
-
     return (
-        <View style={styles.container}>
-            <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
+        <PinGate>
+            <View style={styles.container}>
+                <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
                 {!isSearching ? (
                     <>
                         <FadeIn from="left">
@@ -232,13 +186,20 @@ export const JournalScreen = () => {
                     <View style={styles.searchHeader}>
                         <TextInput
                             style={styles.searchInput}
-                            placeholder="Search reflections..."
+                            placeholder="Search reflections or #tags..."
+                            placeholderTextColor={theme.colors.secondaryText}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                             autoFocus
                         />
-                        <TouchableOpacity onPress={toggleSearch}>
-                            <X size={22} color={theme.colors.text} />
+                        {searchQuery.length > 0 && (
+                            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+                                <X size={18} color={theme.colors.secondaryText} />
+                            </TouchableOpacity>
+                        )}
+                        <View style={styles.searchDivider} />
+                        <TouchableOpacity onPress={toggleSearch} style={styles.closeSearchButton}>
+                            <Text style={styles.cancelText}>Cancel</Text>
                         </TouchableOpacity>
                     </View>
                 )}
@@ -315,7 +276,7 @@ export const JournalScreen = () => {
                 <Plus size={28} color={palette.ivory} />
             </TouchableOpacity>
         </View >
-
+    </PinGate>
     );
 };
 
@@ -333,7 +294,11 @@ const styles = StyleSheet.create({
         borderRadius: theme.borderRadius.md, paddingHorizontal: theme.spacing.md, height: 48,
         borderWidth: 1, borderColor: theme.colors.border, marginBottom: 6
     },
-    searchInput: { flex: 1, fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.text },
+    searchInput: { flex: 1, fontFamily: theme.typography.sans, fontSize: 16, color: theme.colors.text, paddingVertical: 8 },
+    clearButton: { padding: 4, marginRight: 4 },
+    searchDivider: { width: 1, height: 20, backgroundColor: theme.colors.border, marginHorizontal: 8 },
+    closeSearchButton: { paddingVertical: 8, paddingLeft: 4 },
+    cancelText: { fontFamily: theme.typography.sansMedium, fontSize: 14, color: theme.colors.primary },
     listContent: { paddingHorizontal: theme.spacing.xl, paddingBottom: 120 },
     entryCardContainer: {
         width: '100%',

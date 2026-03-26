@@ -35,6 +35,7 @@ export const JournalDetailScreen = () => {
     const [title, setTitle] = useState(entryTitle || '');
     const [content, setContent] = useState(entryContent || initialContent || '');
     const [tags, setTags] = useState<string[]>(entryTags || []);
+    const [activeId, setActiveId] = useState<string | undefined>(entryId);
 
     const [currentTag, setCurrentTag] = useState('');
 
@@ -56,6 +57,54 @@ export const JournalDetailScreen = () => {
             authenticate();
         }
     }, [isSessionUnlocked]);
+
+    // Auto-save logic
+    React.useEffect(() => {
+        if (!title.trim() && !content.trim()) return;
+
+        const timer = setTimeout(() => {
+            const entryData = {
+                title: title.trim() || 'Untitled Reflection',
+                content,
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                tags
+            };
+
+            if (activeId) {
+                updateJournalEntry(activeId, entryData);
+            } else {
+                const newId = Math.random().toString(36).substr(2, 9);
+                addJournalEntry({ ...entryData, id: newId });
+                setActiveId(newId);
+                notificationService.cancelSecondaryGratitudeReminder();
+            }
+        }, 2000);
+
+        return () => clearTimeout(timer);
+    }, [title, content, tags, activeId, isSubscribed, beliefType]);
+
+    React.useEffect(() => {
+        const unsubscribe = navigation.addListener('beforeRemove', () => {
+            if (!title.trim() && !content.trim()) return;
+
+            const entryData = {
+                title: title.trim() || 'Untitled Reflection',
+                content,
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                tags
+            };
+
+            if (activeId) {
+                updateJournalEntry(activeId, entryData);
+            } else {
+                const newId = Math.random().toString(36).substr(2, 9);
+                addJournalEntry({ ...entryData, id: newId });
+                setActiveId(newId);
+            }
+        });
+
+        return unsubscribe;
+    }, [navigation, title, content, tags, activeId]);
 
     const authenticate = async () => {
         if (!biometricsEnabled) {
@@ -149,12 +198,16 @@ export const JournalDetailScreen = () => {
             tags
         };
 
-        if (entryId) {
-            updateJournalEntry(entryId, entryData);
+        if (activeId) {
+            updateJournalEntry(activeId, entryData);
         } else {
-            addJournalEntry(entryData);
+            const newId = Math.random().toString(36).substr(2, 9);
+            addJournalEntry({ ...entryData, id: newId });
+            setActiveId(newId);
             notificationService.cancelSecondaryGratitudeReminder();
         }
+        
+        Alert.alert("Sanctuary Updated", "Your reflection has been safely stored in your sacred journal.");
         navigation.goBack();
     };
 
@@ -165,12 +218,12 @@ export const JournalDetailScreen = () => {
         }
 
         const currentBelief = beliefType || 'Open';
-        const analysis = await contentAgentService.getSpiritualAnalysis(content, currentBelief);
+        const analysis = await contentAgentService.getJournalReflection(content, currentBelief);
 
         Alert.alert(
             analysis.title,
-            analysis.message,
-            [{ text: analysis.action }]
+            `${analysis.greeting}\n\n${analysis.analysis}\n\n"${analysis.quote}"\n— ${analysis.location}\n\n${analysis.advice}`,
+            [{ text: analysis.action || "Amen" }]
         );
     };
 
