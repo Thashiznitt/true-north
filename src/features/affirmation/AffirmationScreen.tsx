@@ -117,8 +117,8 @@ export const AffirmationScreen = () => {
             await Share.share({
                 message: `"${current.text}" - ${current.author}\n\nDiscover spiritual guidance and affirmations on True North. Download here: https://www.truenorth.you/download`,
             });
-        } catch (error) {
-            console.error(error);
+        } catch (_error) {
+            console.error(_error);
         }
     };
 
@@ -134,8 +134,8 @@ export const AffirmationScreen = () => {
                             await Share.share({
                                 message: `Today's True North Affirmation:\n\n"${current.text}"\n\nDiscover spiritual guidance and affirmations on True North. Download here: https://www.truenorth.you/download`,
                             });
-                        } catch (error) {
-                            console.error(error);
+                        } catch (_error) {
+                            console.error(_error);
                         }
                     }
                 },
@@ -165,7 +165,7 @@ export const AffirmationScreen = () => {
                 themes
             );
             setAdviceContent(advice);
-        } catch (error) {
+        } catch (_error) {
             setAdviceContent({ analysis: "Rest in the silence. The guidance will come clear soon." });
         } finally {
             setLoadingAdvice(false);
@@ -186,7 +186,7 @@ export const AffirmationScreen = () => {
             await Share.share({
                 message: `${textToCopy}\n\n— Sent from True North Sanctuary`,
             });
-        } catch (error) {
+        } catch (_error) {
             console.error(error);
         }
     };
@@ -215,9 +215,9 @@ export const AffirmationScreen = () => {
             setCapturing(false);
             setIsWallpaperMode(false);
             Alert.alert("Sanctuary Saved", "Your sacred wallpaper is now in your photo library.");
-        } catch (error) {
+        } catch (_error) {
             setCapturing(false);
-            console.error('Error saving wallpaper:', error);
+            console.error('Error saving wallpaper:', _error);
             Alert.alert('Error', 'Failed to save wallpaper. Please try again.');
         } finally {
             setSaving(false);
@@ -340,6 +340,7 @@ export const AffirmationScreen = () => {
             {!capturing && (
                 <FadeIn delay={100} from="top" pointerEvents="box-none" style={{ zIndex: 100, position: 'absolute', top: 0, left: 0, right: 0 }}>
                     <View style={[styles.headerOverlay, { top: insets.top + 10 }]}>
+                        <Text style={styles.headerGreeting}>Welcome, {isSubscribed ? 'NorthStar' : 'Seeker'}</Text>
                         <View style={styles.headerButtons}>
                             <TouchableOpacity
                                 style={styles.guideButton}
@@ -629,7 +630,16 @@ const styles = StyleSheet.create({
     headerButtons: {
         flexDirection: 'row',
         gap: 12,
-        alignItems: 'center'
+        alignItems: 'center',
+        marginTop: 8
+    },
+    headerGreeting: {
+        fontFamily: theme.typography.sansBold,
+        fontSize: 12,
+        color: palette.softGold,
+        textTransform: 'uppercase',
+        letterSpacing: 2,
+        opacity: 0.9
     }
 });
 

@@ -319,9 +319,9 @@ export const SubscriptionScreen = () => {
                     <View style={styles.successIconContainer}>
                         <Sparkles size={48} color={palette.softGold} />
                     </View>
-                    <Text style={styles.successTitle}>Vision Aligned</Text>
+                    <Text style={styles.successTitle}>Welcome, NorthStar</Text>
                     <Text style={styles.successDesc}>
-                        Your path is now set to <Text style={{ fontFamily: theme.typography.sansBold, color: palette.softGold }}>{selectedTier.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</Text>.{'\n'}
+                        Your vision is now aligned. Your path is now set to <Text style={{ fontFamily: theme.typography.sansBold, color: palette.softGold }}>{selectedTier.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</Text>.{'\n'}
                         May your journey be filled with divine light and clarity.
                     </Text>
 

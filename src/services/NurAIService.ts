@@ -63,7 +63,7 @@ export const NurAIService = {
     constructSystemPrompt: (context: NurContext): string => {
         const belief = context.identity.belief || 'Spiritual';
         const activeGoals = Object.entries(context.goals.longTerm)
-            .filter(([_, value]) => value && value.length > 0)
+            .filter(([, value]) => value && value.length > 0)
             .map(([key, value]) => `${key.toUpperCase()}: ${value}`)
             .join('\n');
 
@@ -101,6 +101,7 @@ STRICT CONFINEMENT & SAFEGUARDS:
 - YOUR SACRED PURPOSE: You exist ONLY to guide the seeker in their spiritual journey, personal growth, daily alignment, and platform assistance within True North.
 - ALLOWED TOPICS: Spiritual texts (Bible, Quran, etc.), personal goals, journal reflections, life themes, belief systems, and help using the True North app.
 - RESTRICTED TOPICS: Do NOT answer questions about general knowledge (e.g., cooking, car repair, scientific facts unrelated to spirituality), generic LLM tasks (e.g., "write a story about a dragon", "write a code snippet"), or political/social debates.
+- NORTHSTAR BRANDING: If the seeker has a 'compass', 'true_north', or 'zenith' subscription (Tier: ${context.identity.tier}), you MUST always address them as 'NorthStar' instead of 'Seeker' in your greetings and conversation. This is a title of honor representing their aligned vision.
 - DEFLECTION STRATEGY: If a user asks something outside your sacred purpose, you MUST politely decline. Use a soft, nurturing tone. 
   - (e.g., "My dear, my heart is dedicated to your spiritual journey and personal alignment. I am here to walk beside you in your reflections and goals, but I cannot provide guidance on [Topic]. Shall we return to your heart's purpose today?")
 
@@ -110,20 +111,24 @@ TONE: Very soft, IMPACTFUL, and deeply supportive. Brief but profound.
 
     // 4. Daily Greeting Generator
     getDailyGreeting: (username: string, belief?: BeliefType | null, affirmation?: string): string => {
-        let greeting = `${username ? `Salam, ${username}` : 'Salam, Seeker'}.`;
+        const { subscriptionTier } = useStore.getState();
+        const isNorthStar = subscriptionTier && subscriptionTier !== 'free';
+        const title = isNorthStar ? 'NorthStar' : 'Seeker';
+
+        let greeting = `${username ? `Salam, ${username}` : `Salam, ${title}`}.`;
 
         if (belief === 'Christian' || belief === 'Catholic' || belief === 'Protestant') {
-            greeting = `${username ? `Peace be with you, ${username}` : 'Peace be with you, Seeker'}.`;
+            greeting = `${username ? `Peace be with you, ${username}` : `Peace be with you, ${title}`}.`;
         } else if (belief === 'Jewish') {
-            greeting = `${username ? `Shalom, ${username}` : 'Shalom, Seeker'}.`;
+            greeting = `${username ? `Shalom, ${username}` : `Shalom, ${title}`}.`;
         } else if (belief === 'Hindu') {
-            greeting = `${username ? `Namaste, ${username}` : 'Namaste, Seeker'}.`;
+            greeting = `${username ? `Namaste, ${username}` : `Namaste, ${title}`}.`;
         } else if (belief === 'Buddhist') {
-            greeting = `${username ? `Peace and mindful blessings, ${username}` : 'Peace and mindful blessings, Seeker'}.`;
+            greeting = `${username ? `Peace and mindful blessings, ${username}` : `Peace and mindful blessings, ${title}`}.`;
         } else if (belief === 'Sikh') {
-            greeting = `${username ? `Sat Sri Akal, ${username}` : 'Sat Sri Akal, Seeker'}.`;
+            greeting = `${username ? `Sat Sri Akal, ${username}` : `Sat Sri Akal, ${title}`}.`;
         } else if (belief === 'Spiritual' || belief === 'Exploring') {
-            greeting = `${username ? `Warm greetings, ${username}` : 'Warm greetings, Seeker'}.`;
+            greeting = `${username ? `Warm greetings, ${username}` : `Warm greetings, ${title}`}.`;
         }
 
         const personalizationSuffix = !username ? "\n\nMay I ask what name you would like to be called in this sanctuary?" : "";

@@ -103,7 +103,13 @@ export const CommunityScreen = () => {
             return c.belief === beliefType || c.belief === 'Open' || !c.belief;
         })
         .sort((a, b) => {
-            // 1. Premium Location Prioritization (Pseudo-match for demo)
+            // 1. Bookmarks (Top Priority)
+            const aBookmarked = bookmarkedCircleIds.includes(a.id);
+            const bBookmarked = bookmarkedCircleIds.includes(b.id);
+            if (aBookmarked && !bBookmarked) return -1;
+            if (!aBookmarked && bBookmarked) return 1;
+
+            // 2. Premium Location Prioritization (Pseudo-match for demo)
             if (isSubscribed && userLocation) {
                 // For demo: Nairobi and London are "Nearby" if user has location (since mock data uses them)
                 const isANearby = a.city === 'Nairobi' || a.city === 'London';
@@ -111,12 +117,6 @@ export const CommunityScreen = () => {
                 if (isANearby && !isBNearby) return -1;
                 if (!isANearby && isBNearby) return 1;
             }
-
-            // 2. Bookmarks
-            const aBookmarked = bookmarkedCircleIds.includes(a.id);
-            const bBookmarked = bookmarkedCircleIds.includes(b.id);
-            if (aBookmarked && !bBookmarked) return -1;
-            if (!aBookmarked && bBookmarked) return 1;
 
             return 0;
         });

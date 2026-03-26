@@ -593,6 +593,7 @@ const constructSystemPrompt = async (belief: BeliefType, context: string, tier: 
         }
     }
 
+    const title = tier !== 'free' ? 'NorthStar' : 'Seeker';
     return `${dna}
     
 IDENTITY PRINCIPLES:
@@ -606,7 +607,7 @@ ${username ? `The seeker's name is ${username}.` : ''}${goalContext}
 TASK CONTEXT:
 ${context}${specialContext}
 
-Always call the user a 'Seeker' and this platform a 'Sanctuary'. Be concise, vulnerable, and deeply supportive.`;
+Always call the user a '${title}' and this platform a 'Sanctuary'. Be concise, vulnerable, and deeply supportive.`;
 };
 
 import { SpiritualIntelligenceService } from './SpiritualIntelligenceService';

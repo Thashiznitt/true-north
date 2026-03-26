@@ -650,6 +650,14 @@ export const CircleDetailScreen = () => {
         );
     }, [userCircle, isAdmin, isModerator]);
 
+    const EmptyReflections = () => (
+        <View style={styles.emptyContainer}>
+            <Sparkles size={48} color={palette.softGold} style={{ marginBottom: 16, opacity: 0.5 }} />
+            <Text style={styles.emptyTitle}>Today's reflections from other Northstars are loading...</Text>
+            <Text style={styles.emptySubtitle}>The sanctuary is being prepared for your communal wisdom.</Text>
+        </View>
+    );
+
     return (
         <View style={styles.container}>
             <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
@@ -746,11 +754,15 @@ export const CircleDetailScreen = () => {
                     </View>
 
                 }
+                ListEmptyComponent={EmptyReflections}
             />
 
             <TouchableOpacity
                 style={[styles.fab, { bottom: insets.bottom + 20 }]}
-                onPress={() => setIsSharing(true)}
+                onPress={() => {
+                    console.log("[CircleDetail] FAB pressed, setting isSharing to true");
+                    setIsSharing(true);
+                }}
             >
                 <Text style={styles.fabText}>Share Reflection</Text>
             </TouchableOpacity>
@@ -1451,5 +1463,39 @@ const styles = StyleSheet.create({
         color: theme.colors.secondaryText,
         fontStyle: 'italic',
         fontSize: 14,
-    }
+    },
+    emptyContainer: {
+        padding: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    emptyTitle: {
+        fontFamily: theme.typography.serifBold,
+        fontSize: 18,
+        color: theme.colors.text,
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    emptySubtitle: {
+        fontFamily: theme.typography.sans,
+        fontSize: 14,
+        color: theme.colors.secondaryText,
+        textAlign: 'center',
+        opacity: 0.7,
+    },
+    avatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: palette.softGold + '20',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    avatarText: {
+        fontFamily: theme.typography.sansBold,
+        fontSize: 16,
+        color: palette.softGold,
+    },
+    userInfo: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md, flex: 1 },
+    userName: { fontFamily: theme.typography.sansMedium, fontSize: 16, color: theme.colors.text },
 });
