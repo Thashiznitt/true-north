@@ -187,7 +187,7 @@ export const AffirmationScreen = () => {
                 message: `${textToCopy}\n\n— Sent from True North Sanctuary`,
             });
         } catch (_error) {
-            console.error(error);
+            console.error(_error);
         }
     };
 
@@ -500,13 +500,6 @@ const styles = StyleSheet.create({
     wallpaperActions: { flexDirection: 'row', gap: theme.spacing.md, marginTop: 40 },
     saveButton: { backgroundColor: palette.softGold, borderColor: palette.softGold },
     saveButtonText: { fontFamily: theme.typography.sansBold, fontSize: 15, color: palette.charcoal },
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: theme.spacing.xl },
-    modalContent: {
-        width: '100%', backgroundColor: theme.colors.surface, borderRadius: 24, padding: theme.spacing.xl,
-        maxHeight: '80%', borderWidth: 1, borderColor: theme.colors.border
-    },
-    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.xl },
-    modalHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
     modalTitle: { fontFamily: theme.typography.serifBold, fontSize: 20, color: theme.colors.text },
     adviceScroll: { paddingBottom: 40, paddingHorizontal: 8 },
     greetingText: {
