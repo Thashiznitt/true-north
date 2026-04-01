@@ -10,7 +10,8 @@
     "web": "expo start --web",
     "lint": "eslint .",
     "api-check": "./scripts/check-api-health.sh",
-    "prebuild": "./scripts/check-api-health.sh",
+    "prebuild": "./scripts/check-api-health.sh && ./scripts/verify-signing.sh",
+    "verify-signing": "./scripts/verify-signing.sh",
     "prepare": "husky install",
     "check-versions": "node -v && npm -v && npx react-native --version"
   },
@@ -80,13 +81,10 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^7.6.0",
     "@react-native-community/cli": "^20.1.1",
     "@react-native/metro-config": "^0.81.0",
     "@types/react": "^18.3.1",
-    "metro": "~0.81.0",
-    "metro-resolver": "~0.81.0",
-    "metro-config": "~0.81.0",
     "@typescript-eslint/eslint-plugin": "^8.55.0",
     "@typescript-eslint/parser": "^8.55.0",
     "eslint": "^8.57.0",
@@ -95,7 +93,10 @@
     "eslint-plugin-truenorth-performance": "file:plugins/eslint-plugin-truenorth-performance",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
-    "prisma": "^5.22.0",
+    "metro": "~0.81.0",
+    "metro-config": "~0.81.0",
+    "metro-resolver": "~0.81.0",
+    "prisma": "^7.6.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },

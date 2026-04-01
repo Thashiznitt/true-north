@@ -37,7 +37,7 @@
     },
     "android": {
       "package": "com.thashiznitt.truenorth",
-      "versionCode": 38,
+      "versionCode": 39,
       "adaptiveIcon": {
         "foregroundImage": "./assets/white-icon.png",
         "backgroundColor": "#C8A95A"

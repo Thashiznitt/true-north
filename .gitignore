@@ -49,3 +49,4 @@ subscription_final.png
 
 # Build Artifacts
 *.aab
+.vercel

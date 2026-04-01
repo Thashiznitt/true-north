@@ -1,11 +1,10 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../web/node_modules/.prisma/client"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 model User {
@@ -25,6 +24,7 @@ model User {
   entries         JournalEntry[]
   circles         Circle[]         @relation("CreatedCircles")
   joinedCircles   CircleMember[]
+  emailLogs       EmailLog[]
 
   @@map("users")
 }
@@ -114,4 +114,34 @@ model CircleMember {
 
   @@unique([circleId, userId])
   @@map("circle_members")
+}
+
+model SignedContract {
+  id               String    @id @default(uuid())
+  referenceCode    String    @unique @map("reference_code")
+  contractType     String    @default("influencer_partnership") @map("contract_type")
+  fullName         String    @map("full_name")
+  email            String
+  idNumber         String?   @map("id_number")
+  signatureData    String    @map("signature_data")
+  commencementDate DateTime  @map("commencement_date") @db.Date
+  contractVersion  String    @default("1.0") @map("contract_version")
+  agreedToTerms    Boolean   @default(false) @map("agreed_to_terms")
+  signedAt         DateTime  @default(now()) @map("signed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  emailSent        Boolean   @default(false) @map("email_sent")
+  emailSentAt      DateTime? @map("email_sent_at")
+
+  @@map("signed_contracts")
+}
+
+model EmailLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  emailType String   @map("email_type")
+  sentAt    DateTime @default(now()) @map("sent_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_logs")
 }
