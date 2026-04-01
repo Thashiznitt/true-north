@@ -117,10 +117,7 @@ function buildContractEmail({
                   <td style="padding:24px 28px;">
                     <p style="margin:0 0 10px;font-size:12px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:${gold};">Key Obligation Reminder</p>
                     <p style="margin:0;font-size:14px;color:${dark};line-height:1.7;">
-                      Every post on your channels must end with the True North referral download links:<br/>
-                      <br/>
-                      <span style="font-family:monospace;font-size:12px;color:${gold};background:rgba(200,169,90,0.1);padding:4px 8px;border-radius:6px;display:inline-block;word-break:break-all;">https://truenorth.you/r/grace-kinuthia</span><br/>
-                      <br/>
+                      Every post on your channels must end with your True North referral download links. These will be shared with you separately.<br/><br/>
                       Failure to include these links constitutes a breach of contract and may result in revenue forfeiture. Please refer to Section 5 of your agreement.
                     </p>
                   </td>
