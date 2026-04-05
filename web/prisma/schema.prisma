@@ -7,61 +7,63 @@ datasource db {
 }
 
 model User {
-  id              String           @id @default(uuid())
-  email           String           @unique
-  passwordHash    String?          @map("password_hash")
-  username        String?
-  avatarUrl       String?          @map("avatar_url")
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
-  role            String           @default("member")
-  subscriptionTier String          @default("free") @map("subscription_tier")
-  
+  id               String   @id @default(uuid())
+  email            String   @unique
+  passwordHash     String?  @map("password_hash")
+  username         String?
+  avatarUrl        String?  @map("avatar_url")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  role             String   @default("member")
+  subscriptionTier String   @default("free") @map("subscription_tier")
+  referredById     String?  @map("referred_by_id")
+
   // Relations
-  preferences     UserPreference?
-  goals           UserGoal?
-  entries         JournalEntry[]
-  circles         Circle[]         @relation("CreatedCircles")
-  joinedCircles   CircleMember[]
-  emailLogs       EmailLog[]
+  partner       Partner?        @relation("PartnerReferrals", fields: [referredById], references: [id])
+  preferences   UserPreference?
+  goals         UserGoal?
+  entries       JournalEntry[]
+  circles       Circle[]        @relation("CreatedCircles")
+  joinedCircles CircleMember[]
+  emailLogs     EmailLog[]
 
   @@map("users")
 }
 
 model UserPreference {
-  id              String   @id @default(uuid())
-  userId          String   @unique @map("user_id")
-  beliefType      String?  @map("belief_type")
-  themes          String[]
-  isOnboarded     Boolean  @default(false) @map("is_onboarded")
-  biometricsEnabled Boolean @default(false) @map("biometrics_enabled")
-  securityPin     String?  @map("security_pin")
-  notificationsEnabled Boolean @default(true) @map("notifications_enabled")
-  notificationTime     String  @default("07:30") @map("notification_time")
-  
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                   String   @id @default(uuid())
+  userId               String   @unique @map("user_id")
+  beliefType           String?  @map("belief_type")
+  themes               String[]
+  isOnboarded          Boolean  @default(false) @map("is_onboarded")
+  biometricsEnabled    Boolean  @default(false) @map("biometrics_enabled")
+  securityPin          String?  @map("security_pin")
+  notificationsEnabled Boolean  @default(true) @map("notifications_enabled")
+  notificationTime     String   @default("07:30") @map("notification_time")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_preferences")
 }
 
 model UserGoal {
-  id              String   @id @default(uuid())
-  userId          String   @unique @map("user_id")
-  dailyReflection Boolean  @default(true) @map("daily_reflection")
-  morningDevotion Boolean  @default(true) @map("morning_devotion")
+  id               String  @id @default(uuid())
+  userId           String  @unique @map("user_id")
+  dailyReflection  Boolean @default(true) @map("daily_reflection")
+  morningDevotion  Boolean @default(true) @map("morning_devotion")
   eveningGratitude Boolean @default(false) @map("evening_gratitude")
-  weeklyCommunity Boolean  @default(true) @map("weekly_community")
-  spirituality    String?
-  spouse          String?
-  career          String?
-  business        String?
-  health          String?
-  family          String?
-  children        String?
-  friends         String?
-  finances        String?
+  weeklyCommunity  Boolean @default(true) @map("weekly_community")
+  spirituality     String?
+  spouse           String?
+  career           String?
+  business         String?
+  health           String?
+  family           String?
+  children         String?
+  friends          String?
+  finances         String?
 
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_goals")
 }
@@ -76,7 +78,7 @@ model JournalEntry {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("journal_entries")
 }
@@ -88,22 +90,22 @@ model Circle {
   creatorId   String   @map("creator_id")
   isPrivate   Boolean  @default(false) @map("is_private")
   createdAt   DateTime @default(now()) @map("created_at")
-  
-  creator     User     @relation("CreatedCircles", fields: [creatorId], references: [id])
-  members     CircleMember[]
+
+  creator User           @relation("CreatedCircles", fields: [creatorId], references: [id])
+  members CircleMember[]
 
   @@map("circles")
 }
 
 model CircleMember {
-  id        String   @id @default(uuid())
-  circleId  String   @map("circle_id")
-  userId    String   @map("user_id")
-  role      String   @default("member")
-  joinedAt  DateTime @default(now()) @map("joined_at")
+  id       String   @id @default(uuid())
+  circleId String   @map("circle_id")
+  userId   String   @map("user_id")
+  role     String   @default("member")
+  joinedAt DateTime @default(now()) @map("joined_at")
 
-  circle    Circle   @relation(fields: [circleId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  circle Circle @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([circleId, userId])
   @@map("circle_members")
@@ -134,7 +136,34 @@ model EmailLog {
   emailType String   @map("email_type")
   sentAt    DateTime @default(now()) @map("sent_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("email_logs")
+}
+
+model Partner {
+  id             String   @id @default(uuid())
+  userId         String   @unique @map("user_id") // The True North user account for the partner
+  promoCode      String   @unique @map("promo_code")
+  referralLink   String   @unique @map("referral_link")
+  commissionRate Float    @default(0.10) @map("commission_rate")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  referrals User[]          @relation("PartnerReferrals")
+  clicks    ReferralVisit[]
+
+  @@map("partners")
+}
+
+model ReferralVisit {
+  id          String   @id @default(uuid())
+  partnerId   String   @map("partner_id")
+  source      String?  // e.g., 'instagram', 'tiktok', 'podcast'
+  ipHash      String?  @map("ip_hash") // Privacy-friendly impressions tracking
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@map("referral_visits")
 }
