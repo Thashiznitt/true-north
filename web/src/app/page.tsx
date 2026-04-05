@@ -67,6 +67,7 @@ export default function LandingPage() {
         </div>
       </nav>
 
+      <main>
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 md:pt-48 md:pb-40 overflow-hidden">
         {/* Subtle Spiritual Gradients */}
@@ -115,7 +116,7 @@ export default function LandingPage() {
                     className="object-cover"
                   />
                 </div>
-                <h3 className="font-serif text-3xl md:text-5xl font-bold text-foreground mb-6 italic opacity-50">"Finding your way, one reflection at a time."</h3>
+                <h2 className="font-serif text-3xl md:text-5xl font-bold text-foreground mb-6 italic opacity-80">"Finding your way, one reflection at a time."</h2>
                 <Separator className="w-24 h-1 bg-primary/20 mx-auto" />
               </div>
             </div>
@@ -171,7 +172,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-primary/5 -z-10" />
         <div className="container mx-auto px-6 max-w-3xl">
           <h2 className="font-serif text-4xl md:text-5xl font-bold mb-8 tracking-tight">Begin Your Journey Today</h2>
-          <p className="text-lg text-muted-foreground mb-12 opacity-80 decoration-primary underline-offset-4 font-serif italic">
+          <p className="text-lg text-muted-foreground mb-12 decoration-primary underline-offset-4 font-serif italic">
             "Your journey is sacred. Your sanctuary is here."
           </p>
           <a href={storeUrl} target="_blank" rel="noopener noreferrer">
@@ -181,6 +182,7 @@ export default function LandingPage() {
           </a>
         </div>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className="py-24 border-t border-black/5 bg-background">
@@ -199,12 +201,12 @@ export default function LandingPage() {
                 </div>
                 <span className="font-serif text-2xl font-bold tracking-tight">True North</span>
               </div>
-              <p className="text-muted-foreground text-sm max-w-sm leading-relaxed tracking-wide opacity-70 italic font-serif">
+              <p className="text-muted-foreground text-sm max-w-sm leading-relaxed tracking-wide font-serif">
                 A digital sanctuary for spiritual growth and community connection.
               </p>
             </div>
             <div>
-              <h4 className="font-bold text-[10px] uppercase tracking-[0.3em] mb-8 text-foreground/40">Legal Sanctuary</h4>
+              <h4 className="font-bold text-[10px] uppercase tracking-[0.3em] mb-8 text-foreground/70">Legal Sanctuary</h4>
               <ul className="space-y-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                 <li><Link href="/about" className="hover:text-primary transition-colors">About</Link></li>
                 <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
@@ -212,14 +214,14 @@ export default function LandingPage() {
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-[10px] uppercase tracking-[0.3em] mb-8 text-foreground/40">Connect</h4>
+              <h4 className="font-bold text-[10px] uppercase tracking-[0.3em] mb-8 text-foreground/70">Connect</h4>
               <ul className="space-y-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                 <li><a href="#" className="hover:text-primary transition-colors">Instagram</a></li>
               </ul>
             </div>
           </div>
           <Separator className="bg-black/5 mb-10" />
-          <div className="flex flex-col md:row items-center justify-between gap-6 text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] opacity-40">
+          <div className="flex flex-col md:row items-center justify-between gap-6 text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] opacity-80">
             <span>© {new Date().getFullYear()} True North. All rights reserved.</span>
             <div className="flex items-center gap-8">
               <span>Designed with Grace</span>
@@ -238,7 +240,7 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode, titl
       <CardContent className="pt-12 pb-12 px-10">
         <div className="mb-8 p-4 bg-primary/5 rounded-2xl inline-block group-hover:scale-110 group-hover:bg-primary/10 transition-all duration-500 text-primary">{icon}</div>
         <h3 className="font-serif text-2xl font-bold mb-4 tracking-tight text-foreground">{title}</h3>
-        <p className="text-muted-foreground text-sm leading-relaxed opacity-70 font-medium">{description}</p>
+        <p className="text-muted-foreground text-sm leading-relaxed font-medium">{description}</p>
       </CardContent>
     </Card>
   );
