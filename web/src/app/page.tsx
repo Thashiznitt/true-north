@@ -54,7 +54,8 @@ export default function LandingPage() {
             <span className="font-serif text-2xl font-bold tracking-tight text-foreground">True North</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-[11px] font-bold text-muted-foreground uppercase tracking-[0.25em]">
-            <a href="#features" className="hover:text-primary transition-colors">Features</a>
+            <a href="/#features" className="hover:text-primary transition-colors">Features</a>
+            <Link href="/about" className="hover:text-primary transition-colors">About</Link>
             <Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-primary transition-colors">Terms</Link>
           </div>
@@ -205,6 +206,7 @@ export default function LandingPage() {
             <div>
               <h4 className="font-bold text-[10px] uppercase tracking-[0.3em] mb-8 text-foreground/40">Legal Sanctuary</h4>
               <ul className="space-y-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                <li><Link href="/about" className="hover:text-primary transition-colors">About</Link></li>
                 <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
                 <li><Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
               </ul>
