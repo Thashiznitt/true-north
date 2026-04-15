@@ -1173,7 +1173,7 @@ Keys:
 
                 const systemPrompt = await constructSystemPrompt(belief, instructions, tier, username, userGoals, dateOfBirth, astrologyEnabled, selectedThemes);
                 const userPrompt = `Guide me based on my current path and recent sanctuary reflections.`;
-                const jsonStr = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
+                const jsonStr = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt, true);
 
                 // Clean JSON string of potential markdown backticks
                 let cleanedJson = jsonStr.trim();

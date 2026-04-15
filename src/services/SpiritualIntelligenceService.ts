@@ -59,7 +59,7 @@ export const SpiritualIntelligenceService = {
 
     // --- Inference ---
 
-    generateText: async (systemPrompt: string, userPrompt: string): Promise<string> => {
+    generateText: async (systemPrompt: string, userPrompt: string, jsonMode = false): Promise<string> => {
         // --- Quota Check ---
         const today = new Date().toISOString().split('T')[0];
         const quotaDataStr = await AsyncStorage.getItem(STORAGE_KEY_DAILY_QUOTA);
@@ -119,6 +119,7 @@ export const SpiritualIntelligenceService = {
                             topK: 40,
                             topP: 0.95,
                             maxOutputTokens: 1024,
+                            ...(jsonMode ? { responseMimeType: 'application/json' } : {})
                         }
                     })
                 });

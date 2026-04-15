@@ -50,3 +50,6 @@ subscription_final.png
 # Build Artifacts
 *.aab
 .vercel
+
+# EAS config (contains env vars — use EAS Secrets instead)
+eas.json

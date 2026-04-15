@@ -216,7 +216,7 @@ export const PrivacySettingsScreen = () => {
             </View>
             <BottomSheet
                 visible={isPinModalVisible}
-                onClose={() => setPinModalVisible(false)}
+            onClose={() => { setPinModalVisible(false); setPinInput(''); }}
                 title={securityPin ? "Change PIN" : "Set PIN"}
                 actionLabel="Save"
                 onAction={handlePinSave}

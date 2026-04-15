@@ -36,7 +36,6 @@ export const JournalScreen = () => {
     const subscriptionTier = useStore(state => state.subscriptionTier);
     const isSubscribed = subscriptionTier !== 'free';
     const dailyGoals = useStore(state => state.dailyGoals);
-    const setSubscriptionTier = useStore(state => state.setSubscriptionTier);
     const beliefType = useStore(state => state.beliefType);
     const biometricsEnabled = useStore(state => state.biometricsEnabled);
     const securityPin = useStore(state => state.securityPin);
@@ -77,10 +76,6 @@ export const JournalScreen = () => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         setIsSearching(!isSearching);
         if (isSearching) setSearchQuery('');
-    };
-
-    const handleSubscribe = () => {
-        setSubscriptionTier('true_north');
     };
 
     const getBeliefTrait = () => {

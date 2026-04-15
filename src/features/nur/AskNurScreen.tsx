@@ -26,8 +26,8 @@ export const AskNurScreen = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const flatListRef = useRef<any>(null);
 
-    // Paywall Check
-    const isSubscriber = subscriptionTier === 'true_north' || subscriptionTier === 'zenith' || subscriptionTier === 'compass';
+    // Paywall Check — any paid tier = unlimited NUR access
+    const isSubscriber = subscriptionTier !== 'free';
     const userMessageCount = nurChats.filter(m => m.role === 'user').length;
     const isTrialExhausted = !isSubscriber && userMessageCount >= 10;
 
