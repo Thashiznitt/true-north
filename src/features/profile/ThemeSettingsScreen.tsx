@@ -20,7 +20,7 @@ const ALL_THEMES = [
 export const ThemeSettingsScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
-    const { themes, setThemes } = useStore();
+    const { themes, setThemes, showToast } = useStore();
     const [selectedThemes, setSelectedThemes] = useState<string[]>(themes);
 
     const toggleTheme = (title: string) => {
@@ -45,6 +45,7 @@ export const ThemeSettingsScreen = () => {
 
     const handleSave = () => {
         setThemes(selectedThemes);
+        showToast("Themes successfully updated!");
         navigation.goBack();
     };
 

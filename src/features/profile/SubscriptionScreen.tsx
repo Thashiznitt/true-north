@@ -29,7 +29,7 @@ const TIER_METADATA: Record<string, any> = {
         benefits: ["1 Personal Daily Affirmation", "View Community Reflections", "Join up to 3 Local Circles", "Ad-supported experience"],
     },
     compass: {
-        benefits: ["Unlimited Private Reflections (Journal)", "Ask Nur Companion", "Join up to 5 Circles", "Standard Daily Guidance"],
+        benefits: ["Unlimited Private Reflections (Journal)", "Join up to 5 Circles", "Standard Daily Guidance"],
         badgeText: "SAVE 55%"
     },
     true_north: {
@@ -38,7 +38,7 @@ const TIER_METADATA: Record<string, any> = {
         badgeText: "MOST ALIGNED"
     },
     zenith: {
-        benefits: ["Elite Spiritual Mentoring", "Ask Nur Companion", "Deep Community Analysis", "Unlimited Circle Creation", "Location Intelligence"],
+        benefits: ["Elite Spiritual Mentoring", "Ask Nur Companion", "Deep Community Analysis", "True North Merchandise", "Join Monthly Community Drives"],
     },
 };
 
@@ -165,17 +165,19 @@ export const SubscriptionScreen = () => {
                     const isSelected = selectedPkgIdentifier === pkg.identifier;
                     const isAnnual = pkgTypeLC.includes('annual') || pkgTypeLC.includes('yearly') || productId.includes('annual');
 
+                    let mockedPrice = product.priceString;
+                    if (displayTier === 'compass' && isAnnual) mockedPrice = "$29.99";
+                    else if (displayTier === 'compass') mockedPrice = "$2.99";
+                    else if (displayTier === 'true_north') mockedPrice = "$9.99";
+                    else if (displayTier === 'zenith') mockedPrice = "$19.99";
+
                     return (
                         <FadeIn key={pkg.identifier} delay={200 + index * 100} from="bottom">
                             <TierCard
                                 name={cleanTitle(product.title)}
-                                price={
-                                    (displayTier === 'compass' && isAnnual)
-                                        ? "Ksh. 900.00"
-                                        : product.priceString
-                                }
-                                period="/ month"
-                                subtext={isAnnual || displayTier === 'compass' ? 'Paid Annually' : (displayTier === 'zenith' ? 'Elite Experience' : 'Monthly Alignment')}
+                                price={mockedPrice}
+                                period={isAnnual ? "/ year" : "/ month"}
+                                subtext={isAnnual ? 'Paid Annually' : (displayTier === 'zenith' ? 'Elite Experience' : 'Monthly Alignment')}
                                 benefits={meta.benefits}
                                 icon={TIER_ICONS[displayTier] || Star}
                                 isSelected={isSelected}
@@ -210,9 +212,9 @@ export const SubscriptionScreen = () => {
                     <FadeIn delay={200} from="bottom">
                         <TierCard
                             name="Compass"
-                            price="Ksh. 900.00"
+                            price="$2.99"
                             period="/ month"
-                            subtext="Paid Annually"
+                            subtext="Billed Monthly"
                             benefits={TIER_METADATA.compass.benefits}
                             icon={CompassIcon}
                             isSelected={selectedTier === 'compass'}
@@ -225,7 +227,7 @@ export const SubscriptionScreen = () => {
                     <FadeIn delay={300} from="bottom">
                         <TierCard
                             name="True North"
-                            price="$12.99"
+                            price="$9.99"
                             period="/ month"
                             subtext="Monthly Alignment"
                             benefits={TIER_METADATA.true_north.benefits}

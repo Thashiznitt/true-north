@@ -3,6 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type AIProvider = 'LocalMock' | 'OpenAI' | 'Groq' | 'Custom' | 'Gemini';
 
+export interface ChatHistoryMessage {
+    role: 'user' | 'assistant';
+    content: string;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface AIConfig {
     provider: AIProvider;
@@ -58,6 +63,127 @@ export const SpiritualIntelligenceService = {
     },
 
     // --- Inference ---
+
+    generateChat: async (systemPrompt: string, messages: ChatHistoryMessage[], jsonMode = false): Promise<string> => {
+        // --- Quota Check ---
+        const today = new Date().toISOString().split('T')[0];
+        const quotaDataStr = await AsyncStorage.getItem(STORAGE_KEY_DAILY_QUOTA);
+        let quotaData = quotaDataStr ? JSON.parse(quotaDataStr) : { date: today, count: 0 };
+
+        if (quotaData.date !== today) quotaData = { date: today, count: 0 };
+
+        if (quotaData.count >= MAX_DAILY_CALLS) {
+            console.warn(`Spiritual Intelligence Quota Exceeded for ${today}.`);
+            return "The sanctuary is currently resting to preserve its energy. Your guide will return with fresh insights tomorrow morning. In the meantime, find stillness in your current reflections.";
+        }
+
+        const provider = await SpiritualIntelligenceService.getProvider();
+
+        if (provider === 'LocalMock') {
+            throw new Error('LocalMock provider does not support dynamic generation. Use static templates.');
+        }
+
+        let apiKey = await SpiritualIntelligenceService.getApiKey(provider);
+        let endpoint = '';
+        const model = await SpiritualIntelligenceService.getModel();
+
+        if (provider === 'Gemini') {
+            const storedKey = await SpiritualIntelligenceService.getApiKey(provider);
+            apiKey = storedKey || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
+
+            if (!apiKey) throw new Error("Missing Gemini API Key. Please check your configuration.");
+
+            const geminiModel = 'gemini-2.5-flash';
+            endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`;
+
+            // Map standard messages to Gemini format
+            const geminiContents = messages.map(msg => ({
+                role: msg.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: msg.content }]
+            }));
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        systemInstruction: {
+                            parts: [{ text: systemPrompt }]
+                        },
+                        contents: geminiContents,
+                        generationConfig: {
+                            temperature: 0.7,
+                            topK: 40,
+                            topP: 0.95,
+                            maxOutputTokens: 2048,
+                            ...(jsonMode ? { responseMimeType: 'application/json' } : {})
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorJson = await response.json().catch(() => ({}));
+                    const errorMsg = errorJson?.error?.message || response.statusText || 'Unknown error';
+                    throw new Error(`Gemini API ${response.status}: ${errorMsg}`);
+                }
+
+                const data = await response.json();
+                if (data.candidates && data.candidates.length > 0 && data.candidates[0].content && data.candidates[0].content.parts.length > 0) {
+                    quotaData.count += 1;
+                    await AsyncStorage.setItem(STORAGE_KEY_DAILY_QUOTA, JSON.stringify(quotaData));
+                    return data.candidates[0].content.parts[0].text;
+                } else {
+                    return "The sanctuary is currently in a state of deep reflection. Please try again in a moment.";
+                }
+            } catch (error: unknown) {
+                const message = error instanceof Error ? error.message : String(error);
+                if (message.includes('429')) return "The sanctuary is receiving many seekers. Please pause for a moment and try again.";
+                if (message.includes('API key') || message.includes('API_KEY_INVALID') || message.includes('403')) return `Guidance Interrupted: API Configuration Error. Please contact support.`;
+                if (message.includes('400') || message.includes('404')) return `Guidance Interrupted: Service Endpoint Error.`;
+                return "I am currently taking a moment of silence. Please try again soon.";
+            }
+        }
+
+        // OpenAi / Groq / Custom logic
+        if (!apiKey) throw new Error(`Missing API Key for provider: ${provider}`);
+
+        const headers: Record<string, string> = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
+        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const body: any = {
+            model: model,
+            messages: [
+                { role: 'system', content: systemPrompt },
+                ...messages.map(m => ({ role: m.role, content: m.content }))
+            ],
+            temperature: 0.7
+        };
+
+        try {
+            switch (provider) {
+                case 'OpenAI': endpoint = 'https://api.openai.com/v1/chat/completions'; break;
+                case 'Groq': 
+                    endpoint = 'https://api.groq.com/openai/v1/chat/completions'; 
+                    if (!model.includes('llama') && !model.includes('mixtral')) body.model = 'llama3-8b-8192';
+                    break;
+                case 'Custom': 
+                    const customUrl = await SpiritualIntelligenceService.getCustomEndpoint();
+                    if (!customUrl) throw new Error('Custom endpoint URL not configured');
+                    endpoint = customUrl;
+                    break;
+            }
+
+            const response = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
+            if (!response.ok) throw new Error(`Spiritual Intelligence Provider Error (${response.status}): ${await response.text()}`);
+
+            const data = await response.json();
+            quotaData.count += 1;
+            await AsyncStorage.setItem(STORAGE_KEY_DAILY_QUOTA, JSON.stringify(quotaData));
+            return data.choices[0].message.content.trim();
+        } catch (error) {
+            throw error;
+        }
+    },
 
     generateText: async (systemPrompt: string, userPrompt: string, jsonMode = false): Promise<string> => {
         // --- Quota Check ---

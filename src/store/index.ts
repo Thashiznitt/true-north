@@ -196,6 +196,8 @@ interface UserState {
     isSessionUnlocked: boolean;
     hasSeenUserGuide: boolean;
     onboardedAt: number | null;
+    toast: { message: string; visible: boolean };
+    freeEngagementCount: number;
 
     setOnboarded: (value: boolean) => Promise<void>;
     setOnboardingStep: (step: number) => void;
@@ -253,6 +255,9 @@ interface UserState {
     clearNurChat: () => void;
     syncNurChats: () => Promise<void>;
     setSessionUnlocked: (unlocked: boolean) => void;
+    showToast: (message: string) => void;
+    hideToast: () => void;
+    incrementEngagement: () => void;
     reset: () => void;
     logout: () => void;
 }
@@ -316,9 +321,19 @@ export const useStore = create<UserState>()(
             },
             communityNews: [],
             nurChats: [],
-            isSessionUnlocked: false,
+            isSessionUnlocked: true,
             hasSeenUserGuide: false,
             onboardedAt: null,
+            toast: { message: '', visible: false },
+            freeEngagementCount: 0,
+            showToast: (message) => {
+                set({ toast: { message, visible: true } });
+                setTimeout(() => {
+                    // Hide toast after 3 seconds, but only if it's the exact same message to prevent overlapping flashes
+                    set((state) => state.toast.message === message ? { toast: { message, visible: false } } : state);
+                }, 3000);
+            },
+            hideToast: () => set((state) => ({ toast: { ...state.toast, visible: false } })),
             setOnboarded: async (isOnboarded: boolean) => {
                 set((state) => ({ 
                     isOnboarded,
@@ -724,7 +739,8 @@ export const useStore = create<UserState>()(
             name: 'true-north-storage',
             storage: createJSONStorage(() => AsyncStorage),
             partialize: (state) => {
-                const { isSessionUnlocked: _, ...rest } = state;
+                // Do not persist ephemeral state like session lock or toast messages
+                const { isSessionUnlocked: _, toast: __, ...rest } = state;
                 return rest;
             },
             onRehydrateStorage: () => (state) => {

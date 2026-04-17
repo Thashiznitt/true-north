@@ -10,7 +10,7 @@ model User {
   id               String   @id @default(uuid())
   email            String   @unique
   passwordHash     String?  @map("password_hash")
-  username         String?
+  username         String?  @unique
   avatarUrl        String?  @map("avatar_url")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
@@ -166,4 +166,13 @@ model ReferralVisit {
   partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
 
   @@map("referral_visits")
+}
+
+model BetaTester {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  platform  String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("beta_testers")
 }

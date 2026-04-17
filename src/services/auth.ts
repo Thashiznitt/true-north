@@ -276,13 +276,15 @@ class AuthService {
 
             console.log(`[Auth] Creating new profile for user ${userId}...`);
 
+            const safeUsername = `${username || 'Seeker'}_${Math.floor(Math.random() * 100000)}`;
+
             // 1. Create User Record
             let { error: userError } = await supabase
                 .from('users')
                 .insert({
                     id: userId,
                     email: email,
-                    username: username || 'Sacred Voyager',
+                    username: safeUsername,
                     role: 'member',
                     subscription_tier: 'free',
                     created_at: new Date().toISOString(),
@@ -297,7 +299,7 @@ class AuthService {
                     .insert({
                         id: userId,
                         email: `${userId}@rescued-profile.local`,
-                        username: username || 'Sacred Voyager',
+                        username: safeUsername + '_alt',
                         role: 'member',
                         subscription_tier: 'free',
                         created_at: new Date().toISOString(),

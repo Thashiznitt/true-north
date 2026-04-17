@@ -142,7 +142,7 @@ TONE: Very soft, IMPACTFUL, and deeply supportive. Brief but profound.
     },
 
     // 3. Simulated Response Generator (The "Brain" for now)
-    generateResponse: async (userMessage: string): Promise<ChatMessage> => {
+    generateResponse: async (history: ChatMessage[], userMessage: string): Promise<ChatMessage> => {
         const provider = await SpiritualIntelligenceService.getProvider();
         const context = NurAIService.buildContext();
 
@@ -205,7 +205,17 @@ TONE: Very soft, IMPACTFUL, and deeply supportive. Brief but profound.
             // REAL LLM PATH
             try {
                 const systemPrompt = NurAIService.constructSystemPrompt(context);
-                const response = await SpiritualIntelligenceService.generateText(systemPrompt, userMessage);
+                
+                // Map the conversation history
+                const chatHistoryInput = history.map(msg => ({
+                    role: msg.role === 'assistant' ? 'assistant' : 'user',
+                    content: msg.content
+                })) as { role: 'user' | 'assistant', content: string }[];
+                
+                // Append the latest user message
+                chatHistoryInput.push({ role: 'user', content: userMessage });
+
+                const response = await SpiritualIntelligenceService.generateChat(systemPrompt, chatHistoryInput);
 
                 // Simple heuristic for mode detection from response (or we can ask LLM for it)
                 let mode: ChatMessage['mode'] = 'affirmation';

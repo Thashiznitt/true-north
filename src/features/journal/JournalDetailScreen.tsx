@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Share, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Share, Alert, Modal, ActivityIndicator, ScrollView } from 'react-native';
 import { TrueNorthFlashList } from '../../components/performance/TrueNorthFlashList';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme, palette } from '../../theme';
@@ -38,6 +38,10 @@ export const JournalDetailScreen = () => {
     const [activeId, setActiveId] = useState<string | undefined>(entryId);
 
     const [currentTag, setCurrentTag] = useState('');
+
+    const [showAIModal, setShowAIModal] = useState(false);
+    const [aiResponse, setAiResponse] = useState<any>(null);
+    const [isAIProcessing, setIsAIProcessing] = useState(false);
 
     const beliefType = useStore((state) => state.beliefType);
     const biometricsEnabled = useStore((state) => state.biometricsEnabled);
@@ -205,6 +209,11 @@ export const JournalDetailScreen = () => {
             addJournalEntry({ ...entryData, id: newId });
             setActiveId(newId);
             notificationService.cancelSecondaryGratitudeReminder();
+
+            const state = useStore.getState();
+            if (state.subscriptionTier === 'free') {
+                state.incrementEngagement();
+            }
         }
         
         Alert.alert("Sanctuary Updated", "Your reflection has been safely stored in your sacred journal.");
@@ -217,14 +226,13 @@ export const JournalDetailScreen = () => {
             return;
         }
 
+        setIsAIProcessing(true);
         const currentBelief = beliefType || 'Open';
         const analysis = await contentAgentService.getJournalReflection(content, currentBelief);
-
-        Alert.alert(
-            analysis.title,
-            `${analysis.greeting}\n\n${analysis.analysis}\n\n"${analysis.quote}"\n— ${analysis.location}\n\n${analysis.advice}`,
-            [{ text: analysis.action || "Amen" }]
-        );
+        
+        setAiResponse(analysis);
+        setIsAIProcessing(false);
+        setShowAIModal(true);
     };
 
     return (
@@ -302,6 +310,45 @@ export const JournalDetailScreen = () => {
                     </>
                 }
             />
+
+            {isAIProcessing && (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', zIndex: 100 }]}>
+                    <ActivityIndicator size="large" color={palette.softGold} />
+                    <Text style={{ marginTop: 16, color: palette.ivory, fontFamily: theme.typography.sans, fontSize: 14 }}>Connecting to your sanctuary...</Text>
+                </View>
+            )}
+
+            <Modal visible={showAIModal} transparent animationType="fade">
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 24, zIndex: 200 }]}>
+                    <View style={{ backgroundColor: theme.colors.surface, borderRadius: 24, padding: 32, width: '100%', borderColor: theme.colors.border, borderWidth: 1, shadowColor: palette.softGold, shadowOpacity: 0.1, shadowRadius: 20 }}>
+                        <View style={{ alignSelf: 'center', backgroundColor: palette.softGold + '20', padding: 12, borderRadius: 100, marginBottom: 20 }}>
+                            <Sparkles size={28} color={palette.softGold} />
+                        </View>
+                        
+                        <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 22, color: theme.colors.text, textAlign: 'center', marginBottom: 8 }}>{aiResponse?.title}</Text>
+                        
+                        <ScrollView style={{ maxHeight: 350 }} showsVerticalScrollIndicator={false}>
+                            <Text style={{ fontFamily: theme.typography.sansMedium, color: theme.colors.text, fontSize: 16, marginBottom: 16, textAlign: 'center' }}>{aiResponse?.greeting}</Text>
+                            
+                            <Text style={{ fontFamily: theme.typography.sans, color: theme.colors.text, fontSize: 15, lineHeight: 24, marginBottom: 24 }}>{aiResponse?.analysis}</Text>
+                            
+                            <View style={{ borderLeftWidth: 3, borderLeftColor: palette.softGold, paddingLeft: 16, marginBottom: 24 }}>
+                                <Text style={{ fontFamily: theme.typography.serif, fontStyle: 'italic', color: theme.colors.text, fontSize: 16, lineHeight: 24 }}>"{aiResponse?.quote}"</Text>
+                                <Text style={{ fontFamily: theme.typography.sansBold, color: palette.softGold, fontSize: 13, marginTop: 8 }}>— {aiResponse?.location}</Text>
+                            </View>
+                            
+                            <Text style={{ fontFamily: theme.typography.sansMedium, color: theme.colors.text, fontSize: 15, lineHeight: 24, textAlign: 'center' }}>{aiResponse?.advice}</Text>
+                        </ScrollView>
+
+                        <TouchableOpacity 
+                            style={{ backgroundColor: palette.softGold, borderRadius: 100, paddingVertical: 16, alignItems: 'center', marginTop: 32 }}
+                            onPress={() => setShowAIModal(false)}
+                        >
+                            <Text style={{ fontFamily: theme.typography.sansBold, color: '#000', fontSize: 16 }}>{aiResponse?.action || "Amen"}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </KeyboardAvoidingView>
     );
 };

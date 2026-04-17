@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { useStore } from '../store';
 import { theme, palette } from '../theme';
-import { Lock, ArrowRight, ShieldCheck } from 'lucide-react-native';
+import { Lock, ArrowRight, ShieldCheck, Fingerprint } from 'lucide-react-native';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 const { width } = Dimensions.get('window');
 
@@ -21,21 +22,42 @@ interface PinGateProps {
 }
 
 export const PinGate: React.FC<PinGateProps> = ({ children }) => {
-    const { securityPin, isSessionUnlocked, setSessionUnlocked } = useStore();
+    const { securityPin, biometricsEnabled, isSessionUnlocked, setSessionUnlocked } = useStore();
     const [pin, setPin] = useState('');
     const [error, setError] = useState(false);
     const shakeAnim = useRef(new Animated.Value(0)).current;
     const inputRef = useRef<TextInput>(null);
 
-    useEffect(() => {
-        if (!isSessionUnlocked && securityPin) {
-            // Focus input when the gate is active
-            const timer = setTimeout(() => {
-                inputRef.current?.focus();
-            }, 500);
-            return () => clearTimeout(timer);
+    const triggerBiometrics = async () => {
+        if (!biometricsEnabled) return;
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        if (hasHardware && isEnrolled) {
+            const result = await LocalAuthentication.authenticateAsync({
+                promptMessage: 'Unlock Sanctuary',
+                fallbackLabel: 'Use PIN',
+            });
+            if (result.success) {
+                setSessionUnlocked(true);
+            }
         }
-    }, [isSessionUnlocked, securityPin]);
+    };
+
+    useEffect(() => {
+        if (!isSessionUnlocked && (securityPin || biometricsEnabled)) {
+            setPin('');
+            setError(false);
+            
+            if (biometricsEnabled) {
+                triggerBiometrics();
+            } else {
+                const timer = setTimeout(() => {
+                    inputRef.current?.focus();
+                }, 500);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [isSessionUnlocked, securityPin, biometricsEnabled]);
 
     const shake = () => {
         Animated.sequence([
@@ -60,7 +82,10 @@ export const PinGate: React.FC<PinGateProps> = ({ children }) => {
         }
     };
 
-    if (!securityPin || isSessionUnlocked) {
+    if (!securityPin && !biometricsEnabled) {
+        return <>{children}</>;
+    }
+    if (isSessionUnlocked) {
         return <>{children}</>;
     }
 
@@ -87,6 +112,9 @@ export const PinGate: React.FC<PinGateProps> = ({ children }) => {
                         keyboardType="number-pad"
                         maxLength={4}
                         autoFocus={true}
+                        caretHidden={true}
+                        contextMenuHidden={true}
+                        autoComplete="off"
                     />
                     
                     <View style={styles.dotsContainer}>
@@ -105,6 +133,13 @@ export const PinGate: React.FC<PinGateProps> = ({ children }) => {
 
                 {error && (
                     <Text style={styles.errorText}>Incorrect PIN. Please try again.</Text>
+                )}
+
+                {biometricsEnabled && (
+                    <TouchableOpacity style={styles.bioButton} onPress={triggerBiometrics}>
+                        <Fingerprint size={24} color={palette.softGold} />
+                        <Text style={styles.bioText}>Use FaceID / TouchID</Text>
+                    </TouchableOpacity>
                 )}
 
                 <View style={styles.footer}>
@@ -187,6 +222,20 @@ const styles = StyleSheet.create({
         fontFamily: theme.typography.sansMedium,
         fontSize: 14,
         marginBottom: 20,
+    },
+    bioButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: theme.spacing.md,
+        borderRadius: theme.borderRadius.md,
+        backgroundColor: palette.softGold + '15',
+        marginBottom: 20,
+    },
+    bioText: {
+        fontFamily: theme.typography.sansMedium,
+        fontSize: 15,
+        color: palette.softGold,
+        marginLeft: theme.spacing.sm,
     },
     footerStatus: {
         flexDirection: 'row',

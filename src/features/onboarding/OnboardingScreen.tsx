@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable truenorth-performance/no-scrollview */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, ImageBackground, Keyboard, FlatList } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, ImageBackground, Keyboard, FlatList, Switch } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { OptimizedImage } from '../../components/performance/OptimizedImage';
@@ -68,7 +68,7 @@ const BELIEF_META: Record<string, { icon: React.FC<any>, desc: string }> = { // 
 
 const TIER_BENEFITS: Record<string, string[]> = {
     free: ["1 Personal Daily Affirmation", "View Community Reflections", "Join up to 3 Local Circles", "Ad-supported experience"],
-    compass: ["Unlimited Private Reflections (Journal)", "Ask Nur Companion", "Join up to 5 Circles", "Standard Daily Guidance"],
+    compass: ["Unlimited Private Reflections (Journal)", "Join up to 5 Circles", "Standard Daily Guidance", "No Ask Nur Companion"],
     true_north: ["Unlimited Community Reflections", "Ask Nur Companion", "Personalized Spiritual Guidance", "Join Unlimited Circles", "Create up to 2 Circles"],
     zenith: ["Elite Spiritual Mentoring", "Ask Nur Companion", "Deep Community Analysis", "Unlimited Circle Creation", "Location Intelligence"],
 };
@@ -85,7 +85,7 @@ const cleanTitle = (title: string) => {
 const INTRO_BG = require('../../../assets/onboarding_intro_bg.jpg'); // eslint-disable-line
 
 const GOAL_KEYS = [
-    'spirituality', 'spouse', 'career', 'business',
+    'spirituality', 'spouse', 'career & business',
     'health', 'family', 'children', 'friends', 'finances'
 ];
 
@@ -337,8 +337,8 @@ export const OnboardingScreen = () => {
             }
             setStep(2);
         } else if (step === 2) {
-            // Find first empty field and focus it, or proceed if all filled
-            const emptyFieldIndex = GOAL_KEYS.findIndex(key => !goals[key as keyof typeof goals]?.trim());
+            // Find first empty field (excluding spouse) and focus it, or proceed if all filled
+            const emptyFieldIndex = GOAL_KEYS.findIndex(key => key !== 'spouse' && !goals[key as keyof typeof goals]?.trim());
 
             if (emptyFieldIndex !== -1) {
                 // Simply focus the empty input for a smoother experience
@@ -374,12 +374,12 @@ export const OnboardingScreen = () => {
             }
             setStep(7);
         } else if (step === 7) {
-            if (!username.trim()) {
-                Alert.alert("Name Required", "Please let us know what to call you.");
+            if (!username.trim() || username.trim().length < 3) {
+                Alert.alert("Name Required", "Please enter a valid username (min 3 characters).");
                 return;
             }
-            if (usernameAvailable === false) {
-                Alert.alert("Unavailable", "Please choose a different username.");
+            if (usernameAvailable !== true) {
+                Alert.alert("Unavailable", "Please wait for validation or choose a different username.");
                 return;
             }
             if (!dateOfBirth) {
@@ -423,7 +423,7 @@ export const OnboardingScreen = () => {
         setLoading(true);
         try {
             // 1. Create Auth User
-            let userId: string | undefined;
+            let userId: string | undefined = useStore.getState().userId || undefined;
 
             if (authMode === 'email' && email && password) {
                 const { success, error } = await authService.signUp(email, password);
@@ -448,9 +448,11 @@ export const OnboardingScreen = () => {
                 eveningGratitude: true,
                 weeklyCommunity: true
             });
-            setBiometricsEnabled(false);
+            setBiometricsEnabled(setupBiometrics);
             setSecurityPin(pin || null);
-            setSubscriptionTier('free'); // Default to free initially
+            
+            // Set optimistically; revenuecat will sync it correctly on next launch if out of sync
+            setSubscriptionTier(tier as any);
 
             // 3. Sync to Supabase (if we have a userId)
             if (userId) {
@@ -483,8 +485,8 @@ export const OnboardingScreen = () => {
                         user_id: userId,
                         spirituality: goals.spirituality,
                         spouse: goals.spouse,
-                        career: goals.career,
-                        business: goals.business,
+                        career: (goals as any)['career & business'],
+                        business: (goals as any)['career & business'],
                         health: goals.health,
                         family: goals.family,
                         children: goals.children,
@@ -573,7 +575,17 @@ export const OnboardingScreen = () => {
                 }
 
                 console.log("[Onboarding] Proceeding to purchase with package for tier:", tier);
-                const pkg = offering.availablePackages.find(p => p.packageType.toLowerCase().includes(tier)) || offering.availablePackages[0];
+                const pkg = offering.availablePackages.find(p => {
+                    const prod = p.product || (p as any).storeProduct;
+                    const pId = (prod.identifier || '').toLowerCase();
+                    const ptLC = (p.packageType || '').toLowerCase();
+                    let tId = 'true_north';
+                    if (pId.includes('compass')) tId = 'compass';
+                    else if (pId.includes('zenith')) tId = 'zenith';
+                    else if (pId.includes('true_north') || pId.includes('truenorth') || pId.includes('true-north')) tId = 'true_north';
+                    else if (ptLC.includes('annual') || ptLC.includes('yearly')) tId = 'compass';
+                    return tId === tier;
+                }) || offering.availablePackages[0];
 
                 if (!pkg) {
                     console.error("[Onboarding] No package found for tier:", tier);
@@ -813,11 +825,15 @@ export const OnboardingScreen = () => {
                 <StepContainer>
                     <FadeIn delay={100} from="bottom">
                         {renderHeader("Daily Goals", "Tell us about your current priorities (max 10 words)")}
+                        <Text style={[styles.subtitle, { marginTop: 8, fontSize: 13, opacity: 0.8 }]}>Setting clear goals allows your companion Nur to profoundly personalize your guidance and recognize patterns in your reflections.</Text>
                     </FadeIn>
                     {GOAL_KEYS.map((key, index) => (
                         <FadeIn key={key} delay={200 + index * 50} from="bottom">
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
+                                <Text style={styles.label}>
+                                    {key.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                                    {key === 'spouse' && " (Optional)"}
+                                </Text>
                                 <TextInput
                                     ref={(el) => { inputRefs.current[index] = el; }}
                                     style={styles.input}
@@ -947,12 +963,14 @@ export const OnboardingScreen = () => {
                             <ActivityIndicator color={palette.softGold} size="large" style={{ marginTop: 40 }} />
                         ) : (
                             <>
-                                <TouchableOpacity style={[styles.socialButton, { backgroundColor: palette.ivory, opacity: loading ? 0.7 : 1 }]} onPress={() => handleSocialLogin('Apple')} disabled={loading}>
-                                    <View style={{ position: 'absolute', left: 24 }}>
-                                        {/* Apple Logo placeholder or icon if available */}
-                                    </View>
-                                    <Text style={[styles.socialButtonText, { color: theme.colors.text }]}>Continue with Apple</Text>
-                                </TouchableOpacity>
+                                {Platform.OS === 'ios' && (
+                                    <TouchableOpacity style={[styles.socialButton, { backgroundColor: palette.ivory, opacity: loading ? 0.7 : 1 }]} onPress={() => handleSocialLogin('Apple')} disabled={loading}>
+                                        <View style={{ position: 'absolute', left: 24 }}>
+                                            {/* Apple Logo placeholder or icon if available */}
+                                        </View>
+                                        <Text style={[styles.socialButtonText, { color: theme.colors.text }]}>Continue with Apple</Text>
+                                    </TouchableOpacity>
+                                )}
                                 <TouchableOpacity style={[styles.socialButton, styles.googleButton, { backgroundColor: 'transparent', borderColor: 'rgba(255,255,255,0.3)', opacity: loading ? 0.7 : 1 }]} onPress={() => handleSocialLogin('Google')} disabled={loading}>
                                     <View style={{ position: 'absolute', left: 24 }}>
                                         {/* Google Logo placeholder */}
@@ -1049,7 +1067,7 @@ export const OnboardingScreen = () => {
                                 value={username}
                                 autoCapitalize="none"
                                 autoCorrect={false}
-                                onChangeText={setUsername}
+                                onChangeText={(text) => setUsername(text.replace(/\s/g, ''))}
                                 returnKeyType="done"
                                 onSubmitEditing={() => Keyboard.dismiss()}
                             />
@@ -1116,7 +1134,10 @@ export const OnboardingScreen = () => {
                             <DateTimePicker
                                 mode="date"
                                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                                value={dateOfBirth ? new Date(dateOfBirth) : new Date(2000, 0, 1)}
+                                value={dateOfBirth ? (() => {
+                                    const parts = dateOfBirth.split('-');
+                                    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                                })() : new Date(2000, 0, 1)}
                                 maximumDate={new Date()}
                                 onChange={(event, selectedDate) => {
                                     // Don't hide immediately on iOS spinner or it feels glitchy
@@ -1124,8 +1145,10 @@ export const OnboardingScreen = () => {
                                         setShowDatePicker(false);
                                     }
                                     if (selectedDate) {
-                                        const formatted = selectedDate.toISOString().split('T')[0];
-                                        setDateOfBirth(formatted);
+                                        const year = selectedDate.getFullYear();
+                                        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                                        const day = String(selectedDate.getDate()).padStart(2, '0');
+                                        setDateOfBirth(`${year}-${month}-${day}`);
                                     }
                                 }}
                             />
@@ -1189,6 +1212,26 @@ export const OnboardingScreen = () => {
                             autoFocus={true}
                         />
                         <Text style={styles.pinHint}>This PIN will be required to unlock your Journal and Circles.</Text>
+
+                        {pin.length === 4 && (
+                            <FadeIn delay={100} from="bottom">
+                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(255,255,255,0.05)', padding: 16, borderRadius: 16, marginTop: 32, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                        <Fingerprint size={24} color={palette.softGold} />
+                                        <View>
+                                            <Text style={{ fontFamily: theme.typography.sansBold, fontSize: 16, color: theme.colors.text }}>Enable Biometrics</Text>
+                                            <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: theme.colors.secondaryText, marginTop: 2 }}>Unlock faster with FaceID / TouchID</Text>
+                                        </View>
+                                    </View>
+                                    <Switch
+                                        value={setupBiometrics}
+                                        onValueChange={setSetupBiometrics}
+                                        trackColor={{ false: 'rgba(255,255,255,0.1)', true: palette.softGold }}
+                                        thumbColor={setupBiometrics ? palette.ivory : theme.colors.secondaryText}
+                                    />
+                                </View>
+                            </FadeIn>
+                        )}
                     </View>
                 </FadeIn>
             </StepContainer>
@@ -1252,9 +1295,9 @@ export const OnboardingScreen = () => {
 
     const renderStep10 = () => {
         const DEFAULT_TIERS = [
-            { id: 'compass', label: 'Compass', price: 'Ksh. 900.00', sub: '/ mo', save: 'Paid Annually (Save 55%)' },
-            { id: 'true_north', label: 'True North', price: 'Ksh. 2,000.00', sub: '/ mo', save: 'Most Aligned' },
-            { id: 'zenith', label: 'Zenith', price: 'Ksh. 4,500.00', sub: '/ mo', save: 'Elite Experience' },
+            { id: 'compass', label: 'Compass', price: '$2.99', sub: '/ mo', save: 'Billed Monthly' },
+            { id: 'true_north', label: 'True North', price: '$9.99', sub: '/ mo', save: 'Most Aligned' },
+            { id: 'zenith', label: 'Zenith', price: '$19.99', sub: '/ mo', save: 'Elite Experience' },
         ];
 
         return (
@@ -1276,12 +1319,25 @@ export const OnboardingScreen = () => {
                             <ActivityIndicator color={palette.softGold} size="large" />
                         ) : offering ? (
                             offering.availablePackages.map((pkg: any) => {
-                                const tierId = pkg.packageType.toLowerCase().includes('annual') ? 'compass' :
-                                    pkg.packageType.toLowerCase().includes('monthly') ? 'true_north' : 'zenith';
+                                const product = pkg.product || pkg.storeProduct;
+                                const productId = (product.identifier || '').toLowerCase();
+                                const pkgTypeLC = (pkg.packageType || '').toLowerCase();
+                                
+                                let tierId = 'true_north';
+                                if (productId.includes('compass')) tierId = 'compass';
+                                else if (productId.includes('zenith')) tierId = 'zenith';
+                                else if (productId.includes('true_north') || productId.includes('truenorth') || productId.includes('true-north')) tierId = 'true_north';
+                                else if (pkgTypeLC.includes('annual') || pkgTypeLC.includes('yearly')) tierId = 'compass';
+
                                 const active = tier === tierId;
                                 const isCurrent = currentStoreTier === tierId;
-                                const product = pkg.product || pkg.storeProduct;
                                 const benefits = TIER_BENEFITS[tierId as keyof typeof TIER_BENEFITS] || [];
+
+                                let mockedPrice = product.priceString;
+                                if (tierId === 'compass' && (pkgTypeLC.includes('annual') || productId.includes('annual'))) mockedPrice = "$29.99";
+                                else if (tierId === 'compass') mockedPrice = "$2.99";
+                                else if (tierId === 'true_north') mockedPrice = "$9.99";
+                                else if (tierId === 'zenith') mockedPrice = "$19.99";
 
                                 return (
                                     <TouchableOpacity
@@ -1312,10 +1368,10 @@ export const OnboardingScreen = () => {
                                             </View>
                                             <View style={{ alignItems: 'flex-end' }}>
                                                 <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 20, color: active ? palette.charcoal : palette.ivory }}>
-                                                    {tierId === 'compass' ? "Ksh. 900.00" : product.priceString}
+                                                    {mockedPrice}
                                                 </Text>
                                                 <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: active ? 'rgba(0,0,0,0.6)' : palette.softGold, opacity: 0.8 }}>
-                                                    {tierId === 'compass' ? '/ mo' : (pkg.packageType.toLowerCase().includes('annual') ? '/ year' : '/ month')}
+                                                    {pkgTypeLC.includes('annual') || pkgTypeLC.includes('yearly') || productId.includes('annual') ? '/ year' : '/ month'}
                                                 </Text>
                                             </View>
                                         </View>

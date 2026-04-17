@@ -84,6 +84,12 @@ export const CreateCircleScreen = () => {
             moderatorIds: []
         };
         addCreatedCircle(newCircle);
+
+        const state = useStore.getState();
+        if (state.subscriptionTier === 'free') {
+            state.incrementEngagement();
+        }
+
         setShowSuccessModal(true);
     };
 

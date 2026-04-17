@@ -38,8 +38,12 @@ export const CommunityScreen = () => {
     const [circles, setCircles] = useState<any[]>([]);
     const circlesRef = useRef<any[]>([]);
     const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
-    const { createdCircles, bookmarkedCircleIds, subscriptionTier, dailyGoals, beliefType, biometricsEnabled, securityPin, blockedCircleIds, isSessionUnlocked, setSessionUnlocked } = useStore();
+    const { bookmarkedCircleIds, dailyGoals, beliefType, biometricsEnabled, securityPin, blockedCircleIds, isSessionUnlocked, setSessionUnlocked } = useStore();
+    const subscriptionTier = useStore(state => state.subscriptionTier);
     const isSubscribed = subscriptionTier !== 'free';
+    const onboardedAt = useStore(state => state.onboardedAt);
+    const freeEngagementCount = useStore(state => state.freeEngagementCount);
+    const createdCircles = useStore(state => state.createdCircles);
 
 
     const [bioError, setBioError] = useState(false);
@@ -185,24 +189,7 @@ export const CommunityScreen = () => {
         );
     }, [bookmarkedCircleIds, navigation, isSubscribed, filteredCircles]);
 
-    // Paywall gating for the whole screen if not subscribed
-    // This matches the user's request to see subscription tiers when clicking "Unlock"
-    console.log('[CommunityScreen] subscriptionTier:', subscriptionTier, '| isSubscribed:', isSubscribed);
-    if (!isSubscribed) {
-        return (
-            <SanctuaryLock
-                onUnlock={() => {
-                    navigation.navigate('Subscription', { returnTo: 'Circles' });
-                }}
-                loading={false}
-                onBack={() => navigation.navigate('Affirmation')}
-                title="Sacred Circles"
-                subtitle="Join or create circles of faith. Authenticate to protect your community."
-                buttonText="Unlock Circles"
-                icon={Users}
-            />
-        );
-    }
+    const isTrialActive = onboardedAt ? (Date.now() - onboardedAt) < (14 * 24 * 60 * 60 * 1000) : true;
 
     return (
         <PinGate>
@@ -274,7 +261,13 @@ export const CommunityScreen = () => {
             <TouchableOpacity
                 style={styles.fab}
                 onPress={() => {
-                    if (subscriptionTier === 'true_north' || subscriptionTier === 'zenith') {
+                    if (subscriptionTier === 'free') {
+                        if (freeEngagementCount >= 5) {
+                            navigation.navigate('Subscription');
+                            return;
+                        }
+                        navigation.navigate('CreateCircle');
+                    } else if (subscriptionTier === 'true_north' || subscriptionTier === 'zenith') {
                         // Limit True North to 2 circles
                         if (subscriptionTier === 'true_north' && createdCircles.length >= 2) {
                             alert("You've reached the limit of 2 Circles for the True North tier. Upgrade to Zenith for unlimited creation.");
@@ -282,6 +275,7 @@ export const CommunityScreen = () => {
                         }
                         navigation.navigate('CreateCircle');
                     } else {
+                        // Compass doesn't create circles natively at an unlimited or fixed rate securely without bumping up.
                         navigation.navigate('Subscription');
                     }
                 }}

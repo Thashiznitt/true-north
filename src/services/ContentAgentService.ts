@@ -33,33 +33,33 @@ export interface GhostCircle {
 
 const GHOST_USERS: Record<BeliefType, string[]> = {
     Christian: [
-        'Mary W.', 'Peter J.', 'Sarah N.', 'John D.', 'Grace M.', 'Isaac K.', 'Hannah R.', 'Paul S.', 'Lydia B.', 'Mark O.',
-        'Ruth A.', 'Apostle T.', 'Sister Martha', 'Brother Jude', 'Faith E.', 'Hope L.', 'Gabriel V.', 'Noel C.', 'Esther P.', 'David S.'
+        'Mary W.', 'Njeri M.', 'Sarah N.', 'John D.', 'Grace M.', 'Kamau K.', 'Hannah R.', 'Paul S.', 'Wanjiku B.', 'Mark O.',
+        'Ruth A.', 'Ochieng A.', 'Sister Martha', 'Brother Jude', 'Faith E.', 'Hope L.', 'Kariuki V.', 'Noel C.', 'Muthoni P.', 'David S.'
     ],
     Catholic: [
-        'Maria S.', 'Francis P.', 'Theresa K.', 'John Paul.', 'Bernadette L.', 'Ignatius R.', 'Clare B.', 'Anthony M.', 'Catherine D.', 'Joseph W.'
+        'Maria S.', 'Njoroge P.', 'Theresa K.', 'John Paul.', 'Bernadette L.', 'Ignatius R.', 'Atieno B.', 'Anthony M.', 'Catherine D.', 'Odhiambo W.'
     ],
     Protestant: [
-        'Sarah J.', 'David M.', 'Rachel L.', 'Caleb R.', 'Hannah B.', 'Joshua K.', 'Grace E.', 'Daniel T.', 'Esther S.', 'Micah N.'
+        'Sarah J.', 'Kiprono M.', 'Rachel L.', 'Caleb R.', 'Hannah B.', 'Joshua K.', 'Njoki E.', 'Daniel T.', 'Esther S.', 'Micah N.'
     ],
 
     Muslim: [
         'Amina Z.', 'Omar H.', 'Fatima S.', 'Yusuf A.', 'Zaynab K.', 'Idris M.', 'Mariam B.', 'Bilal R.', 'Safiya T.', 'Hassan L.',
-        'Khadija F.', 'Ahmed Q.', 'Layla J.', 'Hamza N.', 'Sumaya B.', 'Rashid G.', 'Zubair K.', 'Nora Y.', 'Saeed M.', 'Aliyah W.'
+        'Farhiya M.', 'Ahmed Q.', 'Khadra J.', 'Hamza N.', 'Sumaya B.', 'Rashid G.', 'Zubair K.', 'Nora Y.', 'Abdi M.', 'Aliyah W.'
     ],
     Secular: [
-        'Alex R.', 'Jamie L.', 'Riley M.', 'Jordan S.', 'Casey K.', 'Taylor B.', 'Morgan P.', 'Skyler J.', 'Charlie V.', 'Quinn D.',
-        'Sasha F.', 'Robin G.', 'Avery H.', 'Drew T.', 'Peyton B.', 'River O.', 'Dakota W.', 'Phoenix S.', 'Sage K.', 'Emerson J.'
+        'Alex R.', 'Jamie L.', 'Riley M.', 'Jordan S.', 'Mutua K.', 'Taylor B.', 'Morgan P.', 'Skyler J.', 'Nyambura V.', 'Quinn D.',
+        'Sasha F.', 'Robin G.', 'Avery H.', 'Drew T.', 'Peyton B.', 'Ondiek O.', 'Dakota W.', 'Phoenix S.', 'Sage K.', 'Emerson J.'
     ],
     Open: [
-        'Amara L.', 'David W.', 'Elena R.', 'Marcus T.', 'Sophie K.', 'Julian M.', 'Zara N.', 'Oliver P.', 'Maya J.', 'Leo S.',
-        'Isabella G.', 'Noah B.', 'Chloe V.', 'Ethan X.', 'Mia Q.', 'Liam F.', 'Ava G.', 'Lucas R.', 'Sophia T.', 'Mason B.'
+        'Amara L.', 'David W.', 'Elena R.', 'Marcus T.', 'Akinyi K.', 'Julian M.', 'Zara N.', 'Oliver P.', 'Maya J.', 'Leo S.',
+        'Isabella G.', 'Noah B.', 'Mwangi V.', 'Ethan X.', 'Mia Q.', 'Liam F.', 'Ava G.', 'Lucas R.', 'Sophia T.', 'Mason B.'
     ],
     Exploring: [
-        'Sam T.', 'Kim L.', 'Pat M.', 'Chris D.', 'Lee S.', 'Jan K.', 'Ren B.', 'Val P.', 'Noa J.', 'Ari V.'
+        'Sam T.', 'Kim L.', 'Pat M.', 'Chris D.', 'Lee S.', 'Mwende K.', 'Ren B.', 'Val P.', 'Noa J.', 'Ari V.'
     ],
     Spiritual: [
-        'Alex R.', 'Jamie L.', 'Riley M.', 'Jordan S.', 'Casey K.', 'Taylor B.', 'Morgan P.', 'Skyler J.', 'Charlie V.', 'Quinn D.',
+        'Alex R.', 'Nyali L.', 'Riley M.', 'Jordan S.', 'Casey K.', 'Taylor B.', 'Morgan P.', 'Skyler J.', 'Charlie V.', 'Quinn D.',
         'Sasha F.', 'Robin G.', 'Avery H.', 'Drew T.', 'Peyton B.', 'River O.', 'Dakota W.', 'Phoenix S.', 'Sage K.', 'Emerson J.'
     ],
     Sikh: [
@@ -643,7 +643,7 @@ export const contentAgentService = {
             content = templates[Math.floor(Math.random() * templates.length)];
         } else {
             try {
-                const systemPrompt = await constructSystemPrompt(belief, `You are a member of a ${belief} circle focused on ${theme}. Write a short, personal reflection (max 2 sentences) to share. Be authentic and vulnerable.`, tier, undefined, undefined, dateOfBirth, astrologyEnabled);
+                const systemPrompt = await constructSystemPrompt(belief, `You are a member of a ${belief} circle focused on ${theme}. Write a short, personal reflection (max 2 sentences) to share. Be authentic and vulnerable. Write as a continuous flowing paragraph. Do NOT use bullet points, hyphens, or dashed lists.`, tier, undefined, undefined, dateOfBirth, astrologyEnabled);
                 const userPrompt = `Write a sanctuary reflection about ${theme}.`;
                 content = await SpiritualIntelligenceService.generateText(systemPrompt, userPrompt);
             } catch (error) {
@@ -1195,16 +1195,25 @@ Keys:
                         action: parsed.action || "Reflect"
                     };
                 } catch (parseError) {
-                    console.error("[ContentAgent] JSON Parse Error:", parseError, "Raw content:", jsonStr);
-                    // Fallback to unstructured parsing if possible, or just the message
+                    console.error("[ContentAgent] JSON Parse Error. Falling back to Regex Extractor. Raw:", jsonStr);
+                    
+                    // Robust regex fallback extractor for truncated or malformed JSON
+                    const extract = (key: string) => {
+                        // Using ([^"]*) instead of ([^"]*)" so we can capture truncated values without closing quotes!
+                        const match = jsonStr.match(new RegExp(`"${key}"\\s*:\\s*"([^"]*)`, 'i'));
+                        return match ? match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').trim() : null;
+                    };
+
+                    const adviceFallback = extract('advice') || extract('message') || "The sanctuary offers quiet guidance today.";
+
                     return { 
-                        title: "Spiritual Insight", 
-                        greeting: `Hello, ${username || 'Seeker'}.`,
-                        analysis: "I am reflecting on your path.",
-                        quote: "",
-                        location: "",
-                        advice: jsonStr, 
-                        action: "Reflect" 
+                        title: extract('title') || "Spiritual Insight", 
+                        greeting: extract('greeting') || `Hello, ${username || 'Seeker'}.`,
+                        analysis: extract('analysis') || "I am reflecting on your path.",
+                        quote: extract('quote') || "",
+                        location: extract('location') || "",
+                        advice: adviceFallback, 
+                        action: extract('action') || "Reflect" 
                     };
                 }
 
@@ -1288,26 +1297,66 @@ JSON KEYS:
                 if (cleanedJson.endsWith('```')) cleanedJson = cleanedJson.replace(/```$/, '');
                 cleanedJson = cleanedJson.trim();
 
-                const parsed = JSON.parse(cleanedJson);
-                return {
-                    title: parsed.title || "Sacred Insight",
-                    greeting: parsed.greeting || `Hello, ${username || 'Seeker'}.`,
-                    analysis: parsed.analysis || "I am reflecting on your path.",
-                    quote: parsed.quote || "",
-                    location: parsed.location || "",
-                    advice: parsed.advice || "Walk in grace today.",
-                    action: parsed.action || "Amen"
-                };
+                try {
+                    const parsed = JSON.parse(cleanedJson);
+                    return {
+                        title: parsed.title || "Sacred Insight",
+                        greeting: parsed.greeting || `Hello, ${username || 'Seeker'}.`,
+                        analysis: parsed.analysis || "I am reflecting on your path.",
+                        quote: parsed.quote || "",
+                        location: parsed.location || "",
+                        advice: parsed.advice || "Walk in grace today.",
+                        action: parsed.action || "Amen"
+                    };
+                } catch (parseError) {
+                    console.error("[ContentAgent] JSON Parse Error in getJournalReflection. Falling back to Regex. Raw:", jsonStr);
+                    
+                    const extract = (key: string) => {
+                        const match = jsonStr.match(new RegExp(`"${key}"\\s*:\\s*"([^"]*)`, 'i'));
+                        return match ? match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').trim() : null;
+                    };
+
+                    const getFallback = () => {
+                        const b = belief || 'Open';
+                        if (b === 'Muslim') return { q: "Verily, with hardship comes ease.", l: "Quran 94:6", a: "Ameen" };
+                        if (b === 'Christian' || b === 'Catholic' || b === 'Protestant') return { q: "The Lord is my shepherd; I shall not want.", l: "Psalm 23:1", a: "Amen" };
+                        if (b === 'Hindu') return { q: "You have the right to work, but never to the fruit of work.", l: "Bhagavad Gita 2.47", a: "Om" };
+                        if (b === 'Buddhist') return { q: "Peace comes from within. Do not seek it without.", l: "Buddha", a: "Breathe" };
+                        return { q: "Within you is a stillness and a sanctuary to which you can retreat at any time.", l: "Hermann Hesse", a: "So be it" };
+                    };
+                    const fallback = getFallback();
+
+                    const adviceFallback = extract('advice') || extract('message') || "Peace be with you this day.";
+
+                    return { 
+                        title: extract('title') || "Sacred Insight", 
+                        greeting: extract('greeting') || `Hello, ${username || 'Seeker'}.`,
+                        analysis: extract('analysis') || "Your reflection is a beautiful step on your journey.",
+                        quote: extract('quote') || fallback.q,
+                        location: extract('location') || fallback.l,
+                        advice: adviceFallback, 
+                        action: extract('action') || fallback.a 
+                    };
+                }
             } catch (err) {
-                console.error("[ContentAgent] Error in getJournalReflection:", err);
+                console.error("[ContentAgent] Network Error in getJournalReflection:", err);
+                const getFallback = () => {
+                    const b = belief || 'Open';
+                    if (b === 'Muslim') return { q: "Verily, with hardship comes ease.", l: "Quran 94:6", a: "Ameen" };
+                    if (b === 'Christian' || b === 'Catholic' || b === 'Protestant') return { q: "The Lord is my shepherd; I shall not want.", l: "Psalm 23:1", a: "Amen" };
+                    if (b === 'Hindu') return { q: "You have the right to work, but never to the fruit of work.", l: "Bhagavad Gita 2.47", a: "Om" };
+                    if (b === 'Buddhist') return { q: "Peace comes from within. Do not seek it without.", l: "Buddha", a: "Breathe" };
+                    return { q: "Within you is a stillness and a sanctuary to which you can retreat at any time.", l: "Hermann Hesse", a: "So be it" };
+                };
+                const fb = getFallback();
                 return { 
                     title: "Sacred Insight", 
                     greeting: `Hello, ${username || 'Seeker'}.`,
                     analysis: "Your reflection is a beautiful step on your journey.",
-                    quote: "The Lord is my shepherd; I shall not want.",
-                    location: "Psalm 23:1",
+                    quote: fb.q,
+                    location: fb.l,
                     advice: "Peace be with you this day.", 
-                    action: "Amen" 
+                    action: fb.a 
                 };
             }
         }

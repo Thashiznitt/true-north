@@ -40,7 +40,7 @@ export const CircleDetailScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const isFocused = useIsFocused();
-    const { createdCircles, bookmarkedCircleIds, toggleBookmark, deleteCreatedCircle, blockedUserIds, blockUser, blockCircle, handleJoinRequest, userId, userTickets, purchaseTicket, addNotification, findUserByUsername, setCircleRole, addCircleReflection, platformFeatures } = useStore();
+    const { createdCircles, bookmarkedCircleIds, toggleBookmark, deleteCreatedCircle, blockedUserIds, blockUser, blockCircle, handleJoinRequest, userId, userTickets, purchaseTicket, addNotification, findUserByUsername, setCircleRole, addCircleReflection, platformFeatures, showToast } = useStore();
 
 
     const { circleId, circleName: initialName } = (route.params as { circleId: string; circleName?: string }) || {};
@@ -192,7 +192,7 @@ export const CircleDetailScreen = () => {
                         // Update existing reflection
                         useStore.getState().updateCircleReflection(circleId, editingReflectionId, newPostContent.trim(), selectedImage);
                         setReflections(prev => prev.map(p => p.id === editingReflectionId ? { ...p, content: newPostContent.trim(), image: selectedImage } : p));
-                        Alert.alert("Reflection Updated", "Your reflection has been updated.");
+                        showToast("Reflection successfully updated!");
                         setEditingReflectionId(null);
                     } else {
                         // Create new reflection
@@ -217,7 +217,7 @@ export const CircleDetailScreen = () => {
                             shared_in_circle_id: circleId,
                             image: selectedImage
                         });
-                        Alert.alert("Blessing Shared", "Your reflection has been shared with the circle.");
+                        showToast("Reflection successfully shared!");
                     }
 
                     setNewPostContent('');
@@ -675,9 +675,13 @@ export const CircleDetailScreen = () => {
                             const isCurrentlyBookmarked = bookmarkedCircleIds.includes(circleId);
 
                             if (!isCurrentlyBookmarked) {
-                                if (subscriptionTier === 'free' && bookmarkedCircleIds.length >= 1) {
-                                    Alert.alert("Join Limit", "The Seeker Tier allows joining 1 Circle. Upgrade to Compass to join up to 5 Circles.");
-                                    return;
+                                if (subscriptionTier === 'free') {
+                                    const freeEngagementCount = useStore.getState().freeEngagementCount;
+                                    if (freeEngagementCount >= 5) {
+                                        (navigation as any).navigate('Subscription', { returnTo: 'Circles' });
+                                        return;
+                                    }
+                                    useStore.getState().incrementEngagement();
                                 }
                                 if (subscriptionTier === 'compass' && bookmarkedCircleIds.length >= 5) {
                                     Alert.alert("Join Limit", "The Compass Tier allows joining 5 Circles. Upgrade to True North for unlimited access.");

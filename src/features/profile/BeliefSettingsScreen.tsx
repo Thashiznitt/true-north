@@ -18,7 +18,7 @@ const BELIEF_TYPES = APP_BELIEFS.map(b => ({ type: b.id, description: b.descript
 export const BeliefSettingsScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
-    const { beliefType, setBeliefType, astrologyEnabled, setAstrologyEnabled } = useStore();
+    const { beliefType, setBeliefType, astrologyEnabled, setAstrologyEnabled, showToast } = useStore();
     const [selected, setSelected] = useState<BeliefType | null>(beliefType);
     const [cosmicEnabled, setCosmicEnabled] = useState(astrologyEnabled);
 
@@ -41,6 +41,7 @@ export const BeliefSettingsScreen = () => {
             console.error('Error syncing belief settings:', error);
         }
 
+        showToast("Belief alignment successfully updated!");
         navigation.goBack();
     };
 

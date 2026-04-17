@@ -37,10 +37,13 @@
     },
     "android": {
       "package": "com.thashiznitt.truenorth",
-      "versionCode": 40,
+      "versionCode": 53,
       "adaptiveIcon": {
         "foregroundImage": "./assets/white-icon.png",
         "backgroundColor": "#C8A95A"
+      },
+      "navigationBar": {
+        "backgroundColor": "#000000"
       },
       "permissions": [
         "ACCESS_COARSE_LOCATION",

@@ -220,7 +220,7 @@ export const AskNurScreen = () => {
         }
 
         try {
-            const response = await NurAIService.generateResponse(userMsg.content);
+            const response = await NurAIService.generateResponse(nurChats, userMsg.content);
             addNurMessage(response);
         } catch (error) {
             console.error("Nur Error:", error);
@@ -247,7 +247,7 @@ export const AskNurScreen = () => {
         addNurMessage(userMsg);
         setIsTyping(true);
         try {
-            const response = await NurAIService.generateResponse("reality check");
+            const response = await NurAIService.generateResponse(nurChats, "reality check");
             addNurMessage(response);
         } finally {
             setIsTyping(false);
@@ -284,7 +284,23 @@ export const AskNurScreen = () => {
                         </Text>
                     </View>
                 )}
-                <Text style={[styles.messageText, isUser && styles.userMessageText]}>{message.content}</Text>
+                
+                <Text style={[styles.messageText, isUser && styles.userMessageText]}>
+                    {(() => {
+                        // Custom robust lightweight markdown renderer for bold and italic
+                        const text = message.content;
+                        const regex = /(\*\*.*?\*\*|\*.*?\*)/g;
+                        const parts = text.split(regex);
+                        return parts.map((part, index) => {
+                            if (part.startsWith('**') && part.endsWith('**')) {
+                                return <Text key={index} style={{ fontFamily: theme.typography.sansBold }}>{part.slice(2, -2)}</Text>;
+                            } else if (part.startsWith('*') && part.endsWith('*')) {
+                                return <Text key={index} style={{ fontStyle: 'italic', fontFamily: theme.typography.serifBold }}>{part.slice(1, -1)}</Text>;
+                            }
+                            return <Text key={index}>{part}</Text>;
+                        });
+                    })()}
+                </Text>
 
                 {/* Event Cards */}
                 {message.metadata?.events && (
@@ -355,7 +371,7 @@ export const AskNurScreen = () => {
 
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
                 {/* Chat Area or Intro */}

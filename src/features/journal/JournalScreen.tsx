@@ -42,6 +42,7 @@ export const JournalScreen = () => {
     const isSessionUnlocked = useStore(state => state.isSessionUnlocked);
     const setSessionUnlocked = useStore(state => state.setSessionUnlocked);
     const onboardedAt = useStore(state => state.onboardedAt);
+    const freeEngagementCount = useStore(state => state.freeEngagementCount);
 
     const journalEntries = useStore(state => state.journalEntries);
     const [searchQuery, setSearchQuery] = useState('');
@@ -52,16 +53,8 @@ export const JournalScreen = () => {
 
     const navigation = useNavigation<any>(); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    useFocusEffect(
-        React.useCallback(() => {
-            return () => {
-                // Lock session when leaving the screen
-                if (securityPin) {
-                    setSessionUnlocked(false);
-                }
-            };
-        }, [securityPin])
-    );
+    // Intentionally removed aggressive blur lock to prevent double PIN prompts 
+    // when navigating to JournalDetailScreen.
 
 
 
@@ -138,24 +131,7 @@ export const JournalScreen = () => {
 
     const isTrialActive = onboardedAt ? (Date.now() - onboardedAt) < (14 * 24 * 60 * 60 * 1000) : true;
 
-    // Paywall gating for the whole screen if not subscribed
-    // This matches the user's request to see subscription tiers when clicking "Unlock"
-    console.log('[JournalScreen] subscriptionTier:', subscriptionTier, '| isSubscribed:', isSubscribed);
-    if (!isSubscribed) {
-        return (
-            <SanctuaryLock
-                onUnlock={() => {
-                    navigation.navigate('Subscription', { returnTo: 'Journal' });
-                }}
-                loading={false}
-                onBack={() => navigation.navigate('Affirmation')}
-                title="Sacred Journal"
-                subtitle={getBeliefSubtitle()}
-                buttonText="View Subscription Tiers"
-                icon={LucideLock}
-            />
-        );
-    }
+    console.log('[JournalScreen] subscriptionTier:', subscriptionTier, '| isSubscribed:', isSubscribed, '| freeUses:', freeEngagementCount);
 
     return (
         <PinGate>
@@ -265,6 +241,10 @@ export const JournalScreen = () => {
             <TouchableOpacity
                 style={[styles.fab, { bottom: insets.bottom + 20 }]}
                 onPress={() => {
+                    if (subscriptionTier === 'free' && freeEngagementCount >= 5) {
+                        navigation.navigate('Subscription', { returnTo: 'Journal' });
+                        return;
+                    }
                     navigation.navigate('JournalDetail', { isNew: true, entryTags: [] });
                 }}
             >

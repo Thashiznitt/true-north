@@ -8,9 +8,11 @@ import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootNavigator, navigationRef } from './src/navigation/root';
-import { Platform } from 'react-native';
+import { Platform, AppState } from 'react-native';
+import { useStore } from './src/store';
 import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 import { subscriptionService } from './src/services/subscription';
+import { TrueNorthToast } from './src/components/TrueNorthToast';
 
 
 const queryClient = new QueryClient();
@@ -85,6 +87,21 @@ export default function App() {
   }, [fontsLoaded]);
 
   React.useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
+        const { securityPin, biometricsEnabled, setSessionUnlocked } = useStore.getState();
+        if (securityPin || biometricsEnabled) {
+          console.log("[App] App backgrounded. Locking session...");
+          setSessionUnlocked(false);
+        }
+      }
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  React.useEffect(() => {
     console.log("[App] fontsLoaded status:", fontsLoaded);
     if (fontsLoaded) {
       const hideSplash = async () => {
@@ -119,6 +136,7 @@ export default function App() {
             <RootNavigator />
           </NavigationContainer>
         </QueryClientProvider>
+        <TrueNorthToast />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
