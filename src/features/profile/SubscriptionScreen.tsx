@@ -165,17 +165,11 @@ export const SubscriptionScreen = () => {
                     const isSelected = selectedPkgIdentifier === pkg.identifier;
                     const isAnnual = pkgTypeLC.includes('annual') || pkgTypeLC.includes('yearly') || productId.includes('annual');
 
-                    let mockedPrice = product.priceString;
-                    if (displayTier === 'compass' && isAnnual) mockedPrice = "$29.99";
-                    else if (displayTier === 'compass') mockedPrice = "$2.99";
-                    else if (displayTier === 'true_north') mockedPrice = "$9.99";
-                    else if (displayTier === 'zenith') mockedPrice = "$19.99";
-
                     return (
                         <FadeIn key={pkg.identifier} delay={200 + index * 100} from="bottom">
                             <TierCard
                                 name={cleanTitle(product.title)}
-                                price={mockedPrice}
+                                price={product.priceString}
                                 period={isAnnual ? "/ year" : "/ month"}
                                 subtext={isAnnual ? 'Paid Annually' : (displayTier === 'zenith' ? 'Elite Experience' : 'Monthly Alignment')}
                                 benefits={meta.benefits}
@@ -297,7 +291,7 @@ export const SubscriptionScreen = () => {
                                 </Text>
                                 {!offering && selectedTier !== 'free' && (
                                     <Text style={styles.ctaButtonSub}>
-                                        {selectedTier === 'compass' ? 'Ksh. 10,800.00 / year' : `${selectedTier === 'true_north' ? '$12.99' : '$19.99'} / month`}
+                                        Loading exact pricing...
                                     </Text>
                                 )}
                             </>

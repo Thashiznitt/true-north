@@ -1333,12 +1333,6 @@ export const OnboardingScreen = () => {
                                 const isCurrent = currentStoreTier === tierId;
                                 const benefits = TIER_BENEFITS[tierId as keyof typeof TIER_BENEFITS] || [];
 
-                                let mockedPrice = product.priceString;
-                                if (tierId === 'compass' && (pkgTypeLC.includes('annual') || productId.includes('annual'))) mockedPrice = "$29.99";
-                                else if (tierId === 'compass') mockedPrice = "$2.99";
-                                else if (tierId === 'true_north') mockedPrice = "$9.99";
-                                else if (tierId === 'zenith') mockedPrice = "$19.99";
-
                                 return (
                                     <TouchableOpacity
                                         key={pkg.identifier}
@@ -1368,7 +1362,7 @@ export const OnboardingScreen = () => {
                                             </View>
                                             <View style={{ alignItems: 'flex-end' }}>
                                                 <Text style={{ fontFamily: theme.typography.serifBold, fontSize: 20, color: active ? palette.charcoal : palette.ivory }}>
-                                                    {mockedPrice}
+                                                    {product.priceString}
                                                 </Text>
                                                 <Text style={{ fontFamily: theme.typography.sans, fontSize: 12, color: active ? 'rgba(0,0,0,0.6)' : palette.softGold, opacity: 0.8 }}>
                                                     {pkgTypeLC.includes('annual') || pkgTypeLC.includes('yearly') || productId.includes('annual') ? '/ year' : '/ month'}
