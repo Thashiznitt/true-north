@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, tester });
   } catch (error: any) {
+    console.error("Critical API Error in /beta:", error);
     if (error.code === "P2002") {
       return NextResponse.json(
         { error: "This email is already registered." },
