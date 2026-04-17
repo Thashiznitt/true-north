@@ -66,12 +66,33 @@ export async function POST(req: NextRequest) {
   </table>
 </div>`;
 
-      await resend.emails.send({
-        from: "True North <steve@truenorth.you>",
-        to: email,
-        subject: "Welcome to the True North Beta.",
-        html: emailHtml,
-      });
+      const adminHtml = `
+<div style="font-family: -apple-system, sans-serif; background-color: #FAFAFA; padding: 20px;">
+  <div style="background-color: #FFFFFF; border-radius: 8px; padding: 24px; border-left: 4px solid #D4AF37;">
+    <h3 style="margin-top: 0; color: #111111;">New Beta Tester Registration</h3>
+    <ul style="list-style: none; padding: 0; color: #4A4A4A; font-size: 15px; margin-bottom: 0;">
+      <li style="margin-bottom: 12px;"><strong>Email:</strong> ${email}</li>
+      <li style="margin-bottom: 12px;"><strong>Platform:</strong> ${platform}</li>
+      <li style="margin-bottom: 12px;"><strong>Date:</strong> ${new Date().toUTCString()}</li>
+    </ul>
+  </div>
+</div>`;
+
+      // Dispatch both emails securely utilizing Promise bounds avoiding generic structural timeout blocking limits natively
+      await Promise.all([
+        resend.emails.send({
+          from: "True North <steve@truenorth.you>",
+          to: email,
+          subject: "Welcome to the True North Beta.",
+          html: emailHtml,
+        }),
+        resend.emails.send({
+          from: "True North <system@truenorth.you>",
+          to: "remyngatia@gmail.com",
+          subject: "🚀 New True North Beta Tester: " + platform,
+          html: adminHtml,
+        })
+      ]);
     }
 
     return NextResponse.json({ success: true, tester });
