@@ -6,8 +6,9 @@ import { Sparkles, CheckCircle2, AlertCircle, Apple, Smartphone } from "lucide-r
 export default function BetaWaitlist() {
   const [email, setEmail] = useState("");
   const [platform, setPlatform] = useState<"ios" | "android" | "">("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [showToast, setShowToast] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +33,11 @@ export default function BetaWaitlist() {
       const data = await res.json();
 
       if (res.ok) {
-        setStatus("success");
+        setStatus("idle");
+        setEmail("");
+        setPlatform("");
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 4000);
       } else {
         setStatus("error");
         setErrorMessage(data.error || "Something went wrong.");
@@ -43,35 +48,20 @@ export default function BetaWaitlist() {
     }
   };
 
-  if (status === "success") {
-    return (
-      <div className="min-h-screen bg-[#111111] flex flex-col items-center justify-center p-6 font-sans">
-        <div className="max-w-md w-full bg-[#1A1A1A] rounded-3xl p-8 border border-white/5 text-center flex flex-col items-center">
-          <div className="w-16 h-16 rounded-full bg-[#E5D3B3]/20 flex items-center justify-center mb-6">
-            <CheckCircle2 className="w-8 h-8 text-[#E5D3B3]" />
-          </div>
-          <h1 className="text-3xl font-serif font-bold text-[#FCFBF8] mb-4">You're on the list!</h1>
-          <p className="text-white/60 mb-8 leading-relaxed">
-            Thank you for joining the True North beta. We will send your exclusive invite to <span className="text-white font-medium">{email}</span> soon.
-          </p>
-          <button
-            onClick={() => {
-              setStatus("idle");
-              setEmail("");
-              setPlatform("");
-            }}
-            className="text-[#E5D3B3] font-semibold text-sm tracking-wide"
-          >
-            Submit another email
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-[#111111] flex flex-col items-center justify-center p-6 font-sans">
-      <div className="max-w-md w-full">
+    <div className="min-h-screen bg-[#111111] flex flex-col items-center justify-center p-6 font-sans relative overflow-hidden">
+      
+      {/* Floating Success Toast */}
+      {showToast && (
+        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-8 fade-in duration-500">
+          <div className="bg-[#1A1A1A] border border-[#E5D3B3]/30 shadow-2xl rounded-full px-6 py-4 flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-[#E5D3B3]" />
+            <span className="text-white text-sm font-medium tracking-wide">You're on the list! We'll be in touch.</span>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-md w-full relative z-10">
         <div className="text-center mb-10">
           <div className="flex justify-center mb-6">
             <div className="w-12 h-12 rounded-2xl bg-[#E5D3B3]/10 flex items-center justify-center border border-[#E5D3B3]/20">
