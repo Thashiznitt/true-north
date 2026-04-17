@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+let prisma: PrismaClient;
 
 export async function POST(req: NextRequest) {
+  if (!prisma) {
+    prisma = new PrismaClient();
+  }
+
   try {
     const { email, platform } = await req.json();
 
