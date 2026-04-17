@@ -176,3 +176,13 @@ model BetaTester {
 
   @@map("beta_testers")
 }
+
+model BetaFeedback {
+  id        String   @id @default(uuid())
+  email     String?
+  theme     String
+  message   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("beta_feedback")
+}
