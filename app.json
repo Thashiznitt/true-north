@@ -33,7 +33,8 @@
             ]
           }
         ]
-      }
+      },
+      "buildNumber": "5"
     },
     "android": {
       "package": "com.thashiznitt.truenorth",
