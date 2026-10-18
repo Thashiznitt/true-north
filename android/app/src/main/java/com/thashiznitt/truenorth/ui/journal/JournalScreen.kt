@@ -60,6 +60,7 @@ import java.io.File
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -259,349 +260,379 @@ fun JournalScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(0.8.dp, SoftGoldBorder, RoundedCornerShape(22.dp)),
-                    shape = RoundedCornerShape(22.dp),
+                        .border(0.8.dp, SoftGoldBorder, RoundedCornerShape(24.dp)),
+                    shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        // Header: Sanctuary Archetype & Controls
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        // 1. Cinematic Supporting Hero Artwork
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(180.dp)
+                                .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "DAILY SANCTUARY",
-                                    fontSize = 10.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.2.sp,
-                                    color = SoftGold
-                                )
+                            Image(
+                                painter = painterResource(id = sanctuary.imageRes),
+                                contentDescription = "${sanctuary.archetype} Sanctuary",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
 
+                            // Subtle dual-gradient scrim for depth and text legibility
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Black.copy(alpha = 0.45f),
+                                                Color.Transparent,
+                                                Color.Black.copy(alpha = 0.72f)
+                                            )
+                                        )
+                                    )
+                            )
+
+                            // Floating Archetype & Controls Header Bar
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Archetype Badge Pill
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(SoftPastelRose)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color.White.copy(alpha = 0.92f))
                                         .clickable { viewModel.openWomenDeckDialog() }
-                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                        .padding(horizontal = 10.dp, vertical = 5.dp)
                                 ) {
                                     Text(
                                         text = "👑 ${sanctuary.archetype.uppercase()}",
-                                        fontSize = 10.sp,
+                                        fontSize = 10.5.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = SoftRoseAccent
                                     )
                                 }
-                            }
 
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                // Bilingual Toggle Pill (EN / SW)
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(if (isSw) SoftGoldLight else WarmPorcelain)
-                                        .border(0.5.dp, if (isSw) SoftGold.copy(alpha = 0.5f) else WarmBorder, RoundedCornerShape(12.dp))
-                                        .clickable { viewModel.toggleSanctuaryLanguage() }
-                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                    // Bilingual Toggle Pill (EN / SW)
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(Color.White.copy(alpha = 0.92f))
+                                            .clickable { viewModel.toggleSanctuaryLanguage() }
+                                            .padding(horizontal = 9.dp, vertical = 5.dp)
+                                    ) {
                                         Text(
                                             text = if (isSw) "Kiswahili" else "English",
                                             fontSize = 10.5.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = if (isSw) SoftGold else WarmTaupe
+                                            color = SoftGold
+                                        )
+                                    }
+
+                                    // 14 Women Gallery Pill
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(Color.White.copy(alpha = 0.92f))
+                                            .clickable { viewModel.openWomenDeckDialog() },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Stars,
+                                            contentDescription = "Women of Faith",
+                                            tint = SoftGold,
+                                            modifier = Modifier.size(16.dp)
                                         )
                                     }
                                 }
+                            }
 
-                                // 14 Women Gallery
-                                Box(
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .clip(CircleShape)
-                                        .background(WarmPorcelain)
-                                        .clickable { viewModel.openWomenDeckDialog() },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Stars,
-                                        contentDescription = "Women of Faith",
-                                        tint = SoftGold,
-                                        modifier = Modifier.size(15.dp)
-                                    )
-                                }
+                            // Bottom Image Scrim: Devotional Sanctuary Title
+                            Column(
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                            ) {
+                                Text(
+                                    text = "DAILY DEVOTIONAL SANCTUARY",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.2.sp,
+                                    color = Color.White.copy(alpha = 0.85f)
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = if (isSw) sanctuary.title.sw else sanctuary.title.en,
+                                    fontSize = 13.5.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.White
+                                )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // Character Title
-                        Text(
-                            text = if (isSw) sanctuary.title.sw else sanctuary.title.en,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = WarmTaupe
-                        )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        // Bilingual Affirmation
-                        Text(
-                            text = "“${if (isSw) sanctuary.affirmation.sw else sanctuary.affirmation.en}”",
-                            fontSize = 16.5.sp,
-                            fontWeight = FontWeight.Normal,
-                            fontFamily = FontFamily.Serif,
-                            color = WarmCharcoal,
-                            lineHeight = 24.sp
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Scripture Reference Pill
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
+                        // 2. Sanctuary Body with Clean, Breathable Spacing
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            // Powerful Affirmation Quote
                             Text(
-                                text = sanctuary.scriptureRef.uppercase(),
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = SoftGold,
-                                letterSpacing = 0.8.sp
+                                text = "“${if (isSw) sanctuary.affirmation.sw else sanctuary.affirmation.en}”",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Normal,
+                                fontFamily = FontFamily.Serif,
+                                color = WarmCharcoal,
+                                lineHeight = 23.sp
                             )
-                            Text(
-                                text = "•",
-                                fontSize = 11.sp,
-                                color = WarmTaupe
-                            )
-                            Text(
-                                text = if (isSw) "Neno la Faraja" else "Sisterhood Affirmation",
-                                fontSize = 11.5.sp,
-                                fontStyle = FontStyle.Italic,
-                                color = WarmTaupe
-                            )
-                        }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                        // 90-sec Sisterhood Audio Voice Note Player Pill
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(if (uiState.isSisterhoodAudioPlaying) SoftGoldLight else SoftWarmCream)
-                                .border(
-                                    0.8.dp,
-                                    if (uiState.isSisterhoodAudioPlaying) SoftGold else SoftGoldBorder,
-                                    RoundedCornerShape(14.dp)
-                                )
-                                .clickable { viewModel.playSisterhoodVoiceNote() }
-                                .padding(horizontal = 14.dp, vertical = 10.dp)
-                        ) {
+                            // Scripture Reference Pill
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = sanctuary.scriptureRef.uppercase(),
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = SoftGold,
+                                    letterSpacing = 0.8.sp
+                                )
+                                Text(
+                                    text = "•",
+                                    fontSize = 11.sp,
+                                    color = WarmTaupe
+                                )
+                                Text(
+                                    text = if (isSw) "Neno la Faraja" else "Sisterhood Affirmation",
+                                    fontSize = 11.5.sp,
+                                    fontStyle = FontStyle.Italic,
+                                    color = WarmTaupe
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            // Modern Sisterhood Audio Player Pill
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(if (uiState.isSisterhoodAudioPlaying) SoftGoldLight else SoftWarmCream)
+                                    .border(
+                                        0.8.dp,
+                                        if (uiState.isSisterhoodAudioPlaying) SoftGold else SoftGoldBorder,
+                                        RoundedCornerShape(14.dp)
+                                    )
+                                    .clickable { viewModel.playSisterhoodVoiceNote() }
+                                    .padding(horizontal = 14.dp, vertical = 9.dp)
                             ) {
                                 Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .clip(CircleShape)
-                                            .background(if (uiState.isSisterhoodAudioPlaying) SoftGold else Color.White),
-                                        contentAlignment = Alignment.Center
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                                     ) {
-                                        if (uiState.isSisterhoodAudioBuffering) {
-                                            androidx.compose.material3.CircularProgressIndicator(
-                                                modifier = Modifier.size(16.dp),
-                                                strokeWidth = 2.dp,
-                                                color = SoftGold
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape)
+                                                .background(if (uiState.isSisterhoodAudioPlaying) SoftGold else Color.White),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (uiState.isSisterhoodAudioBuffering) {
+                                                androidx.compose.material3.CircularProgressIndicator(
+                                                    modifier = Modifier.size(16.dp),
+                                                    strokeWidth = 2.dp,
+                                                    color = SoftGold
+                                                )
+                                            } else {
+                                                Icon(
+                                                    imageVector = if (uiState.isSisterhoodAudioPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                                                    contentDescription = "Sisterhood Audio",
+                                                    tint = if (uiState.isSisterhoodAudioPlaying) Color.White else SoftGold,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                        }
+
+                                        Column {
+                                            Text(
+                                                text = if (uiState.isSisterhoodAudioPlaying) "Listening to Sisterhood Audio..." else "Sisterhood Voice Note (1:30)",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = WarmCharcoal
                                             )
-                                        } else {
-                                            Icon(
-                                                imageVector = if (uiState.isSisterhoodAudioPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                                                contentDescription = "Sisterhood Audio",
-                                                tint = if (uiState.isSisterhoodAudioPlaying) Color.White else SoftGold,
-                                                modifier = Modifier.size(18.dp)
+                                            Text(
+                                                text = if (isSw) "Sauti ya faraja na ${sanctuary.archetype} • Kiswahili" else "Daily devotion note with ${sanctuary.archetype}",
+                                                fontSize = 10.5.sp,
+                                                color = WarmTaupe
                                             )
                                         }
                                     }
 
-                                    Column {
+                                    Text(
+                                        text = if (uiState.isSisterhoodAudioPlaying) "PAUSE" else "PLAY",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = SoftGold
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            // Guided Journal Prompts
+                            Text(
+                                text = if (isSw) "MIONGOZO YA SHAJARA (TAFAKARI)" else "GUIDED JOURNAL PROMPTS",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp,
+                                color = WarmTaupe
+                            )
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            // 3 Prompt Category Selector
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                listOf(
+                                    Triple("surrender", if (isSw) "Kusalimisha" else "Surrender", "🕊️"),
+                                    Triple("courage", if (isSw) "Ujasiri" else "Courage", "🦁"),
+                                    Triple("waiting", if (isSw) "Kusubiri" else "Waiting", "⏳")
+                                ).forEach { (type, label, emoji) ->
+                                    val isSelected = uiState.selectedSanctuaryPrompt == type
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(if (isSelected) SoftPastelRose else WarmPorcelain)
+                                            .border(
+                                                0.5.dp,
+                                                if (isSelected) SoftRoseAccent.copy(alpha = 0.4f) else WarmBorder,
+                                                RoundedCornerShape(12.dp)
+                                            )
+                                            .clickable { viewModel.selectSanctuaryPrompt(type) }
+                                            .padding(vertical = 7.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
                                         Text(
-                                            text = if (uiState.isSisterhoodAudioPlaying) "Listening to Sisterhood Audio..." else "Sisterhood Audio Voice Note (1:30)",
-                                            fontSize = 12.5.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = WarmCharcoal
-                                        )
-                                        Text(
-                                            text = if (isSw) "Sauti ya faraja na ${sanctuary.archetype} • Kiswahili" else "Daily devotion note with ${sanctuary.archetype}",
+                                            text = "$emoji $label",
                                             fontSize = 11.sp,
-                                            color = WarmTaupe
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isSelected) SoftRoseAccent else WarmCharcoal
                                         )
                                     }
                                 }
+                            }
 
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Active Prompt Display Box
+                            val activePromptText = when (uiState.selectedSanctuaryPrompt) {
+                                "courage" -> if (isSw) sanctuary.prompts.courage.sw else sanctuary.prompts.courage.en
+                                "waiting" -> if (isSw) sanctuary.prompts.waiting.sw else sanctuary.prompts.waiting.en
+                                else -> if (isSw) sanctuary.prompts.surrender.sw else sanctuary.prompts.surrender.en
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(SoftWarmCream.copy(alpha = 0.7f))
+                                    .padding(horizontal = 12.dp, vertical = 9.dp)
+                            ) {
                                 Text(
-                                    text = if (uiState.isSisterhoodAudioPlaying) "PAUSE" else "PLAY",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = SoftGold
+                                    text = "“$activePromptText”",
+                                    fontSize = 12.sp,
+                                    color = WarmCharcoal.copy(alpha = 0.88f),
+                                    fontStyle = FontStyle.Italic,
+                                    lineHeight = 17.sp
                                 )
                             }
-                        }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                        // Guided Journal Prompts (Surrender, Courage, Waiting)
-                        Text(
-                            text = if (isSw) "MIONGOZO YA SHAJARA (TAFAKARI)" else "GUIDED JOURNAL PROMPTS",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp,
-                            color = WarmTaupe
-                        )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        // 3 Prompt Category Selector
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            listOf(
-                                Triple("surrender", if (isSw) "Kusalimisha" else "Surrender", "🕊️"),
-                                Triple("courage", if (isSw) "Ujasiri" else "Courage", "🦁"),
-                                Triple("waiting", if (isSw) "Kusubiri" else "Waiting", "⏳")
-                            ).forEach { (type, label, emoji) ->
-                                val isSelected = uiState.selectedSanctuaryPrompt == type
-                                Box(
+                            // Bottom Actions: Reflect in Journal & 1-Tap WhatsApp Status Export
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = {
+                                        viewModel.reflectOnSanctuaryPrompt(onNavigateToCreate)
+                                    },
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(if (isSelected) SoftPastelRose else WarmPorcelain)
-                                        .border(
-                                            0.5.dp,
-                                            if (isSelected) SoftRoseAccent.copy(alpha = 0.4f) else WarmBorder,
-                                            RoundedCornerShape(12.dp)
-                                        )
-                                        .clickable { viewModel.selectSanctuaryPrompt(type) }
-                                        .padding(vertical = 7.dp),
-                                    contentAlignment = Alignment.Center
+                                        .weight(1.2f)
+                                        .height(38.dp),
+                                    shape = RoundedCornerShape(19.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = SoftGold,
+                                        contentColor = Color.White
+                                    )
                                 ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Create,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(5.dp))
                                     Text(
-                                        text = "$emoji $label",
-                                        fontSize = 11.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isSelected) SoftRoseAccent else WarmCharcoal
+                                        text = if (isSw) "Andika Shajarani" else "Reflect in Journal",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        maxLines = 1
                                     )
                                 }
-                            }
-                        }
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Prompt Text Display Box
-                        val activePromptText = when (uiState.selectedSanctuaryPrompt) {
-                            "courage" -> if (isSw) sanctuary.prompts.courage.sw else sanctuary.prompts.courage.en
-                            "waiting" -> if (isSw) sanctuary.prompts.waiting.sw else sanctuary.prompts.waiting.en
-                            else -> if (isSw) sanctuary.prompts.surrender.sw else sanctuary.prompts.surrender.en
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(SoftWarmCream.copy(alpha = 0.7f))
-                                .padding(horizontal = 12.dp, vertical = 9.dp)
-                        ) {
-                            Text(
-                                text = "“$activePromptText”",
-                                fontSize = 12.sp,
-                                color = WarmCharcoal.copy(alpha = 0.88f),
-                                fontStyle = FontStyle.Italic,
-                                lineHeight = 17.sp
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Bottom Actions: Reflect on Prompt & 1-Tap WhatsApp Status Export
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Button(
-                                onClick = {
-                                    viewModel.reflectOnSanctuaryPrompt(onNavigateToCreate)
-                                },
-                                modifier = Modifier
-                                    .weight(1.2f)
-                                    .height(38.dp),
-                                shape = RoundedCornerShape(19.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = SoftGold,
-                                    contentColor = Color.White
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Create,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(13.dp)
-                                )
-                                Spacer(modifier = Modifier.width(5.dp))
-                                Text(
-                                    text = if (isSw) "Andika Shajarani" else "Reflect in Journal",
-                                    fontSize = 11.5.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    maxLines = 1
-                                )
-                            }
-
-                            Button(
-                                onClick = {
-                                    val aff = if (isSw) sanctuary.affirmation.sw else sanctuary.affirmation.en
-                                    val prompt = activePromptText
-                                    ScriptureShareHelper.shareReflectionStatusCard(
-                                        context = context,
-                                        affirmation = aff,
-                                        verseRef = sanctuary.scriptureRef,
-                                        archetype = sanctuary.archetype,
-                                        devotionNote = prompt
+                                Button(
+                                    onClick = {
+                                        val aff = if (isSw) sanctuary.affirmation.sw else sanctuary.affirmation.en
+                                        val prompt = activePromptText
+                                        ScriptureShareHelper.shareReflectionStatusCard(
+                                            context = context,
+                                            affirmation = aff,
+                                            verseRef = sanctuary.scriptureRef,
+                                            archetype = sanctuary.archetype,
+                                            devotionNote = prompt
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(38.dp),
+                                    shape = RoundedCornerShape(19.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = SoftPastelRose,
+                                        contentColor = SoftRoseAccent
                                     )
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(38.dp),
-                                shape = RoundedCornerShape(19.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = SoftPastelRose,
-                                    contentColor = SoftRoseAccent
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Share,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(13.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "WhatsApp",
-                                    fontSize = 11.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    maxLines = 1
-                                )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Share,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "WhatsApp",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1
+                                    )
+                                }
                             }
                         }
                     }

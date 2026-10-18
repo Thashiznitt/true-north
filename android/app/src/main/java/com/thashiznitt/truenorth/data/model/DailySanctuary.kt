@@ -41,6 +41,16 @@ data class DailySanctuary(
     val audioDurationSeconds: Int = 90,
     val prompts: GuidedPrompt
 ) {
+    val imageRes: Int
+        get() = when (archetype.lowercase()) {
+            "esther" -> com.thashiznitt.truenorth.R.drawable.sanctuary_esther
+            "hannah" -> com.thashiznitt.truenorth.R.drawable.sanctuary_hannah
+            "ruth" -> com.thashiznitt.truenorth.R.drawable.sanctuary_ruth
+            "deborah" -> com.thashiznitt.truenorth.R.drawable.sanctuary_deborah
+            "mary" -> com.thashiznitt.truenorth.R.drawable.sanctuary_mary
+            else -> com.thashiznitt.truenorth.R.drawable.sanctuary_hannah
+        }
+
     companion object {
         val Deck: List<DailySanctuary> = listOf(
             DailySanctuary(
