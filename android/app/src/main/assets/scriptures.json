@@ -1,0 +1,292 @@
+[
+  {
+    "id": "gen",
+    "name": "Genesis",
+    "testament": "OT",
+    "chapters": [
+      {
+        "chapterNumber": 1,
+        "verses": [
+          { "verseNumber": 1, "text": "In the beginning God created the heaven and the earth." },
+          { "verseNumber": 2, "text": "And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters." },
+          { "verseNumber": 3, "text": "And God said, Let there be light: and there was light." },
+          { "verseNumber": 4, "text": "And God saw the light, that it was good: and God divided the light from the darkness." },
+          { "verseNumber": 5, "text": "And God called the light Day, and the darkness he called Night. And the evening and the morning were the first day." }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "psa",
+    "name": "Psalms",
+    "testament": "OT",
+    "chapters": [
+      {
+        "chapterNumber": 23,
+        "verses": [
+          { "verseNumber": 1, "text": "The Lord is my shepherd; I shall not want." },
+          { "verseNumber": 2, "text": "He maketh me to lie down in green pastures: he leadeth me beside the still waters." },
+          { "verseNumber": 3, "text": "He restoreth my soul: he leadeth me in the paths of righteousness for his name's sake." },
+          { "verseNumber": 4, "text": "Yea, though I walk through the valley of the shadow of death, I will fear no evil: for thou art with me; thy rod and thy staff they comfort me." },
+          { "verseNumber": 5, "text": "Thou preparest a table before me in the presence of mine enemies: thou anointest my head with oil; my cup runneth over." },
+          { "verseNumber": 6, "text": "Surely goodness and mercy shall follow me all the days of my life: and I will dwell in the house of the Lord for ever." }
+        ]
+      },
+      {
+        "chapterNumber": 91,
+        "verses": [
+          { "verseNumber": 1, "text": "He that dwelleth in the secret place of the most High shall abide under the shadow of the Almighty." },
+          { "verseNumber": 2, "text": "I will say of the Lord, He is my refuge and my fortress: my God; in him will I trust." },
+          { "verseNumber": 4, "text": "He shall cover thee with his feathers, and under his wings shalt thou trust: his truth shall be thy shield and buckler." },
+          { "verseNumber": 11, "text": "For he shall give his angels charge over thee, to keep thee in all thy ways." }
+        ]
+      },
+      {
+        "chapterNumber": 100,
+        "verses": [
+          { "verseNumber": 1, "text": "Make a joyful noise unto the Lord, all ye lands." },
+          { "verseNumber": 2, "text": "Serve the Lord with gladness: come before his presence with singing." },
+          { "verseNumber": 3, "text": "Know ye that the Lord he is God: it is he that hath made us, and not we ourselves; we are his people, and the sheep of his pasture." },
+          { "verseNumber": 4, "text": "Enter into his gates with thanksgiving, and into his courts with praise: be thankful unto him, and bless his name." },
+          { "verseNumber": 5, "text": "For the Lord is good; his mercy is everlasting; and his truth endureth to all generations." }
+        ]
+      },
+      {
+        "chapterNumber": 121,
+        "verses": [
+          { "verseNumber": 1, "text": "I will lift up mine eyes unto the hills, from whence cometh my help." },
+          { "verseNumber": 2, "text": "My help cometh from the Lord, which made heaven and earth." },
+          { "verseNumber": 7, "text": "The Lord shall preserve thee from all evil: he shall preserve thy soul." },
+          { "verseNumber": 8, "text": "The Lord shall preserve thy going out and thy coming in from this time forth, and even for evermore." }
+        ]
+      },
+      {
+        "chapterNumber": 151,
+        "verses": [
+          { "verseNumber": 1, "text": "I was small among my brethren, and the youngest in the house of my father: and I fed my father's sheep." },
+          { "verseNumber": 2, "text": "My hands made an instrument, and my fingers fitted the psaltery." },
+          { "verseNumber": 3, "text": "And who shall tell my Lord? The Lord Himself, He Himself heareth." },
+          { "verseNumber": 4, "text": "He sent forth His angel, and took me from my father's sheep, and anointed me with the oil of His anointing." },
+          { "verseNumber": 5, "text": "My brethren were handsome and tall, but the Lord took not pleasure in them." },
+          { "verseNumber": 6, "text": "I went forth to meet the Philistine; and he cursed me by his idols." },
+          { "verseNumber": 7, "text": "But I drew his own sword, and beheaded him, and took away the reproach from the children of Israel." }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "pro",
+    "name": "Proverbs",
+    "testament": "OT",
+    "chapters": [
+      {
+        "chapterNumber": 3,
+        "verses": [
+          { "verseNumber": 5, "text": "Trust in the Lord with all thine heart; and lean not unto thine own understanding." },
+          { "verseNumber": 6, "text": "In all thy ways acknowledge him, and he shall direct thy paths." },
+          { "verseNumber": 7, "text": "Be not wise in thine own eyes: fear the Lord, and depart from evil." },
+          { "verseNumber": 8, "text": "It shall be health to thy navel, and marrow to thy bones." }
+        ]
+      },
+      {
+        "chapterNumber": 16,
+        "verses": [
+          { "verseNumber": 3, "text": "Commit thy works unto the Lord, and thy thoughts shall be established." },
+          { "verseNumber": 9, "text": "A man's heart deviseth his way: but the Lord directeth his steps." }
+        ]
+      },
+      {
+        "chapterNumber": 31,
+        "verses": [
+          { "verseNumber": 25, "text": "Strength and honour are her clothing; and she shall rejoice in time to come." },
+          { "verseNumber": 26, "text": "She openeth her mouth with wisdom; and in her tongue is the law of kindness." },
+          { "verseNumber": 30, "text": "Favour is deceitful, and beauty is vain: but a woman that feareth the Lord, she shall be praised." }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "isa",
+    "name": "Isaiah",
+    "testament": "OT",
+    "chapters": [
+      {
+        "chapterNumber": 40,
+        "verses": [
+          { "verseNumber": 28, "text": "Hast thou not known? hast thou not heard, that the everlasting God, the Lord, the Creator of the ends of the earth, fainteth not, neither is weary? there is no searching of his understanding." },
+          { "verseNumber": 29, "text": "He giveth power to the faint; and to them that have no might he increaseth strength." },
+          { "verseNumber": 31, "text": "But they that wait upon the Lord shall renew their strength; they shall mount up with wings as eagles; they shall run, and not be weary; and they shall walk, and not faint." }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mat",
+    "name": "Matthew",
+    "testament": "NT",
+    "chapters": [
+      {
+        "chapterNumber": 5,
+        "verses": [
+          { "verseNumber": 3, "text": "Blessed are the poor in spirit: for theirs is the kingdom of heaven." },
+          { "verseNumber": 4, "text": "Blessed are they that mourn: for they shall be comforted." },
+          { "verseNumber": 5, "text": "Blessed are the meek: for they shall inherit the earth." },
+          { "verseNumber": 6, "text": "Blessed are they which do hunger and thirst after righteousness: for they shall be filled." },
+          { "verseNumber": 7, "text": "Blessed are the merciful: for they shall obtain mercy." },
+          { "verseNumber": 8, "text": "Blessed are the pure in heart: for they shall see God." },
+          { "verseNumber": 9, "text": "Blessed are the peacemakers: for they shall be called the children of God." },
+          { "verseNumber": 14, "text": "Ye are the light of the world. A city that is set on an hill cannot be hid." },
+          { "verseNumber": 16, "text": "Let your light so shine before men, that they may see your good works, and glorify your Father which is in heaven." }
+        ]
+      },
+      {
+        "chapterNumber": 6,
+        "verses": [
+          { "verseNumber": 9, "text": "After this manner therefore pray ye: Our Father which art in heaven, Hallowed be thy name." },
+          { "verseNumber": 10, "text": "Thy kingdom come, Thy will be done in earth, as it is in heaven." },
+          { "verseNumber": 11, "text": "Give us this day our daily bread." },
+          { "verseNumber": 12, "text": "And forgive us our debts, as we forgive our debtors." },
+          { "verseNumber": 13, "text": "And lead us not into temptation, but deliver us from evil: For thine is the kingdom, and the power, and the glory, for ever. Amen." },
+          { "verseNumber": 33, "text": "But seek ye first the kingdom of God, and his righteousness; and all these things shall be added unto you." },
+          { "verseNumber": 34, "text": "Take therefore no thought for the morrow: for the morrow shall take thought for the things of itself. Sufficient unto the day is the evil thereof." }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "jhn",
+    "name": "John",
+    "testament": "NT",
+    "chapters": [
+      {
+        "chapterNumber": 1,
+        "verses": [
+          { "verseNumber": 1, "text": "In the beginning was the Word, and the Word was with God, and the Word was God." },
+          { "verseNumber": 4, "text": "In him was life; and the life was the light of men." },
+          { "verseNumber": 5, "text": "And the light shineth in darkness; and the darkness comprehended it not." }
+        ]
+      },
+      {
+        "chapterNumber": 3,
+        "verses": [
+          { "verseNumber": 16, "text": "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life." },
+          { "verseNumber": 17, "text": "For God sent not his Son into the world to condemn the world; but that the world through him might be saved." }
+        ]
+      },
+      {
+        "chapterNumber": 14,
+        "verses": [
+          { "verseNumber": 1, "text": "Let not your heart be troubled: ye believe in God, believe also in me." },
+          { "verseNumber": 6, "text": "Jesus saith unto him, I am the way, the truth, and the life: no man cometh unto the Father, but by me." },
+          { "verseNumber": 27, "text": "Peace I leave with you, my peace I give unto you: not as the world giveth, give I unto you. Let not your heart be troubled, neither let it be afraid." }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rom",
+    "name": "Romans",
+    "testament": "NT",
+    "chapters": [
+      {
+        "chapterNumber": 8,
+        "verses": [
+          { "verseNumber": 28, "text": "And we know that all things work together for good to them that love God, to them who are the called according to his purpose." },
+          { "verseNumber": 31, "text": "What shall we then say to these things? If God be for us, who can be against us?" },
+          { "verseNumber": 38, "text": "For I am persuaded, that neither death, nor life, nor angels, nor principalities, nor powers, nor things present, nor things to come," },
+          { "verseNumber": 39, "text": "Nor height, nor depth, nor any other creature, shall be able to separate us from the love of God, which is in Christ Jesus our Lord." }
+        ]
+      },
+      {
+        "chapterNumber": 12,
+        "verses": [
+          { "verseNumber": 2, "text": "And be not conformed to this world: but be ye transformed by the renewing of your mind, that ye may prove what is that good, and acceptable, and perfect, will of God." },
+          { "verseNumber": 12, "text": "Rejoicing in hope; patient in tribulation; continuing instant in prayer." }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "1co",
+    "name": "1 Corinthians",
+    "testament": "NT",
+    "chapters": [
+      {
+        "chapterNumber": 13,
+        "verses": [
+          { "verseNumber": 4, "text": "Charity suffereth long, and is kind; charity envieth not; charity vaunteth not itself, is not puffed up," },
+          { "verseNumber": 7, "text": "Beareth all things, believeth all things, hopeth all things, endureth all things." },
+          { "verseNumber": 8, "text": "Charity never faileth." },
+          { "verseNumber": 13, "text": "And now abideth faith, hope, charity, these three; but the greatest of these is charity." }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "php",
+    "name": "Philippians",
+    "testament": "NT",
+    "chapters": [
+      {
+        "chapterNumber": 4,
+        "verses": [
+          { "verseNumber": 4, "text": "Rejoice in the Lord alway: and again I say, Rejoice." },
+          { "verseNumber": 6, "text": "Be careful for nothing; but in every thing by prayer and supplication with thanksgiving let your requests be made known unto God." },
+          { "verseNumber": 7, "text": "And the peace of God, which passeth all understanding, shall keep your hearts and minds through Christ Jesus." },
+          { "verseNumber": 8, "text": "Finally, brethren, whatsoever things are true, whatsoever things are honest, whatsoever things are just, whatsoever things are pure, whatsoever things are lovely, whatsoever things are of good report; if there be any virtue, and if there be any praise, think on these things." },
+          { "verseNumber": 13, "text": "I can do all things through Christ which strengtheneth me." }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rev",
+    "name": "Revelation",
+    "testament": "NT",
+    "chapters": [
+      {
+        "chapterNumber": 21,
+        "verses": [
+          { "verseNumber": 4, "text": "And God shall wipe away all tears from their eyes; and there shall be no more death, neither sorrow, nor crying, neither shall there be any more pain: for the former things are passed away." }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "1en",
+    "name": "1 Enoch",
+    "testament": "ETH",
+    "chapters": [
+      {
+        "chapterNumber": 1,
+        "verses": [
+          { "verseNumber": 1, "text": "The words of the blessing of Enoch, wherewith he blessed the elect and righteous, who will be living in the day of tribulation, when all the wicked and godless are to be removed." },
+          { "verseNumber": 2, "text": "And he took up his parable and said: Enoch a righteous man, whose eyes were opened by God, saw the vision of the Holy One in the heavens, which the angels showed me." },
+          { "verseNumber": 9, "text": "And behold! He cometh with ten thousands of His holy ones to execute judgement upon all, and to destroy all the ungodly: and to convict all flesh of all the works of their ungodliness." }
+        ]
+      },
+      {
+        "chapterNumber": 46,
+        "verses": [
+          { "verseNumber": 1, "text": "And there I saw One who had a head of days, and His head was white like wool, and with Him was another being whose countenance was full of graciousness, like one of the holy angels." },
+          { "verseNumber": 2, "text": "And I asked the angel who went with me concerning that Son of Man, who he was, and whence he was, and why he went with the Head of Days?" },
+          { "verseNumber": 3, "text": "And he answered and said unto me: This is the Son of Man who hath righteousness, with whom dwelleth righteousness, and who revealeth all the treasures of that which is hidden." }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "jub",
+    "name": "Jubilees",
+    "testament": "ETH",
+    "chapters": [
+      {
+        "chapterNumber": 1,
+        "verses": [
+          { "verseNumber": 1, "text": "And it came to pass in the first year of the exodus of the children of Israel out of Egypt, God spake to Moses, saying: Come up to Me to the Mount, and I will give thee tables of stone of the law." },
+          { "verseNumber": 29, "text": "And the angel of the presence spake to Moses: Write the complete history of the creation, how in six days the Lord God finished all His works, and sanctified the seventh day." }
+        ]
+      }
+    ]
+  }
+]

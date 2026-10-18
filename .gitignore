@@ -43,7 +43,6 @@ subscription_final.png
 
 # generated native folders
 /ios
-/android
 
 /src/generated/prisma
 

@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Her Bible</string>
+    <string name="verse_of_the_day">Verse of the Day</string>
+    <string name="reader">Scriptures</string>
+    <string name="journal">Sanctuary Journal</string>
+    <string name="search">Search</string>
+    <string name="bookmarks">Saved</string>
+</resources>
