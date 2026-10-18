@@ -247,6 +247,7 @@ fun JournalScreen(
                         )
                     }
                 }
+                Spacer(modifier = Modifier.height(6.dp))
             }
 
         // Daily Sanctuary: Daily Devotional Sanctuary designed around the women of Scripture
@@ -494,9 +495,9 @@ fun JournalScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            // Guided Journal Prompts
+                            // Guided Journal Topics
                             Text(
-                                text = if (isSw) "MIONGOZO YA SHAJARA (TAFAKARI)" else "GUIDED JOURNAL PROMPTS",
+                                text = if (isSw) "MADA ZA SHAJARA (TAFAKARI)" else "GUIDED JOURNAL TOPICS",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp,
@@ -602,13 +603,22 @@ fun JournalScreen(
                                 Button(
                                     onClick = {
                                         val aff = if (isSw) sanctuary.affirmation.sw else sanctuary.affirmation.en
+                                        val title = if (isSw) sanctuary.title.sw else sanctuary.title.en
+                                        val topicName = when (uiState.selectedSanctuaryPrompt) {
+                                            "courage" -> if (isSw) "Ujasiri" else "Courage"
+                                            "waiting" -> if (isSw) "Kusubiri" else "Waiting"
+                                            else -> if (isSw) "Kusalimisha" else "Surrender"
+                                        }
                                         val prompt = activePromptText
-                                        ScriptureShareHelper.shareReflectionStatusCard(
+                                        ScriptureShareHelper.shareSanctuaryCard(
                                             context = context,
-                                            affirmation = aff,
-                                            verseRef = sanctuary.scriptureRef,
+                                            isSwahili = isSw,
                                             archetype = sanctuary.archetype,
-                                            devotionNote = prompt
+                                            archetypeTitle = title,
+                                            verseRef = sanctuary.scriptureRef,
+                                            affirmation = aff,
+                                            topicName = topicName,
+                                            promptQuestion = prompt
                                         )
                                     },
                                     modifier = Modifier
