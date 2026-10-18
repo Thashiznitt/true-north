@@ -79,7 +79,7 @@ import com.thashiznitt.truenorth.ui.theme.WarmPorcelain
 import com.thashiznitt.truenorth.ui.theme.WarmTaupe
 import com.thashiznitt.truenorth.ui.components.HerBiblePaywallDialog
 import com.thashiznitt.truenorth.ui.reader.components.AppleBookPickerSheet
-import com.thashiznitt.truenorth.ui.reader.components.AppleScriptureFilterCard
+import com.thashiznitt.truenorth.ui.reader.components.ScriptureSelectorBar
 
 @Composable
 fun ReaderScreen(
@@ -99,6 +99,11 @@ fun ReaderScreen(
     } else {
         if (isSwahili) "Neno Takatifu" else "Holy Word"
     }
+
+    val currentBookChapters = currentBook?.chapters ?: emptyList()
+    val currentChapterIndex = currentBookChapters.indexOfFirst { it.chapterNumber == currentChapter?.chapterNumber }
+    val hasPreviousChapter = currentChapterIndex > 0
+    val hasNextChapter = currentChapterIndex != -1 && currentChapterIndex < currentBookChapters.lastIndex
 
     // Compute tag counts in current chapter for Finder tag filter bar
     val chapterTagCounts = remember(uiState.verses) {
@@ -141,18 +146,16 @@ fun ReaderScreen(
             }
         } else {
             item {
-                AppleScriptureFilterCard(
-                    language = uiState.language,
-                    onLanguageSelected = { viewModel.setLanguage(it) },
-                    testamentFilter = uiState.currentTestamentFilter,
-                    onTestamentFilterSelected = { viewModel.setTestamentFilter(it) },
-                    filteredBooks = uiState.filteredBooks,
+                ScriptureSelectorBar(
                     selectedBook = uiState.selectedBook,
-                    onBookSelected = { viewModel.selectBook(it) },
                     selectedChapter = uiState.selectedChapter,
-                    onChapterSelected = { viewModel.selectChapter(it) },
-                    onOpenBookPicker = { isBookPickerOpen = true },
-                    isSwahili = isSwahili
+                    language = uiState.language,
+                    isSwahili = isSwahili,
+                    onPreviousChapter = { viewModel.goToPreviousChapter() },
+                    onNextChapter = { viewModel.goToNextChapter() },
+                    hasPreviousChapter = hasPreviousChapter,
+                    hasNextChapter = hasNextChapter,
+                    onOpenPicker = { isBookPickerOpen = true }
                 )
             }
 
@@ -298,13 +301,14 @@ fun ReaderScreen(
         // Apple HIG Quick Book & Chapter Selection Sheet
     if (isBookPickerOpen) {
         AppleBookPickerSheet(
+            language = uiState.language,
+            onLanguageSelected = { viewModel.setLanguage(it) },
             books = uiState.books,
             selectedBook = uiState.selectedBook,
             selectedChapter = uiState.selectedChapter,
             isSwahili = isSwahili,
             onSelectBookAndChapter = { book, chapter ->
-                viewModel.selectBook(book)
-                viewModel.selectChapter(chapter)
+                viewModel.selectBookAndChapter(book, chapter)
                 isBookPickerOpen = false
             },
             onDismiss = { isBookPickerOpen = false }

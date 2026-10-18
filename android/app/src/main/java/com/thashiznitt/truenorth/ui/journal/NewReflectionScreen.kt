@@ -130,14 +130,14 @@ private val SacredPrompts = listOf(
     SacredPrompt(
         title = "What message or sermon touched your spirit today?",
         starter = "Preacher's Message:\n\nKey Revelation:\n\nMy Commitment to God:",
-        tag = "Church Sermon",
+        tag = "Sermons",
         emoji = "⛪",
         tint = SoftWarmCream
     ),
     SacredPrompt(
         title = "What prayer are you placing in God's hands today?",
         starter = "Dear Heavenly Father,\n\nI come before You seeking Your peace...",
-        tag = "Prayer",
+        tag = "Prayers",
         emoji = "🙏",
         tint = SoftPastelSage
     ),
@@ -177,11 +177,11 @@ private val QuickScriptures = listOf(
 )
 
 private val CategoryTags = listOf(
-    "Church Sermon" to "⛪ Church",
-    "Prayer" to "🙏 Prayer",
-    "Scripture" to "📖 Scripture",
     "Gratitude" to "✨ Gratitude",
-    "Meditation" to "🕊️ Peace"
+    "Sermons" to "⛪ Sermons",
+    "Prayers" to "🙏 Prayers",
+    "Meditation" to "🕊️ Meditation",
+    "Scripture" to "📖 Scripture"
 )
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
@@ -249,7 +249,7 @@ fun NewReflectionScreen(
     }
 
     var showChurchSection by remember(uiState.newTag) {
-        mutableStateOf(uiState.newTag == "Church Sermon")
+        mutableStateOf(uiState.newTag.equals("Sermons", true) || uiState.newTag.equals("Church Sermon", true))
     }
     var showDevotionPhoto by remember { mutableStateOf(false) }
 
@@ -370,7 +370,7 @@ fun NewReflectionScreen(
                                 .clickable {
                                     activePromptTitle = prompt.title
                                     viewModel.onNewTagChanged(prompt.tag)
-                                    showChurchSection = (prompt.tag == "Church Sermon")
+                                    showChurchSection = (prompt.tag.equals("Sermons", true) || prompt.tag.equals("Church Sermon", true))
                                     if (uiState.newContent.isBlank() || SacredPrompts.any { it.starter == uiState.newContent }) {
                                         viewModel.onNewContentChanged(prompt.starter)
                                     }
@@ -456,7 +456,7 @@ fun NewReflectionScreen(
             }
 
             // Optional Church & Speaker Details Card
-            if (showChurchSection || uiState.newTag == "Church Sermon") {
+            if (showChurchSection || uiState.newTag.equals("Sermons", true) || uiState.newTag.equals("Church Sermon", true)) {
                 item {
                     Spacer(modifier = Modifier.height(14.dp))
                     Card(
@@ -491,7 +491,7 @@ fun NewReflectionScreen(
                                     )
                                 }
 
-                                if (uiState.newTag != "Church Sermon") {
+                                if (!uiState.newTag.equals("Sermons", true) && !uiState.newTag.equals("Church Sermon", true)) {
                                     IconButton(
                                         onClick = { showChurchSection = false },
                                         modifier = Modifier.size(24.dp)

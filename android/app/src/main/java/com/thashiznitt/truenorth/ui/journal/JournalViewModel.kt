@@ -217,8 +217,24 @@ class JournalViewModel(
                 entry.title.contains(filter.query, ignoreCase = true) ||
                 entry.content.contains(filter.query, ignoreCase = true) ||
                 (entry.churchName?.contains(filter.query, ignoreCase = true) == true) ||
-                (entry.scriptureReference?.contains(filter.query, ignoreCase = true) == true)
-            val matchesTag = filter.tag == "ALL" || entry.tag.equals(filter.tag, ignoreCase = true)
+                (entry.speaker?.contains(filter.query, ignoreCase = true) == true) ||
+                (entry.scriptureReference?.contains(filter.query, ignoreCase = true) == true) ||
+                (entry.dateDisplay.contains(filter.query, ignoreCase = true))
+
+            val matchesTag = when (filter.tag.uppercase()) {
+                "ALL" -> true
+                "SERMONS", "CHURCH SERMON", "CHURCH", "SERMON" ->
+                    entry.tag.equals("Sermons", true) || entry.tag.equals("Church Sermon", true) || entry.tag.equals("Church", true) || entry.tag.equals("Sermon", true)
+                "PRAYERS", "PRAYER" ->
+                    entry.tag.equals("Prayers", true) || entry.tag.equals("Prayer", true)
+                "GRATITUDE" ->
+                    entry.tag.equals("Gratitude", true)
+                "MEDITATION" ->
+                    entry.tag.equals("Meditation", true)
+                "SCRIPTURE" ->
+                    entry.tag.equals("Scripture", true)
+                else -> entry.tag.equals(filter.tag, ignoreCase = true)
+            }
             matchesQuery && matchesTag
         }
 
@@ -344,13 +360,19 @@ class JournalViewModel(
         _tagFilter.value = tag
     }
 
-    fun openNewEntry(initialTag: String = "Church Sermon") {
+    fun openNewEntry(initialTag: String = "Sermons") {
+        val isSermon = initialTag.equals("Sermons", true) || initialTag.equals("Church Sermon", true) || initialTag.equals("Church", true)
+        val normalizedTag = when {
+            isSermon -> "Sermons"
+            initialTag.equals("Prayers", true) || initialTag.equals("Prayer", true) -> "Prayers"
+            else -> initialTag
+        }
         _editorState.value = EditorState(
             isCreating = true,
             title = "",
             content = "",
-            tag = initialTag,
-            churchName = if (initialTag == "Church Sermon") "Beloved Grace Fellowship" else "",
+            tag = normalizedTag,
+            churchName = if (isSermon) "Beloved Grace Fellowship" else "",
             speaker = "",
             scriptureReference = "",
             scriptureText = "",
@@ -483,7 +505,14 @@ class JournalViewModel(
         viewModelScope.launch {
             journalRepository.saveEntry(
                 title = if (state.title.isBlank()) {
-                    if (state.tag == "Church Sermon") "Sunday Sermon Notes" else "Sacred Reflection"
+                    when {
+                        state.tag.equals("Sermons", true) || state.tag.equals("Church Sermon", true) -> "Sunday Sermon Notes"
+                        state.tag.equals("Prayers", true) || state.tag.equals("Prayer", true) -> "Sacred Prayer"
+                        state.tag.equals("Gratitude", true) -> "Daily Gratitude"
+                        state.tag.equals("Meditation", true) -> "Meditation Reflection"
+                        state.tag.equals("Scripture", true) -> "Scripture Reflection"
+                        else -> "Sacred Reflection"
+                    }
                 } else state.title,
                 content = state.content,
                 tag = state.tag,

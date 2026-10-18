@@ -163,6 +163,34 @@ class ReaderViewModel(
         updateVerses(_uiState.value.selectedBook, chapter)
     }
 
+    fun selectBookAndChapter(book: ScriptureBook, chapter: ScriptureChapter) {
+        _uiState.update {
+            it.copy(
+                selectedBook = book,
+                selectedChapter = chapter
+            )
+        }
+        updateVerses(book, chapter)
+    }
+
+    fun goToNextChapter() {
+        val book = _uiState.value.selectedBook ?: return
+        val currentChapter = _uiState.value.selectedChapter ?: return
+        val currentIndex = book.chapters.indexOfFirst { it.chapterNumber == currentChapter.chapterNumber }
+        if (currentIndex != -1 && currentIndex < book.chapters.lastIndex) {
+            selectChapter(book.chapters[currentIndex + 1])
+        }
+    }
+
+    fun goToPreviousChapter() {
+        val book = _uiState.value.selectedBook ?: return
+        val currentChapter = _uiState.value.selectedChapter ?: return
+        val currentIndex = book.chapters.indexOfFirst { it.chapterNumber == currentChapter.chapterNumber }
+        if (currentIndex > 0) {
+            selectChapter(book.chapters[currentIndex - 1])
+        }
+    }
+
     private fun updateVerses(book: ScriptureBook?, chapter: ScriptureChapter?) {
         if (book == null || chapter == null) return
         val currentTags = _uiState.value.bookmarkTags

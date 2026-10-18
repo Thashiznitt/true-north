@@ -39,6 +39,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.LockOpen
@@ -128,21 +131,21 @@ private val AffirmationDeck = listOf(
         bg = SoftPastelRose
     ),
     AffirmationCardData(
-        title = "Church Sermon",
+        title = "Sermons",
         subtitle = "Preacher's message, revelation & vows",
         duration = "5 mins",
         emoji = "⛪",
-        tag = "Church Sermon",
+        tag = "Sermons",
         promptTitle = "What message or sermon touched your spirit today?",
         starter = "Preacher's Message:\n\nKey Revelation:\n\nMy Commitment to God:",
         bg = SoftWarmCream
     ),
     AffirmationCardData(
-        title = "Prayer",
+        title = "Prayers",
         subtitle = "Place your petitions in God's loving hands",
         duration = "3 mins",
         emoji = "🙏",
-        tag = "Prayer",
+        tag = "Prayers",
         promptTitle = "What prayer are you placing in God's hands today?",
         starter = "Dear Heavenly Father,\n\nI come before You seeking Your peace...",
         bg = SoftPastelSage
@@ -726,7 +729,7 @@ fun JournalScreen(
             }
         }
 
-        // Category Filter & Biometric Lock Row
+        // Category Filter, Search Bar & Biometric Lock Row
         item {
             Spacer(modifier = Modifier.height(14.dp))
             val context = LocalContext.current
@@ -739,7 +742,7 @@ fun JournalScreen(
             ) {
                 Text(
                     text = "Reflections & Sermons",
-                    fontSize = 13.5.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = FontFamily.Serif,
                     color = WarmCharcoal
@@ -775,22 +778,119 @@ fun JournalScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
-            val tags = listOf("ALL", "Gratitude", "Church Sermon", "Prayer", "Meditation", "Scripture")
-            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
-                IosSegmentedControl(
-                    items = tags,
-                    selectedItem = uiState.selectedTagFilter,
-                    onItemSelected = { viewModel.onTagFilterSelected(it) },
-                    labelProvider = {
-                        when (it) {
-                            "ALL" -> "All"
-                            "Church Sermon" -> "Church"
-                            else -> it
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Search Bar under Reflections & Sermons
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color.White)
+                    .border(0.8.dp, SoftGoldBorder.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
+                    .padding(horizontal = 12.dp, vertical = 2.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(38.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = "Search Entries",
+                        tint = SoftGold,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    BasicTextField(
+                        value = uiState.searchQuery,
+                        onValueChange = { viewModel.onSearchQueryChanged(it) },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            fontSize = 13.5.sp,
+                            color = WarmCharcoal,
+                            fontWeight = FontWeight.Normal
+                        ),
+                        decorationBox = { innerTextField ->
+                            if (uiState.searchQuery.isEmpty()) {
+                                Text(
+                                    text = "Search reflections, sermons, prayers...",
+                                    fontSize = 13.sp,
+                                    color = WarmTaupe.copy(alpha = 0.75f)
+                                )
+                            }
+                            innerTextField()
+                        }
+                    )
+                    if (uiState.searchQuery.isNotEmpty()) {
+                        IconButton(
+                            onClick = { viewModel.onSearchQueryChanged("") },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = "Clear search",
+                                tint = WarmTaupe,
+                                modifier = Modifier.size(15.dp)
+                            )
                         }
                     }
-                )
+                }
             }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Redesigned Horizontally Scrollable Category Filter Chips (Attachment 1 Redesign)
+            val categoryTabs = listOf(
+                "ALL" to "All",
+                "Gratitude" to "✨ Gratitude",
+                "Sermons" to "⛪ Sermons",
+                "Prayers" to "🙏 Prayers",
+                "Meditation" to "🕊️ Meditation",
+                "Scripture" to "📖 Scripture"
+            )
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(categoryTabs) { (id, label) ->
+                    val isSelected = when (id.uppercase()) {
+                        "ALL" -> uiState.selectedTagFilter.equals("ALL", true)
+                        "SERMONS" -> uiState.selectedTagFilter.equals("Sermons", true) || uiState.selectedTagFilter.equals("Church Sermon", true) || uiState.selectedTagFilter.equals("Church", true)
+                        "PRAYERS" -> uiState.selectedTagFilter.equals("Prayers", true) || uiState.selectedTagFilter.equals("Prayer", true)
+                        else -> uiState.selectedTagFilter.equals(id, true)
+                    }
+                    val bg = if (isSelected) SoftGold else Color.White
+                    val textColor = if (isSelected) Color.White else WarmCharcoal
+                    val borderColor = if (isSelected) SoftGold else WarmBorder
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(bg)
+                            .border(
+                                width = if (isSelected) 1.dp else 0.8.dp,
+                                color = borderColor,
+                                shape = RoundedCornerShape(20.dp)
+                            )
+                            .clickable { viewModel.onTagFilterSelected(id) }
+                            .padding(horizontal = 14.dp, vertical = 7.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = label,
+                            fontSize = 12.5.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = textColor,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(6.dp))
         }
 
         // Entries List or Biometric Locked Shield
@@ -906,8 +1006,26 @@ fun JournalScreen(
                             color = WarmCharcoal
                         )
                         Spacer(modifier = Modifier.height(6.dp))
+                        val (dynamicButtonLabel, dynamicInitialTag) = when (uiState.selectedTagFilter.uppercase()) {
+                            "GRATITUDE" -> "Reflect on Gratitude" to "Gratitude"
+                            "SERMONS", "CHURCH SERMON", "CHURCH", "SERMON" -> "Reflect on Sermon" to "Sermons"
+                            "PRAYERS", "PRAYER" -> "Reflect in Prayer" to "Prayers"
+                            "MEDITATION" -> "Reflect on Meditation" to "Meditation"
+                            "SCRIPTURE" -> "Reflect on Scripture" to "Scripture"
+                            else -> "Reflect in Journal" to "Sermons"
+                        }
+
+                        val emptyDescription = when {
+                            uiState.searchQuery.isNotBlank() ->
+                                "No journal reflections found matching “${uiState.searchQuery}”. Tap below to reflect in journal."
+                            uiState.selectedTagFilter.uppercase() != "ALL" ->
+                                "No $dynamicInitialTag reflections recorded yet. Tap below to begin your sacred reflection."
+                            else ->
+                                "Record Sunday sermon notes, heartfelt prayers, and moments of gratitude."
+                        }
+
                         Text(
-                            text = "Record Sunday sermon notes, heartfelt prayers, and moments of gratitude.",
+                            text = emptyDescription,
                             fontSize = 13.sp,
                             color = WarmTaupe,
                             lineHeight = 18.sp
@@ -916,7 +1034,7 @@ fun JournalScreen(
                         Button(
                             onClick = {
                                 if (viewModel.canStartNewReflection()) {
-                                    viewModel.openNewEntry("Church Sermon")
+                                    viewModel.openNewEntry(dynamicInitialTag)
                                     onNavigateToCreate()
                                 }
                             },
@@ -931,7 +1049,7 @@ fun JournalScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Record Church Entry",
+                                text = "+ $dynamicButtonLabel",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -953,11 +1071,20 @@ fun JournalScreen(
         }
     }
 
+        val fabInitialTag = when (uiState.selectedTagFilter.uppercase()) {
+            "GRATITUDE" -> "Gratitude"
+            "SERMONS", "CHURCH SERMON", "CHURCH", "SERMON" -> "Sermons"
+            "PRAYERS", "PRAYER" -> "Prayers"
+            "MEDITATION" -> "Meditation"
+            "SCRIPTURE" -> "Scripture"
+            else -> "Sermons"
+        }
+
         // Serene feminine Floating Action Button for New Reflection
         FloatingActionButton(
             onClick = {
                 if (viewModel.canStartNewReflection()) {
-                    viewModel.openNewEntry("Church Sermon")
+                    viewModel.openNewEntry(fabInitialTag)
                     onNavigateToCreate()
                 }
             },
